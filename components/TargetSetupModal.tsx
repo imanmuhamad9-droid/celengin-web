@@ -116,15 +116,27 @@ export default function TargetSetupModal({ isOpen, onClose, onSuccess, showDialo
             </div>
           </div>
 
-          {/* PERBAIKAN: INPUT TANGGAL DIBUAT KECIL (text-[10px] & p-2) */}
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <label className="block text-[10px] font-medium text-gray-700 dark:text-gray-300 mb-1">Mulai</label>
-              <input type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setPeriodType('custom'); }} required className="w-full p-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-[10px] focus:ring-2 focus:ring-teal-500 transition-colors" />
+          {/* PERBAIKAN: INPUT TANGGAL DIPERKECIL (KIRI-KANAN) */}
+          <div className="flex items-center justify-between gap-1">
+            <div className="w-[48%]">
+              <label className="block text-[9px] font-medium text-gray-700 dark:text-gray-300 mb-1">Mulai</label>
+              <input 
+                type="date" 
+                value={startDate} 
+                onChange={e => { setStartDate(e.target.value); setPeriodType('custom'); }} 
+                required 
+                className="w-full px-1 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-[10px] focus:ring-2 focus:ring-teal-500 transition-colors" 
+              />
             </div>
-            <div className="flex-1">
-              <label className="block text-[10px] font-medium text-gray-700 dark:text-gray-300 mb-1">Selesai</label>
-              <input type="date" value={endDate} onChange={e => { setEndDate(e.target.value); setPeriodType('custom'); }} required className="w-full p-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-[10px] focus:ring-2 focus:ring-teal-500 transition-colors" />
+            <div className="w-[48%]">
+              <label className="block text-[9px] font-medium text-gray-700 dark:text-gray-300 mb-1">Selesai</label>
+              <input 
+                type="date" 
+                value={endDate} 
+                onChange={e => { setEndDate(e.target.value); setPeriodType('custom'); }} 
+                required 
+                className="w-full px-1 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-[10px] focus:ring-2 focus:ring-teal-500 transition-colors" 
+              />
             </div>
           </div>
 
