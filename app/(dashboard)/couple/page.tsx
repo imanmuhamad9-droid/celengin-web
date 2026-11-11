@@ -51,7 +51,7 @@ export default function SharedSpacePage() {
     if (invites) setPendingInvites(invites);
 
     const { data: acceptedMembers } = await supabase.from('couple_members').select('goal_id').eq('user_id', session.user.id).eq('status', 'accepted');
-    const goalIds = acceptedMembers?.map(m => m.goal_id) || [];
+    const goalIds = acceptedMembers?.map((m: any) => m.goal_id) || [];
 
     const { data: myGoals } = await supabase.from('couple_goals').select('*').eq('created_by', session.user.id);
 
