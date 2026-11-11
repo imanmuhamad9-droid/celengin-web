@@ -220,26 +220,26 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
             <button onClick={() => setIsPresetModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4 text-center">Kelola Kategori</h2>
             
-                        {/* Form Input/Edit */}
-            <div className="flex items-center gap-2 mb-4 bg-gray-50 dark:bg-gray-700 p-2.5 rounded-xl border border-gray-100 dark:border-gray-600">
+            {/* Form Input/Edit */}
+            <div className="flex items-center gap-1.5 mb-4 bg-gray-50 dark:bg-gray-700 p-2 rounded-xl border border-gray-100 dark:border-gray-600 w-full">
               <input 
                 type="text" 
                 value={newPresetEmoji} 
                 onChange={(e) => setNewPresetEmoji(e.target.value)} 
-                className="w-12 h-11 text-center border border-gray-300 dark:border-gray-500 rounded-lg text-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 transition-all" 
+                className="w-10 h-10 shrink-0 text-center border border-gray-300 dark:border-gray-500 rounded-lg text-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 transition-all" 
                 placeholder="🍔" 
               />
               <input 
                 type="text" 
                 value={newPresetLabel} 
                 onChange={(e) => setNewPresetLabel(e.target.value)} 
-                className="flex-1 h-11 border border-gray-300 dark:border-gray-500 rounded-lg px-3 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 transition-all" 
-                placeholder="Nama kategori..." 
+                className="flex-1 min-w-0 h-10 border border-gray-300 dark:border-gray-500 rounded-lg px-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 transition-all" 
+                placeholder="Nama..." 
               />
               <button 
                 type="button" 
                 onClick={handleSavePreset} 
-                className="h-11 bg-teal-600 text-white px-5 rounded-lg text-sm font-bold hover:bg-teal-700 transition-all shadow-sm"
+                className="h-10 shrink-0 bg-teal-600 text-white px-3 rounded-lg text-xs font-bold hover:bg-teal-700 transition-all shadow-sm"
               >
                 {editingPresetId ? 'Update' : 'Tambah'}
               </button>
