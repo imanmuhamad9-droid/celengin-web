@@ -105,7 +105,7 @@ function TransactionsContent() {
     <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-24 transition-colors">
       <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md px-5 py-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 transition-colors">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-teal-700 rounded-lg flex items-center justify-center text-white font-bold text-lg">C</div>
+          <img src="/icon.png" alt="Logo" className="w-8 h-8 rounded-lg object-contain" />
           <span className="font-bold text-xl text-teal-800 dark:text-teal-400">Riwayat</span>
         </div>
         <button onClick={() => setIsRoutineModalOpen(true)} className="text-xs font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30 px-3 py-1.5 rounded-lg border border-teal-100 dark:border-teal-800 transition-colors">
