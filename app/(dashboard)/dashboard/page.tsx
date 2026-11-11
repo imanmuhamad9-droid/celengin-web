@@ -316,16 +316,22 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <div className="flex justify-between items-end">
+        <div className="flex justify-between items-center mb-2">
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Halo, selamat datang 👋</p>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white truncate">{profile?.nickname || profile?.full_name || user?.email?.split('@')[0]}</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white truncate">{profile?.nickname || profile?.full_name || user?.email?.split('@')[0]}</h2>
           </div>
-          <button onClick={() => setIsProfileModalOpen(true)} className="w-10 h-10 rounded-full border-2 border-teal-100 dark:border-gray-700 overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0 hover:border-teal-400 transition-all mb-1">
-            {profile?.avatar_url ? <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" /> : <User className="w-5 h-5 text-gray-400" />}
+          <button 
+            onClick={() => setIsProfileModalOpen(true)} 
+            className="w-14 h-14 rounded-full border-[3px] border-teal-500 shadow-md overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0 hover:scale-105 transition-all"
+          >
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <User className="w-6 h-6 text-gray-400" />
+            )}
           </button>
         </div>
-
         <div className="flex gap-3">
           <button onClick={() => { setTxType('income'); setIsTxModalOpen(true); }} className="flex-1 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 py-3 rounded-xl flex items-center justify-center gap-2 font-bold hover:bg-green-100 dark:hover:bg-green-900/40 transition-all text-xs">
             + Pemasukan

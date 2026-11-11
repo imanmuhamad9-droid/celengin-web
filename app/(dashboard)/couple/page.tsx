@@ -2,11 +2,17 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { Heart, Plus, UserPlus, X, Edit3, Check, Mail, ArrowDownCircle, Calendar, Trash2, ArrowUpCircle, Users, Info, ChevronDown, ChevronUp } from 'lucide-react';
+import { Heart, Plus, UserPlus, X, Edit3, Check, Mail, ArrowDownCircle, Calendar, Trash2, ArrowUpCircle, Users, Info, ChevronDown, ChevronUp, Copy, CreditCard } from 'lucide-react';
 import { formatRupiah } from '@/lib/utils';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import SkeletonLoader from '@/components/SkeletonLoader';
+
+const BANKS = [
+  "BCA", "Mandiri", "BRI", "BNI", "BSI", "BTN", "CIMB Niaga", "Permata", 
+  "Danamon", "OCBC", "Panin", "Maybank", "UOB", "BJB", "DKI", "Jago", 
+  "SeaBank", "Blu by BCA", "Jenius", "OVO", "GoPay", "DANA", "ShopeePay", "Lainnya"
+];
 
 export default function SharedSpacePage() {
   const [user, setUser] = useState<any>(null);
@@ -17,25 +23,35 @@ export default function SharedSpacePage() {
   const [filterCategory, setFilterCategory] = useState<'all' | 'couple' | 'friend'>('all');
   const [showInfo, setShowInfo] = useState(true);
 
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  // State Modal Form (Tambah / Edit)
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null); // null = Tambah baru, ada isi = Edit
+  
   const [title, setTitle] = useState('');
   const [targetDisplay, setTargetDisplay] = useState('');
   const [targetRaw, setTargetRaw] = useState(0);
   const [goalCategory, setGoalCategory] = useState<'couple' | 'friend'>('couple');
+  const [bankName, setBankName] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [accountHolder, setAccountHolder] = useState('');
 
+  // State Modal Update Dana
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<any>(null);
   const [updateAmountDisplay, setUpdateAmountDisplay] = useState('');
   const [updateAmountRaw, setUpdateAmountRaw] = useState(0);
   const [updateAction, setUpdateAction] = useState<'in' | 'out'>('in');
 
+  // State Modal Invite
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteLoading, setInviteLoading] = useState(false);
 
+  // State Riwayat
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [historyData, setHistoryData] = useState<any[]>([]);
 
+  // Custom Dialog
   const [dialog, setDialog] = useState({ isOpen: false, title: '', msg: '', type: 'info' as 'info'|'success'|'danger', onConfirm: undefined as (()=>void)|undefined });
   const showDialog = (title: string, msg: string, type: 'info'|'success'|'danger', onConfirm?: () => void) => setDialog({ isOpen: true, title, msg, type, onConfirm });
   const closeDialog = () => setDialog(prev => ({ ...prev, isOpen: false }));
@@ -109,14 +125,63 @@ export default function SharedSpacePage() {
     setUpdateAmountDisplay(new Intl.NumberFormat('id-ID').format(Number(rawValue)));
   };
 
-  const handleCreateGoal = async (e: React.FormEvent) => {
+  // Buka Modal Form untuk Tambah
+  const handleOpenAdd = () => {
+    setEditingId(null);
+    setTitle(''); setTargetDisplay(''); setTargetRaw(0); setGoalCategory('couple');
+    setBankName(''); setAccountNumber(''); setAccountHolder('');
+    setIsFormModalOpen(true);
+  };
+
+  // Buka Modal Form untuk Edit
+  const handleOpenEdit = (goal: any) => {
+    setEditingId(goal.id);
+    setTitle(goal.title);
+    setTargetRaw(goal.target_amount);
+    setTargetDisplay(new Intl.NumberFormat('id-ID').format(goal.target_amount));
+    setGoalCategory(goal.category);
+    setBankName(goal.bank_name || '');
+    setAccountNumber(goal.account_number || '');
+    setAccountHolder(goal.account_holder || '');
+    setIsFormModalOpen(true);
+  };
+
+  const handleSaveGoal = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || targetRaw <= 0) return;
-    const { data, error } = await supabase.from('couple_goals').insert({ title, target_amount: targetRaw, created_by: user.id, category: goalCategory }).select().single();
-    if (!error && data) {
+
+    const payload = {
+      title,
+      target_amount: targetRaw,
+      category: goalCategory,
+      bank_name: bankName,
+      account_number: accountNumber,
+      account_holder: accountHolder
+    };
+
+    if (editingId) {
+      // Mode Edit
+      const { error } = await supabase.from('couple_goals').update(payload).eq('id', editingId);
+      if (error) return showDialog('Gagal', error.message, 'danger');
+      showDialog('Berhasil', 'Target berhasil diperbarui!', 'success');
+    } else {
+      // Mode Tambah
+      const { data, error } = await supabase.from('couple_goals').insert({ ...payload, created_by: user.id }).select().single();
+      if (error) return showDialog('Gagal', error.message, 'danger');
       await supabase.from('couple_members').insert({ goal_id: data.id, user_id: user.id, status: 'accepted' });
-      setTitle(''); setTargetDisplay(''); setTargetRaw(0); setIsAddModalOpen(false); fetchSharedData();
+      showDialog('Berhasil', 'Target berhasil dibuat!', 'success');
     }
+    
+    setIsFormModalOpen(false);
+    fetchSharedData();
+  };
+
+  const handleDeleteGoal = (id: string) => {
+    showDialog('Hapus Target?', 'Target ini akan dihapus permanen beserta riwayatnya.', 'danger', async () => {
+      await supabase.from('couple_goals').delete().eq('id', id);
+      showDialog('Berhasil', 'Target telah dihapus.', 'success');
+      fetchSharedData();
+    });
   };
 
   const handleUpdateAmount = async (e: React.FormEvent) => {
@@ -157,6 +222,11 @@ export default function SharedSpacePage() {
     });
   };
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    showDialog('Berhasil', 'Nomor rekening berhasil disalin!', 'success');
+  };
+
   const filteredGoals = goals.filter(g => filterCategory === 'all' ? true : g.category === filterCategory);
 
   if (isLoading) return <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950"><SkeletonLoader /></div>;
@@ -164,10 +234,10 @@ export default function SharedSpacePage() {
   return (
     <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-24 transition-colors">
       <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md px-5 py-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 transition-colors">
-  <div className="flex items-center gap-2">
-    <img src="/icon.png" alt="Logo" className="w-8 h-8 rounded-lg object-contain" />
-    <span className="font-bold text-xl text-teal-800 dark:text-teal-400">Celengin.</span>
-  </div>
+        <div className="flex items-center gap-2">
+          <img src="/icon.png" alt="Logo" className="w-8 h-8 rounded-lg object-contain" />
+          <span className="font-bold text-xl text-teal-800 dark:text-teal-400">Celengin.</span>
+        </div>
       </header>
 
       <main className="px-5 mt-4 space-y-5">
@@ -176,7 +246,7 @@ export default function SharedSpacePage() {
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Bareng</h1>
             <Users className="w-6 h-6 text-teal-600 dark:text-teal-400" />
           </div>
-          <button onClick={() => setIsAddModalOpen(true)} className="bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 p-2.5 rounded-xl hover:bg-teal-200 dark:hover:bg-teal-900/50 transition-all font-bold text-xs flex items-center gap-1"><Plus className="w-4 h-4" /> Buat</button>
+          <button onClick={handleOpenAdd} className="bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 p-2.5 rounded-xl hover:bg-teal-200 dark:hover:bg-teal-900/50 transition-all font-bold text-xs flex items-center gap-1"><Plus className="w-4 h-4" /> Buat</button>
         </div>
 
         <div className="bg-teal-50 dark:bg-teal-900/20 border border-teal-100 dark:border-teal-800 rounded-2xl overflow-hidden transition-all duration-300">
@@ -233,12 +303,23 @@ export default function SharedSpacePage() {
               <div key={goal.id} className={`bg-white dark:bg-gray-800 p-5 rounded-3xl border shadow-sm relative overflow-hidden transition-colors ${isCouple ? 'border-pink-100 dark:border-pink-900/30' : 'border-blue-100 dark:border-blue-900/30'}`}>
                 <div className={`absolute -right-4 -top-4 opacity-5 ${isCouple ? 'text-pink-500' : 'text-blue-500'}`}>{isCouple ? <Heart className="w-24 h-24" /> : <Users className="w-24 h-24" />}</div>
                 <div className="relative z-10">
+                  
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md ${isCouple ? 'bg-pink-50 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400' : 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'}`}>{isCouple ? 'Couple' : 'Teman'}</span>
                       <h3 className="font-bold text-gray-800 dark:text-gray-100 text-lg mt-1">{goal.title}</h3>
                     </div>
-                    <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${isCouple ? 'text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-900/30' : 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'}`}>{Math.round(percentage)}%</span>
+                    <div className="flex gap-1">
+                      <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${isCouple ? 'text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-900/30' : 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'}`}>{Math.round(percentage)}%</span>
+                      
+                      {/* TOMBOL EDIT & HAPUS (Khusus Pembuat) */}
+                      {isCreator && (
+                        <>
+                          <button onClick={() => handleOpenEdit(goal)} className="text-gray-400 hover:text-teal-600 bg-gray-50 dark:bg-gray-700 p-1.5 rounded-md transition-colors"><Edit3 className="w-3.5 h-3.5" /></button>
+                          <button onClick={() => handleDeleteGoal(goal.id)} className="text-gray-400 hover:text-red-500 bg-gray-50 dark:bg-gray-700 p-1.5 rounded-md transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+                        </>
+                      )}
+                    </div>
                   </div>
                   
                   <div className="flex justify-between items-end mb-2">
@@ -246,9 +327,25 @@ export default function SharedSpacePage() {
                     <span className="text-[10px] text-gray-400 dark:text-gray-500 mb-1">dari {formatRupiah(goal.target_amount)}</span>
                   </div>
                   
-                  <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2 mb-4 overflow-hidden">
+                  <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2 mb-3 overflow-hidden">
                     <div className={`h-2 rounded-full ${isCouple ? 'bg-pink-500' : 'bg-blue-500'}`} style={{ width: `${percentage}%` }}></div>
                   </div>
+
+                  {/* INFO REKENING */}
+                  {goal.bank_name && (
+                    <div className="bg-gray-50 dark:bg-gray-700/50 p-2.5 rounded-xl border border-gray-100 dark:border-gray-600 mb-3 flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <CreditCard className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                        <div>
+                          <p className="text-[10px] font-bold text-gray-800 dark:text-gray-200">{goal.bank_name}</p>
+                          <p className="text-[11px] text-gray-600 dark:text-gray-300 font-mono">{goal.account_number} <span className="text-[9px] font-sans">a/n {goal.account_holder}</span></p>
+                        </div>
+                      </div>
+                      <button onClick={() => copyToClipboard(goal.account_number)} className="bg-white dark:bg-gray-800 p-1.5 rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm text-teal-600 dark:text-teal-400 hover:bg-gray-100 transition-all">
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
 
                   <div className="mb-4">
                     <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Anggota:</p>
@@ -267,7 +364,6 @@ export default function SharedSpacePage() {
                     </div>
                   </div>
                   
-                  {/* TOMBOL AKSI DIPISAHKAN */}
                   <div className="grid grid-cols-4 gap-2">
                     <button onClick={() => { setSelectedGoal(goal); setUpdateAction('in'); setIsUpdateModalOpen(true); }} className={`text-xs font-bold py-2.5 rounded-xl flex items-center justify-center gap-1 transition-all ${isCouple ? 'bg-pink-50 dark:bg-pink-900/20 text-pink-600 dark:text-pink-400 hover:bg-pink-100 dark:hover:bg-pink-900/40' : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40'}`}>Nabung</button>
                     <button onClick={() => { setSelectedGoal(goal); setUpdateAction('out'); setIsUpdateModalOpen(true); }} className="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-bold py-2.5 rounded-xl flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-all">Kepake</button>
@@ -338,19 +434,41 @@ export default function SharedSpacePage() {
         </div>
       )}
 
-      {isAddModalOpen && (
+      {/* MODAL FORM (TAMBAH / EDIT) */}
+      {isFormModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative transition-colors">
-            <button onClick={() => setIsAddModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
-            <h2 className="text-lg font-bold text-center mb-4 text-gray-800 dark:text-white">Buat Target Bareng</h2>
-            <form onSubmit={handleCreateGoal} className="space-y-4">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative transition-colors max-h-[90vh] overflow-y-auto">
+            <button onClick={() => setIsFormModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
+            <h2 className="text-lg font-bold text-center mb-4 text-gray-800 dark:text-white">{editingId ? 'Edit Target Bareng' : 'Buat Target Bareng'}</h2>
+            <form onSubmit={handleSaveGoal} className="space-y-4">
               <div className="flex gap-2">
                 <button type="button" onClick={() => setGoalCategory('couple')} className={`flex-1 py-2 rounded-xl text-xs font-bold border-2 flex items-center justify-center gap-1 transition-all ${goalCategory === 'couple' ? 'border-pink-500 bg-pink-50 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}><Heart className="w-4 h-4" /> Couple</button>
                 <button type="button" onClick={() => setGoalCategory('friend')} className={`flex-1 py-2 rounded-xl text-xs font-bold border-2 flex items-center justify-center gap-1 transition-all ${goalCategory === 'friend' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}><Users className="w-4 h-4" /> Teman</button>
               </div>
-              <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Cth: Liburan Bali" required className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm" />
-              <input type="text" inputMode="numeric" value={targetDisplay} onChange={handleTargetChange} required className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm font-bold" placeholder="Target Rp" />
-              <button type="submit" className={`w-full text-white font-bold py-3.5 rounded-xl mt-2 transition-all ${goalCategory === 'couple' ? 'bg-pink-500 hover:bg-pink-600' : 'bg-blue-500 hover:bg-blue-600'}`}>Buat Target</button>
+              
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Target</label>
+                <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Cth: Liburan Bali" required className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm" />
+              </div>
+              
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Target Dana</label>
+                <input type="text" inputMode="numeric" value={targetDisplay} onChange={handleTargetChange} required className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm font-bold" placeholder="Target Rp" />
+              </div>
+
+              <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
+                <p className="text-[10px] font-bold text-teal-600 dark:text-teal-400 mb-2 uppercase">Info Rekening (Opsional)</p>
+                <div className="space-y-2">
+                  <select value={bankName} onChange={e => setBankName(e.target.value)} className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm">
+                    <option value="">Pilih Bank / E-Wallet</option>
+                    {BANKS.map(bank => <option key={bank} value={bank}>{bank}</option>)}
+                  </select>
+                  <input type="text" inputMode="numeric" value={accountNumber} onChange={e => setAccountNumber(e.target.value)} placeholder="Nomor Rekening" className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm" />
+                  <input type="text" value={accountHolder} onChange={e => setAccountHolder(e.target.value)} placeholder="Nama Pemilik Rekening" className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm" />
+                </div>
+              </div>
+
+              <button type="submit" className={`w-full text-white font-bold py-3.5 rounded-xl mt-2 transition-all ${goalCategory === 'couple' ? 'bg-pink-500 hover:bg-pink-600' : 'bg-blue-500 hover:bg-blue-600'}`}>{editingId ? 'Simpan Perubahan' : 'Buat Target'}</button>
             </form>
           </div>
         </div>
