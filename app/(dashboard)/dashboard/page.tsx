@@ -437,15 +437,14 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Isi Kalender (Hanya muncul jika showCalendar = true) */}
+          {/* Isi Kalender */}
           {showCalendar && (
             <div className="animate-in fade-in">
               
-              {/* Tombol Filter (Masuk / Keluar / Semua) */}
+              {/* Tombol Filter (Hanya Masuk / Keluar) */}
               <div className="flex gap-2 mb-4">
                 <button onClick={() => setCalendarView('expense')} className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg border transition-all ${calendarView === 'expense' ? 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500'}`}>Keluar</button>
                 <button onClick={() => setCalendarView('income')} className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg border transition-all ${calendarView === 'income' ? 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800 text-green-600 dark:text-green-400' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500'}`}>Masuk</button>
-                <button onClick={() => setCalendarView('all')} className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg border transition-all ${calendarView === 'all' ? 'bg-teal-50 dark:bg-teal-900/30 border-teal-200 dark:border-teal-800 text-teal-600 dark:text-teal-400' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500'}`}>Semua</button>
               </div>
 
               {/* Grid Tanggal */}
@@ -455,7 +454,6 @@ export default function DashboardPage() {
               <div className="grid grid-cols-7 gap-1">
                 {Array.from({ length: firstDay }).map((_, i) => <div key={`empty-${i}`} />)}
                 {daysArray.map(d => {
-                  // Logika perhitungan berdasarkan filter
                   const inc = transactions.filter(t => t.transaction_date === d.dateStr && t.type === 'income').reduce((a, b) => a + Number(b.amount), 0);
                   const exp = transactions.filter(t => t.transaction_date === d.dateStr && t.type === 'expense').reduce((a, b) => a + Number(b.amount), 0);
                   
@@ -463,9 +461,8 @@ export default function DashboardPage() {
                   let colorBase = '239, 68, 68'; // Merah (default)
                   if (calendarView === 'income') { val = inc; colorBase = '16, 185, 129'; } // Hijau
                   else if (calendarView === 'expense') { val = exp; colorBase = '239, 68, 68'; } // Merah
-                  else { val = inc + exp; colorBase = '20, 184, 166'; } // Tosca (Total)
 
-                  const maxVal = calendarView === 'income' ? maxDailyIncome : calendarView === 'expense' ? maxDailyExpense : Math.max(maxDailyIncome + maxDailyExpense, 1);
+                  const maxVal = calendarView === 'income' ? maxDailyIncome : maxDailyExpense;
                   const intensity = val / maxVal;
                   const isToday = d.dateStr === new Date().toISOString().split('T')[0];
 
@@ -483,7 +480,7 @@ export default function DashboardPage() {
                 })}
               </div>
 
-              {/* Keterangan Terboros */}
+              {/* Keterangan */}
               {calendarView === 'expense' && mostExpensiveDay && mostExpensiveDay.expense > 0 && (
                 <div className="mt-3 text-center">
                   <p className="text-[10px] text-gray-500 dark:text-gray-400">
@@ -498,14 +495,6 @@ export default function DashboardPage() {
                   </p>
                 </div>
               )}
-              {calendarView === 'all' && (
-                <div className="mt-3 text-center">
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400">
-                    Menampilkan total (Masuk + Keluar).
-                  </p>
-                </div>
-              )}
-
             </div>
           )}
         </div>
