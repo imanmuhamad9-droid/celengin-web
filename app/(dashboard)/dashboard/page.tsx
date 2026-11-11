@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { Trash2, User, X, Upload, LogOut, Settings, KeyRound, Eye, EyeOff, ShieldAlert, AlertTriangle, Award, CalendarDays, Flame } from 'lucide-react';
+import { Trash2, User, X, Upload, LogOut, Settings, KeyRound, Eye, EyeOff, ShieldAlert, AlertTriangle, Award, CalendarDays, Flame, Info } from 'lucide-react';
 import { formatRupiah } from '@/lib/utils';
 import TransactionModal from '@/components/TransactionModal';
 import CustomDialog from '@/components/CustomDialog';
@@ -21,6 +21,9 @@ export default function DashboardPage() {
   const [last7Days, setLast7Days] = useState<string[]>([]);
   const [selectedDay, setSelectedDay] = useState<any>(null);
   const [isBalanceHidden, setIsBalanceHidden] = useState(false);
+    // State Info Edukasi
+  const [showInfoJatah, setShowInfoJatah] = useState(false);
+  const [showInfoStreak, setShowInfoStreak] = useState(false);
 
   // State untuk Kalender
   const [calendarView, setCalendarView] = useState<'expense' | 'income' | 'all'>('expense');
@@ -274,7 +277,8 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-24 transition-colors">
       <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md px-5 py-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 transition-colors">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-teal-700 rounded-lg flex items-center justify-center text-white font-bold text-lg">C</div>
+          {/* Logo Baru */}
+          <img src="/icon.png" alt="Logo" className="w-8 h-8 rounded-lg object-contain" />
           <span className="font-bold text-xl text-teal-800 dark:text-teal-400">Celengin.</span>
         </div>
         <button onClick={() => router.push('/settings')} className="w-9 h-9 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-teal-600 transition-all"><Settings className="w-5 h-5" /></button>
@@ -360,20 +364,29 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* JATAH HARIAN & STREAK */}
-        <div className="flex gap-3">
-          <div className="flex-1 bg-white dark:bg-gray-800 p-3 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col justify-center">
+                {/* JATAH HARIAN & STREAK */}
+        <div className="flex gap-3 relative">
+          {/* Kotak Jatah Harian */}
+          <div className="flex-1 bg-white dark:bg-gray-800 p-3 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col justify-center relative">
+            <button 
+              onClick={() => setShowInfoJatah(true)} 
+              className="absolute top-2 right-2 text-gray-400 hover:text-teal-600 dark:hover:text-teal-400"
+            >
+              <Info className="w-4 h-4" />
+            </button>
             <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-1">Jatah Hari Ini</p>
-            <p className="font-bold text-gray-800 dark:text-gray-100 text-sm">
-              {primaryTarget ? formatRupiah(jatahHariIni) : 'Belum ada'}
-            </p>
-            {primaryTarget && (
-              <p className="text-[9px] text-gray-400 mt-0.5">
-                dari <span className="font-semibold">{formatRupiah(dailyAllowance)}</span>
-              </p>
-            )}
+            <p className="font-bold text-gray-800 dark:text-gray-100 text-sm">{primaryTarget ? formatRupiah(jatahHariIni) : 'Belum ada'}</p>
+            <p className="text-[9px] text-gray-400 mt-0.5">{primaryTarget ? `dari ${formatRupiah(dailyAllowance)}` : 'Aktifkan Target Utama'}</p>
           </div>
-          <div className="flex-1 bg-white dark:bg-gray-800 p-3 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col justify-center">
+
+          {/* Kotak Streak Hemat */}
+          <div className="flex-1 bg-white dark:bg-gray-800 p-3 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col justify-center relative">
+            <button 
+              onClick={() => setShowInfoStreak(true)} 
+              className="absolute top-2 right-2 text-gray-400 hover:text-orange-500 dark:hover:text-orange-400"
+            >
+              <Info className="w-4 h-4" />
+            </button>
             <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-1">Streak Hemat</p>
             <p className="font-bold text-orange-500 text-sm flex items-center gap-1"><Flame className="w-3.5 h-3.5" /> {dailyAllowance > 0 ? `${streak} Hari` : 'Belum ada'}</p>
             <p className="text-[9px] text-gray-400 mt-0.5">{dailyAllowance > 0 ? 'di bawah jatah harian' : 'Aktifkan Target Utama'}</p>
@@ -687,7 +700,53 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+      {/* MODAL EDUKASI JATAH HARIAN */}
+      {showInfoJatah && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative transition-colors">
+            <button onClick={() => setShowInfoJatah(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
+            <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-2">Apa itu Jatah Hari Ini?</h2>
+            <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
+              Angka ini adalah batas maksimal uang yang <strong>boleh kamu belanjakan hari ini</strong> agar target keuanganmu tidak jebol.
+            </p>
+            <div className="bg-teal-50 dark:bg-teal-900/30 p-3 rounded-xl border border-teal-100 dark:border-teal-800 mb-4">
+              <p className="text-[11px] font-bold text-teal-800 dark:text-teal-300 mb-1">Rumus Perhitungan:</p>
+              <ul className="text-[10px] text-teal-700 dark:text-teal-400 space-y-1 list-disc pl-4">
+                <li>Total Batas Pengeluaran dibagi Total Hari Periode Target.</li>
+                <li>Hasilnya jadi patokan harian.</li>
+                <li>Lalu dikurangi pengeluaran yang sudah kamu catat hari ini.</li>
+              </ul>
+            </div>
+            <p className="text-[10px] text-gray-500 dark:text-gray-400 text-center">
+              Data diambil dari target yang sedang kamu aktifkan sebagai <strong>Target Utama</strong>.
+            </p>
+          </div>
+        </div>
+      )}
 
+      {/* MODAL EDUKASI STREAK */}
+      {showInfoStreak && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative transition-colors">
+            <button onClick={() => setShowInfoStreak(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
+            <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-2">Apa itu Streak Hemat?</h2>
+            <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
+              Streak adalah penghitung <strong>berapa hari berturut-turut</strong> kamu berhasil mengendalikan pengeluaran di bawah jatah harian.
+            </p>
+            <div className="bg-orange-50 dark:bg-orange-900/30 p-3 rounded-xl border border-orange-100 dark:border-orange-800 mb-4">
+              <p className="text-[11px] font-bold text-orange-800 dark:text-orange-300 mb-1">Cara Kerjanya:</p>
+              <ul className="text-[10px] text-orange-700 dark:text-orange-400 space-y-1 list-disc pl-4">
+                <li>Setiap hari sistem mengecek pengeluaranmu.</li>
+                <li>Jika belanja &le; Jatah Harian, streak bertambah +1.</li>
+                <li>Jika kamu <em>overbudget</em> sehari saja, streak akan <strong>reset kembali ke 0</strong>.</li>
+              </ul>
+            </div>
+            <p className="text-[10px] text-gray-500 dark:text-gray-400 text-center">
+              Semakin panjang streak-mu, semakin sehat keuanganmu! 🔥
+            </p>
+          </div>
+        </div>
+      )}
       <CustomDialog isOpen={dialog.isOpen} onClose={closeDialog} title={dialog.title} message={dialog.msg} type={dialog.type} onConfirm={dialog.onConfirm} />
       <BottomNav />
     </div>
