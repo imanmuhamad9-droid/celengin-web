@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { Trash2, User, X, Upload, LogOut, Settings, KeyRound, Eye, EyeOff, ShieldAlert, AlertTriangle, Award, CalendarDays, Flame, Info } from 'lucide-react';
+import { Trash2, User, X, Upload, LogOut, Settings, KeyRound, Eye, EyeOff, ShieldAlert, AlertTriangle, Award, CalendarDays, Flame, Info, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatRupiah } from '@/lib/utils';
 import TransactionModal from '@/components/TransactionModal';
 import CustomDialog from '@/components/CustomDialog';
@@ -18,6 +18,10 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   
   const [currentMonthStr, setCurrentMonthStr] = useState('');
+  const [calendarMonth, setCalendarMonth] = useState(0);
+const [calendarYear, setCalendarYear] = useState(2024);
+const [todayStr, setTodayStr] = useState('');
+  const [maxDateStr, setMaxDateStr] = useState('');
   const [last7Days, setLast7Days] = useState<string[]>([]);
   const [selectedDay, setSelectedDay] = useState<any>(null);
   const [isBalanceHidden, setIsBalanceHidden] = useState(false);
@@ -82,14 +86,26 @@ export default function DashboardPage() {
     setIsLoading(false);
   };
 
-  useEffect(() => { 
-    setCurrentMonthStr(new Date().toISOString().substring(0, 7));
+     useEffect(() => { 
+    // 1. Set Tanggal Hari Ini
+    const now = new Date();
+    setCurrentMonthStr(now.toISOString().substring(0, 7));
+    setTodayStr(now.toISOString().split('T')[0]);
+    setMaxDateStr(now.toISOString().split('T')[0]);
+
+    // 2. Set Bulan & Tahun untuk Kalender
+    setCalendarMonth(now.getMonth());
+    setCalendarYear(now.getFullYear());
+
+    // 3. Set Data 7 Hari Terakhir
     const days = [...Array(7)].map((_, i) => {
       const d = new Date();
       d.setDate(d.getDate() - (6 - i));
       return d.toISOString().split('T')[0];
     });
     setLast7Days(days);
+
+    // 4. Ambil Data dari Database
     fetchData(); 
   }, []);
 
@@ -235,7 +251,8 @@ export default function DashboardPage() {
     dailyAllowance = primaryTarget.target_expense / totalDays;
 
     // 3. Hitung pengeluaran hari ini
-    const todayStr = new Date().toISOString().split('T')[0];
+    // Hapus baris di atas, karena kita sudah punya state todayStr
+// (Cukup hapus saja baris ini)
     const todayExpense = transactions.filter(t => t.transaction_date === todayStr && t.type === 'expense').reduce((a, b) => a + Number(b.amount), 0);
     
     // 4. Jatah Hari Ini = Patokan Harian - Yang sudah dipakai hari ini
@@ -254,8 +271,8 @@ export default function DashboardPage() {
     }
   }
 
-  const currentYear = parseInt(currentMonthStr.slice(0,4));
-  const currentMonth = parseInt(currentMonthStr.slice(5,7)) - 1;
+  const currentYear = calendarYear;
+const currentMonth = calendarMonth;
   const firstDay = new Date(currentYear, currentMonth, 1).getDay();
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const daysArray = Array.from({ length: daysInMonth }, (_, i) => {
@@ -440,12 +457,32 @@ export default function DashboardPage() {
         {/* KALENDER PENGELUARAN / PEMASUKAN */}
         <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
           
-          {/* Header Kalender */}
+                    {/* Header Kalender */}
           <div className="flex justify-between items-center mb-3">
             <div className="flex items-center gap-2">
               <CalendarDays className="w-4 h-4 text-teal-600 dark:text-teal-400" />
               <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100">Kalender</h3>
             </div>
+            
+            {/* POIN 4: Tombol Navigasi Bulan */}
+            <div className="flex items-center gap-1">
+              <button onClick={() => {
+                if (calendarMonth === 0) { setCalendarMonth(11); setCalendarYear(calendarYear - 1); } 
+                else setCalendarMonth(calendarMonth - 1);
+              }} className="p-1 bg-gray-50 dark:bg-gray-700 rounded-md text-gray-500 hover:text-teal-600">
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="text-[10px] font-bold text-gray-600 dark:text-gray-300 w-16 text-center">
+                {new Date(calendarYear, calendarMonth).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}
+              </span>
+              <button onClick={() => {
+                if (calendarMonth === 11) { setCalendarMonth(0); setCalendarYear(calendarYear + 1); } 
+                else setCalendarMonth(calendarMonth + 1);
+              }} className="p-1 bg-gray-50 dark:bg-gray-700 rounded-md text-gray-500 hover:text-teal-600">
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
             <div className="flex gap-2">
               <button 
                 onClick={() => setShowCalendar(!showCalendar)} 
@@ -483,7 +520,7 @@ export default function DashboardPage() {
 
                   const maxVal = calendarView === 'income' ? maxDailyIncome : maxDailyExpense;
                   const intensity = val / maxVal;
-                  const isToday = d.dateStr === new Date().toISOString().split('T')[0];
+                  const isToday = d.dateStr === todayStr;
 
                   return (
                     <button 
