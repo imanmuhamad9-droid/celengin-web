@@ -107,20 +107,48 @@ export default function DreamPlannerPage() {
           {goals.map(goal => {
             const percentage = Math.min((goal.current_amount / goal.target_amount) * 100, 100);
             const daysLeft = calculateDaysLeft(goal.target_date);
+            
+            // Estimasi tabungan per bulan
+            const remainingAmount = Math.max(0, goal.target_amount - goal.current_amount);
+            const monthsLeft = daysLeft && daysLeft > 0 ? Math.max(1, Math.ceil(daysLeft / 30)) : 1;
+            const monthlySaving = remainingAmount / monthsLeft;
+
             return (
-              <div key={goal.id} onClick={() => handleCardClick(goal)} className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden cursor-pointer hover:border-teal-300 transition-all">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <h3 className="font-bold text-gray-800 dark:text-gray-100 text-lg">{goal.title}</h3>
-                    {daysLeft !== null && <p className={`text-[10px] font-semibold mt-1 ${daysLeft < 0 ? 'text-red-500' : 'text-teal-600 dark:text-teal-400'}`}>{daysLeft < 0 ? 'Waktu Habis' : `H-${daysLeft} lagi`}</p>}
+              <div key={goal.id} onClick={() => handleCardClick(goal)} className="bg-white dark:bg-gray-800 p-4 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden cursor-pointer hover:border-teal-300 transition-all">
+                <div className="flex items-center gap-4">
+                  
+                  {/* Ring Progress Bar */}
+                  <div className="relative w-16 h-16 shrink-0">
+                    <svg viewBox="0 0 80 80" className="w-full h-full transform -rotate-90">
+                      <circle cx="40" cy="40" r="33" fill="none" stroke="currentColor" strokeWidth="8" className="text-gray-100 dark:text-gray-700" />
+                      <circle cx="40" cy="40" r="33" fill="none" stroke="currentColor" strokeWidth="8" strokeLinecap="round" strokeDasharray={`${percentage * 2.0735} 207.35`} className={percentage >= 100 ? 'text-green-500' : 'text-teal-500'} />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-[10px] font-bold text-gray-800 dark:text-gray-100">{Math.round(percentage)}%</span>
+                    </div>
                   </div>
-                  <span className="text-xs font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30 px-2 py-1 rounded-lg">{Math.round(percentage)}%</span>
+
+                  {/* Detail Impian */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start mb-1">
+                      <h3 className="font-bold text-gray-800 dark:text-gray-100 text-lg truncate pr-2">{goal.title}</h3>
+                      {daysLeft !== null && (
+                        <span className="text-[9px] font-bold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded-md shrink-0">
+                          H-{daysLeft < 0 ? 0 : daysLeft}
+                        </span>
+                      )}
+                    </div>
+                    <p className="font-bold text-teal-600 dark:text-teal-400 text-sm">{formatRupiah(goal.current_amount)}</p>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
+                      {percentage >= 100 ? 'Target Tercapai! 🎉' : `Nabung ${formatRupiah(monthlySaving)}/bln dari ${formatRupiah(goal.target_amount)}`}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex justify-between items-end mb-2 mt-4"><span className="font-bold text-lg text-teal-600 dark:text-teal-400">{formatRupiah(goal.current_amount)}</span><span className="text-[10px] text-gray-400">dari {formatRupiah(goal.target_amount)}</span></div>
-                <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2 mb-4 overflow-hidden"><div className="h-2 rounded-full bg-teal-500" style={{ width: `${percentage}%` }}></div></div>
-                <div className="flex gap-2">
-                  <button onClick={(e) => { e.stopPropagation(); setSelectedGoal(goal); setIsUpdateModalOpen(true); }} className="flex-1 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 text-xs font-bold py-2.5 rounded-xl hover:bg-teal-50 dark:hover:bg-gray-600 transition-all flex justify-center gap-1"><Edit3 className="w-4 h-4" /> Update Dana</button>
-                  <button onClick={(e) => { e.stopPropagation(); handleDeleteGoal(goal.id); }} className="bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 px-4 py-2.5 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Trash2 className="w-4 h-4" /></button>
+
+                <div className="flex gap-2 mt-4">
+                  <button onClick={(e) => { e.stopPropagation(); setSelectedGoal(goal); setIsUpdateModalOpen(true); }} className="flex-1 bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 text-xs font-bold py-2 rounded-xl hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-all">Nabung</button>
+                  <button onClick={(e) => { e.stopPropagation(); setSelectedGoal(goal); setIsUpdateModalOpen(true); }} className="flex-1 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-bold py-2 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all">Kepake</button>
+                  <button onClick={(e) => { e.stopPropagation(); handleDeleteGoal(goal.id); }} className="bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 px-3 py-2 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Trash2 className="w-4 h-4" /></button>
                 </div>
               </div>
             );

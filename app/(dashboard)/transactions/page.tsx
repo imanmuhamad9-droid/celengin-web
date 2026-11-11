@@ -1,7 +1,7 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, Trash2, ArrowDownCircle, ArrowUpCircle, Calendar, XCircle, ChevronLeft, ChevronRight, CalendarDays, Edit3 } from 'lucide-react';
 import { formatRupiah } from '@/lib/utils';
 import CustomDialog from '@/components/CustomDialog';
@@ -9,7 +9,7 @@ import BottomNav from '@/components/BottomNav';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import EditTransactionModal from '@/components/EditTransactionModal';
 
-export default function TransactionsPage() {
+function TransactionsContent() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
@@ -34,6 +34,10 @@ export default function TransactionsPage() {
   const closeDialog = () => setDialog(prev => ({ ...prev, isOpen: false }));
 
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Ambil parameter tanggal dari URL
+  const urlDate = searchParams.get('date');
 
   const fetchTx = async () => {
     setIsLoading(true);
@@ -52,7 +56,14 @@ export default function TransactionsPage() {
     }
   };
 
-  useEffect(() => { fetchTx(); }, []);
+  useEffect(() => { 
+    fetchTx(); 
+    // Jika ada parameter tanggal, set filter tanggal
+    if (urlDate) {
+      setStartDate(urlDate);
+      setEndDate(urlDate);
+    }
+  }, [urlDate]);
 
   useEffect(() => { setCurrentPage(1); }, [search, filterType, filterCategory, startDate, endDate]);
 
@@ -125,7 +136,7 @@ export default function TransactionsPage() {
           <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="text-xs bg-transparent text-gray-600 dark:text-gray-300 focus:outline-none w-full" />
           <span className="text-gray-300 text-xs">-</span>
           <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="text-xs bg-transparent text-gray-600 dark:text-gray-300 focus:outline-none w-full" />
-          {(startDate || endDate) && <button onClick={() => { setStartDate(''); setEndDate(''); }} className="text-red-400 hover:text-red-600"><XCircle className="w-4 h-4" /></button>}
+          {(startDate || endDate) && <button onClick={() => { setStartDate(''); setEndDate(''); router.push('/transactions'); }} className="text-red-400 hover:text-red-600"><XCircle className="w-4 h-4" /></button>}
         </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-3xl p-2 shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
@@ -165,6 +176,7 @@ export default function TransactionsPage() {
         )}
       </main>
 
+      {/* MODAL KELOLA TRANSAKSI RUTIN */}
       {isRoutineModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative max-h-[80vh] flex flex-col transition-colors">
@@ -193,5 +205,13 @@ export default function TransactionsPage() {
       <CustomDialog isOpen={dialog.isOpen} onClose={closeDialog} title={dialog.title} message={dialog.msg} type={dialog.type} onConfirm={dialog.onConfirm} />
       <BottomNav />
     </div>
+  );
+}
+
+export default function TransactionsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950"><SkeletonLoader /></div>}>
+      <TransactionsContent />
+    </Suspense>
   );
 }

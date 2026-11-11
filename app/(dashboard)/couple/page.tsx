@@ -267,11 +267,15 @@ export default function SharedSpacePage() {
                     </div>
                   </div>
                   
-                  <div className="flex gap-2">
-                    <button onClick={() => { setSelectedGoal(goal); setIsUpdateModalOpen(true); }} className={`flex-1 text-xs font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all ${isCouple ? 'bg-pink-50 dark:bg-pink-900/20 text-pink-600 dark:text-pink-400 hover:bg-pink-100 dark:hover:bg-pink-900/40' : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40'}`}><Edit3 className="w-4 h-4" /> Transaksi</button>
-                    <button onClick={() => fetchHistory(goal.id)} className="flex-1 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"><Calendar className="w-4 h-4" /> Riwayat</button>
-                    {isCreator && (
-                      <button onClick={() => { setSelectedGoal(goal); setIsInviteModalOpen(true); }} className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400 px-3 py-2.5 rounded-xl hover:border-teal-300 transition-all"><UserPlus className="w-4 h-4" /></button>
+                  {/* TOMBOL AKSI DIPISAHKAN */}
+                  <div className="grid grid-cols-4 gap-2">
+                    <button onClick={() => { setSelectedGoal(goal); setUpdateAction('in'); setIsUpdateModalOpen(true); }} className={`text-xs font-bold py-2.5 rounded-xl flex items-center justify-center gap-1 transition-all ${isCouple ? 'bg-pink-50 dark:bg-pink-900/20 text-pink-600 dark:text-pink-400 hover:bg-pink-100 dark:hover:bg-pink-900/40' : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40'}`}>Nabung</button>
+                    <button onClick={() => { setSelectedGoal(goal); setUpdateAction('out'); setIsUpdateModalOpen(true); }} className="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-bold py-2.5 rounded-xl flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-all">Kepake</button>
+                    <button onClick={() => fetchHistory(goal.id)} className="bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-bold py-2.5 rounded-xl flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-all">Riwayat</button>
+                    {isCreator ? (
+                      <button onClick={() => { setSelectedGoal(goal); setIsInviteModalOpen(true); }} className="bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400 py-2.5 rounded-xl hover:border-teal-300 transition-all flex justify-center items-center"><UserPlus className="w-4 h-4" /></button>
+                    ) : (
+                      <div className="bg-transparent"></div>
                     )}
                   </div>
                 </div>
@@ -327,7 +331,7 @@ export default function SharedSpacePage() {
               <button onClick={() => setUpdateAction('out')} className={`flex-1 py-2 rounded-xl text-xs font-bold border-2 flex items-center justify-center gap-1 transition-all ${updateAction === 'out' ? 'border-red-500 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}><ArrowUpCircle className="w-4 h-4" /> Kepake</button>
             </div>
             <form onSubmit={handleUpdateAmount} className="space-y-4">
-              <input type="text" inputMode="numeric" value={updateAmountDisplay} onChange={handleUpdateAmountChange} required className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm font-bold focus:ring-2 focus:ring-teal-500" placeholder="Nominal (Rp)" />
+              <input type="text" inputMode="numeric" value={updateAmountDisplay} onChange={handleUpdateAmountChange} required className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm font-bold focus:ring-2 focus:ring-teal-500" placeholder="Nominal (Rp)" />
               <button type="submit" className={`w-full text-white font-bold py-3.5 rounded-xl mt-2 transition-all ${updateAction === 'in' ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'}`}>Simpan Transaksi</button>
             </form>
           </div>

@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { Trash2, User, X, Upload, LogOut, Settings, KeyRound, Eye, EyeOff, ShieldAlert, AlertTriangle, CheckCircle2, Award } from 'lucide-react';
+import { Trash2, User, X, Upload, LogOut, Settings, KeyRound, Eye, EyeOff, ShieldAlert, AlertTriangle, Award, CalendarDays, Flame } from 'lucide-react';
 import { formatRupiah } from '@/lib/utils';
 import TransactionModal from '@/components/TransactionModal';
 import CustomDialog from '@/components/CustomDialog';
@@ -21,6 +21,10 @@ export default function DashboardPage() {
   const [last7Days, setLast7Days] = useState<string[]>([]);
   const [selectedDay, setSelectedDay] = useState<any>(null);
   const [isBalanceHidden, setIsBalanceHidden] = useState(false);
+
+  // State untuk Kalender
+  const [calendarView, setCalendarView] = useState<'expense' | 'income' | 'all'>('expense');
+  const [showCalendar, setShowCalendar] = useState(true);
 
   const [showNotif, setShowNotif] = useState(true);
   const [chartTheme, setChartTheme] = useState(0);
@@ -187,7 +191,6 @@ export default function DashboardPage() {
 
   const maxWeeklyValue = Math.max(...weeklyData.map(d => Math.max(d.income, d.expense)), 10000);
 
-  // LOGIKA NOTIFIKASI MULTI-TARGET (Peringatan & Apresiasi)
   const activeWarnings = targets.filter(target => {
     if (target.target_expense <= 0) return false;
     const txsInPeriod = transactions.filter(t => t.transaction_date >= target.start_date && t.transaction_date <= target.end_date && t.type === 'expense');
@@ -213,6 +216,56 @@ export default function DashboardPage() {
 
   const allNotifs = [...activeWarnings, ...activePraise];
 
+    // LOGIKA JATAH HARIAN (Patokan Tetap)
+  const primaryTarget = targets.find(t => t.is_primary === true);
+  
+  let dailyAllowance = 0;
+  let jatahHariIni = 0;
+
+  if (primaryTarget) {
+    // 1. Hitung total hari dalam periode target
+    const startDate = new Date(primaryTarget.start_date);
+    const endDate = new Date(primaryTarget.end_date);
+    const totalDays = Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+
+    // 2. Patokan Harian = Total Budget Target / Total Hari
+    dailyAllowance = primaryTarget.target_expense / totalDays;
+
+    // 3. Hitung pengeluaran hari ini
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todayExpense = transactions.filter(t => t.transaction_date === todayStr && t.type === 'expense').reduce((a, b) => a + Number(b.amount), 0);
+    
+    // 4. Jatah Hari Ini = Patokan Harian - Yang sudah dipakai hari ini
+    jatahHariIni = Math.max(0, dailyAllowance - todayExpense);
+  }
+
+  let streak = 0;
+  if (dailyAllowance > 0) {
+    for (let i = 0; i < 30; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dStr = d.toISOString().split('T')[0];
+      const dailyExp = transactions.filter(t => t.transaction_date === dStr && t.type === 'expense').reduce((a, b) => a + Number(b.amount), 0);
+      if (dailyExp <= dailyAllowance) streak++;
+      else break;
+    }
+  }
+
+  const currentYear = parseInt(currentMonthStr.slice(0,4));
+  const currentMonth = parseInt(currentMonthStr.slice(5,7)) - 1;
+  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const daysArray = Array.from({ length: daysInMonth }, (_, i) => {
+    const dayStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(i+1).padStart(2,'0')}`;
+    const exp = transactions.filter(t => t.transaction_date === dayStr && t.type === 'expense').reduce((a, b) => a + Number(b.amount), 0);
+    return { day: i+1, dateStr: dayStr, expense: exp };
+  });
+  
+  // Perhitungan kalender
+  const maxDailyIncome = Math.max(1, ...daysArray.map(d => transactions.filter(t => t.transaction_date === d.dateStr && t.type === 'income').reduce((a, b) => a + Number(b.amount), 0)));
+  const maxDailyExpense = Math.max(1, ...daysArray.map(d => d.expense));
+  const mostExpensiveDay = daysArray.reduce((prev, current) => (prev.expense > current.expense) ? prev : current, daysArray[0]);
+
   if (isLoading || !currentMonthStr) return (
     <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950"><SkeletonLoader /></div>
   );
@@ -229,38 +282,28 @@ export default function DashboardPage() {
 
       <main className="px-5 mt-4 space-y-6">
         
-        {/* NOTIFIKASI MULTI-TARGET */}
+        {/* NOTIFIKASI */}
         {showNotif && allNotifs.length > 0 && (
           <div className="space-y-2">
             {allNotifs.map(notif => {
-              // APRESIASI (BIRU)
               if (notif.typeNotif === 'praise') {
                 return (
                   <div key={notif.id} className="bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500 p-3 rounded-xl shadow-sm flex items-start gap-2 animate-in slide-in-from-top-4 relative">
                     <Award className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
                     <div className="flex-1">
                       <p className="text-xs font-bold text-blue-700 dark:text-blue-300 mb-0.5">Target Tercapai! 🎉</p>
-                      <p className="text-[10px] text-blue-600 dark:text-blue-400">
-                        Pemasukan target <strong className="capitalize">{notif.period_type}</strong> tercapai ({Math.round(notif.percent)}%). Pertahankan!
-                      </p>
+                      <p className="text-[10px] text-blue-600 dark:text-blue-400">Pemasukan target <strong className="capitalize">{notif.period_type}</strong> tercapai ({Math.round(notif.percent)}%).</p>
                     </div>
                     <button onClick={() => setShowNotif(false)} className="p-1 absolute top-2 right-2 text-blue-400 hover:text-blue-600"><X className="w-4 h-4" /></button>
                   </div>
                 );
               }
-
-              // PERINGATAN (MERAH/KUNING)
               return (
                 <div key={notif.id} className={`p-3 rounded-xl shadow-sm flex items-start gap-2 animate-in slide-in-from-top-4 relative ${notif.percent >= 90 ? 'bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500' : 'bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-500'}`}>
                   {notif.percent >= 90 ? <ShieldAlert className="w-5 h-5 text-red-500 shrink-0 mt-0.5" /> : <AlertTriangle className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />}
                   <div className="flex-1">
-                    <p className={`text-xs font-bold mb-0.5 ${notif.percent >= 90 ? 'text-red-700 dark:text-red-400' : 'text-yellow-700 dark:text-yellow-400'}`}>
-                      {notif.percent >= 90 ? 'Peringatan Kritis!' : 'Peringatan Belanja'}
-                    </p>
-                    <p className={`text-[10px] ${notif.percent >= 90 ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'}`}>
-                      Target <strong className="capitalize">{notif.period_type}</strong> terpakai {Math.round(notif.percent)}%. 
-                      {notif.percent >= 90 ? ` Sisa ${formatRupiah(notif.target_expense - notif.totalExp)}.` : ' Yuk hemat!'}
-                    </p>
+                    <p className={`text-xs font-bold mb-0.5 ${notif.percent >= 90 ? 'text-red-700 dark:text-red-400' : 'text-yellow-700 dark:text-yellow-400'}`}>{notif.percent >= 90 ? 'Peringatan Kritis!' : 'Peringatan Belanja'}</p>
+                    <p className={`text-[10px] ${notif.percent >= 90 ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'}`}>Target <strong className="capitalize">{notif.period_type}</strong> terpakai {Math.round(notif.percent)}%.</p>
                   </div>
                   <button onClick={() => setShowNotif(false)} className={`p-1 absolute top-2 right-2 ${notif.percent >= 90 ? 'text-red-400 hover:text-red-600' : 'text-yellow-500 hover:text-yellow-700'}`}><X className="w-4 h-4" /></button>
                 </div>
@@ -317,6 +360,26 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* JATAH HARIAN & STREAK */}
+        <div className="flex gap-3">
+          <div className="flex-1 bg-white dark:bg-gray-800 p-3 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col justify-center">
+            <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-1">Jatah Hari Ini</p>
+            <p className="font-bold text-gray-800 dark:text-gray-100 text-sm">
+              {primaryTarget ? formatRupiah(jatahHariIni) : 'Belum ada'}
+            </p>
+            {primaryTarget && (
+              <p className="text-[9px] text-gray-400 mt-0.5">
+                dari <span className="font-semibold">{formatRupiah(dailyAllowance)}</span>
+              </p>
+            )}
+          </div>
+          <div className="flex-1 bg-white dark:bg-gray-800 p-3 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col justify-center">
+            <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-1">Streak Hemat</p>
+            <p className="font-bold text-orange-500 text-sm flex items-center gap-1"><Flame className="w-3.5 h-3.5" /> {dailyAllowance > 0 ? `${streak} Hari` : 'Belum ada'}</p>
+            <p className="text-[9px] text-gray-400 mt-0.5">{dailyAllowance > 0 ? 'di bawah jatah harian' : 'Aktifkan Target Utama'}</p>
+          </div>
+        </div>
+
         {/* GRAFIK MINGGUAN */}
         <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
           <div className="flex justify-between items-start mb-4">
@@ -353,6 +416,98 @@ export default function DashboardPage() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* KALENDER PENGELUARAN / PEMASUKAN */}
+        <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
+          
+          {/* Header Kalender */}
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex items-center gap-2">
+              <CalendarDays className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+              <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100">Kalender</h3>
+            </div>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setShowCalendar(!showCalendar)} 
+                className="text-[10px] font-bold text-gray-500 dark:text-gray-400 hover:text-teal-600 bg-gray-50 dark:bg-gray-700 px-2 py-1 rounded-lg transition-colors"
+              >
+                {showCalendar ? 'Sembunyikan' : 'Tampilkan'}
+              </button>
+            </div>
+          </div>
+
+          {/* Isi Kalender (Hanya muncul jika showCalendar = true) */}
+          {showCalendar && (
+            <div className="animate-in fade-in">
+              
+              {/* Tombol Filter (Masuk / Keluar / Semua) */}
+              <div className="flex gap-2 mb-4">
+                <button onClick={() => setCalendarView('expense')} className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg border transition-all ${calendarView === 'expense' ? 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500'}`}>Keluar</button>
+                <button onClick={() => setCalendarView('income')} className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg border transition-all ${calendarView === 'income' ? 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800 text-green-600 dark:text-green-400' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500'}`}>Masuk</button>
+                <button onClick={() => setCalendarView('all')} className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg border transition-all ${calendarView === 'all' ? 'bg-teal-50 dark:bg-teal-900/30 border-teal-200 dark:border-teal-800 text-teal-600 dark:text-teal-400' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500'}`}>Semua</button>
+              </div>
+
+              {/* Grid Tanggal */}
+              <div className="grid grid-cols-7 gap-1 text-center mb-2">
+                {['M','S','S','R','K','J','S'].map((d, i) => <span key={i} className="text-[10px] font-bold text-gray-400">{d}</span>)}
+              </div>
+              <div className="grid grid-cols-7 gap-1">
+                {Array.from({ length: firstDay }).map((_, i) => <div key={`empty-${i}`} />)}
+                {daysArray.map(d => {
+                  // Logika perhitungan berdasarkan filter
+                  const inc = transactions.filter(t => t.transaction_date === d.dateStr && t.type === 'income').reduce((a, b) => a + Number(b.amount), 0);
+                  const exp = transactions.filter(t => t.transaction_date === d.dateStr && t.type === 'expense').reduce((a, b) => a + Number(b.amount), 0);
+                  
+                  let val = 0;
+                  let colorBase = '239, 68, 68'; // Merah (default)
+                  if (calendarView === 'income') { val = inc; colorBase = '16, 185, 129'; } // Hijau
+                  else if (calendarView === 'expense') { val = exp; colorBase = '239, 68, 68'; } // Merah
+                  else { val = inc + exp; colorBase = '20, 184, 166'; } // Tosca (Total)
+
+                  const maxVal = calendarView === 'income' ? maxDailyIncome : calendarView === 'expense' ? maxDailyExpense : Math.max(maxDailyIncome + maxDailyExpense, 1);
+                  const intensity = val / maxVal;
+                  const isToday = d.dateStr === new Date().toISOString().split('T')[0];
+
+                  return (
+                    <button 
+                      key={d.dateStr} 
+                      onClick={() => router.push(`/transactions?date=${d.dateStr}`)}
+                      className={`aspect-square flex items-center justify-center rounded-lg text-[10px] font-bold transition-all hover:scale-110 ${val > 0 ? 'text-white' : 'text-gray-600 dark:text-gray-400'} ${isToday ? 'ring-2 ring-teal-500 ring-offset-1 dark:ring-offset-gray-800' : ''}`}
+                      style={{ backgroundColor: val > 0 ? `rgba(${colorBase}, ${Math.max(0.2, intensity)})` : 'rgba(156, 163, 175, 0.1)' }}
+                      title={formatRupiah(val)}
+                    >
+                      {d.day}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Keterangan Terboros */}
+              {calendarView === 'expense' && mostExpensiveDay && mostExpensiveDay.expense > 0 && (
+                <div className="mt-3 text-center">
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                    Paling boros: <span className="font-bold text-red-500">{new Date(mostExpensiveDay.dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span> ({formatRupiah(mostExpensiveDay.expense)})
+                  </p>
+                </div>
+              )}
+              {calendarView === 'income' && (
+                <div className="mt-3 text-center">
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                    Menampilkan data pemasukan.
+                  </p>
+                </div>
+              )}
+              {calendarView === 'all' && (
+                <div className="mt-3 text-center">
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                    Menampilkan total (Masuk + Keluar).
+                  </p>
+                </div>
+              )}
+
+            </div>
+          )}
         </div>
 
         {/* DONUT CHART BULAN INI */}
@@ -438,16 +593,13 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* TOMBOL KE RIWAYAT */}
         <button onClick={() => router.push('/transactions')} className="w-full bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-teal-300 transition-all shadow-sm">
           Lihat Semua Riwayat Transaksi
         </button>
 
       </main>
 
-      {/* SEMUA MODAL */}
-      <TransactionModal isOpen={isTxModalOpen} onClose={() => setIsTxModalOpen(false)} onSuccess={fetchData} showDialog={showDialog} initialType={txType} />
-
+      {/* MODAL PROFIL (VERSI RINGKAS) */}
       {isProfileModalOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-gray-50 dark:bg-gray-800 rounded-3xl w-full max-w-xs relative overflow-hidden shadow-2xl">
@@ -474,6 +626,7 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* MODAL UBAH NICKNAME */}
       {isNicknameModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative transition-colors">
@@ -493,6 +646,7 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* MODAL GANTI PASSWORD */}
       {isPasswordModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative transition-colors">
