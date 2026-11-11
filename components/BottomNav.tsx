@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Plus } from 'lucide-react';
+import { Plus } from 'lucide-react'; // Cukup Plus saja, jangan ada Users
 import TransactionModal from './TransactionModal';
 import CustomDialog from './CustomDialog';
 
@@ -60,13 +60,13 @@ export default function BottomNav() {
             <span className={`text-[10px] font-bold ${pathname === '/dream-planner' ? 'text-teal-700 dark:text-teal-400' : 'text-gray-500'}`}>Impian</span>
           </button>
 
-          {/* Menu Bareng */}
+          {/* Menu Bareng (Gunakan Gambar Maskot & Teks Tosca) */}
           <button 
             onClick={() => router.push('/couple')} 
             className={`flex flex-col items-center justify-end w-full h-full pb-2 transition-transform active:scale-90 duration-150 ${pathname === '/couple' ? 'opacity-100' : 'opacity-60 grayscale hover:opacity-100 hover:grayscale-0'}`}
           >
             <img src="/icon-couple.png" alt="Bareng" className="w-7 h-7 object-contain mb-1" />
-            <span className={`text-[10px] font-bold ${pathname === '/couple' ? 'text-pink-600 dark:text-pink-400' : 'text-gray-500'}`}>Bareng</span>
+            <span className={`text-[10px] font-bold ${pathname === '/couple' ? 'text-teal-700 dark:text-teal-400' : 'text-gray-500'}`}>Bareng</span>
           </button>
         </div>
       </nav>
