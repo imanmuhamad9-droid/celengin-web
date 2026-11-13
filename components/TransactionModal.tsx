@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { X, ArrowDownCircle, ArrowUpCircle, Plus, Trash2, Settings2, Edit3 } from 'lucide-react';
+import { X, Plus, Trash2, Settings2, Edit3 } from 'lucide-react';
 import { toLocalDateStr } from '@/lib/utils';
 import { Frequency } from '@/lib/recurring';
 import { createRecurringRule } from '@/lib/recurringClient';
@@ -10,6 +10,9 @@ import FrequencyPicker from '@/components/FrequencyPicker';
 import WalletChips from '@/components/WalletChips';
 import { triggerMoneyRain } from '@/components/MoneyRain';
 import DateField from '@/components/DateField';
+
+// Teks kategori yang disimpan di transaksi. Kategori lama yang punya emoji tetap menyimpan emoji supaya Riwayat dan Laporan tidak terpecah; di layar Catat hanya namanya yang tampil.
+const presetValue = (p: any): string => (p.emoji ? `${p.emoji} ${p.label}` : p.label);
 
 export default function TransactionModal({ isOpen, onClose, onSuccess, showDialog, initialType, initialDate }: { isOpen: boolean, onClose: () => void, onSuccess: () => void, showDialog: (title: string, msg: string, type: 'info'|'success'|'danger', onConfirm?: () => void) => void, initialType?: 'income' | 'expense', initialDate?: string }) {
   
@@ -22,7 +25,6 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
   // State Modal Kelola Kategori
   const [isPresetModalOpen, setIsPresetModalOpen] = useState(false);
   const [newPresetLabel, setNewPresetLabel] = useState('');
-  const [newPresetEmoji, setNewPresetEmoji] = useState('🍔');
   const [editingPresetId, setEditingPresetId] = useState<string | null>(null);
 
   const createEmptyRow = () => ({
@@ -44,12 +46,12 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
     
     if (!data || data.length === 0) {
       const defaultPresets = [
-        { user_id: session.user.id, label: 'Gaji', emoji: '💵' },
-        { user_id: session.user.id, label: 'Makan', emoji: '🍛' },
-        { user_id: session.user.id, label: 'Kopi', emoji: '☕' },
-        { user_id: session.user.id, label: 'Bensin', emoji: '⛽' },
-        { user_id: session.user.id, label: 'Belanja', emoji: '🛍️' },
-        { user_id: session.user.id, label: 'Lainnya', emoji: '📌' },
+        { user_id: session.user.id, label: 'Gaji', emoji: '' },
+        { user_id: session.user.id, label: 'Makan', emoji: '' },
+        { user_id: session.user.id, label: 'Kopi', emoji: '' },
+        { user_id: session.user.id, label: 'Bensin', emoji: '' },
+        { user_id: session.user.id, label: 'Belanja', emoji: '' },
+        { user_id: session.user.id, label: 'Lainnya', emoji: '' },
       ];
       await supabase.from('presets').insert(defaultPresets);
       const res = await supabase.from('presets').select('*').order('created_at', { ascending: true });
@@ -156,19 +158,18 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
     if (!session) return;
 
     if (editingPresetId) {
-      await supabase.from('presets').update({ label: newPresetLabel, emoji: newPresetEmoji }).eq('id', editingPresetId);
+      await supabase.from('presets').update({ label: newPresetLabel }).eq('id', editingPresetId);
     } else {
-      await supabase.from('presets').insert({ user_id: session.user.id, label: newPresetLabel, emoji: newPresetEmoji });
+      await supabase.from('presets').insert({ user_id: session.user.id, label: newPresetLabel, emoji: '' });
     }
     
-    setNewPresetLabel(''); setNewPresetEmoji('🍔'); setEditingPresetId(null);
+    setNewPresetLabel(''); setEditingPresetId(null);
     fetchPresets();
   };
 
   const handleEditPreset = (preset: any) => {
     setEditingPresetId(preset.id);
     setNewPresetLabel(preset.label);
-    setNewPresetEmoji(preset.emoji);
   };
 
   const handleDeletePreset = (id: string) => {
@@ -208,10 +209,10 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
 
                 <div className="flex gap-2 mb-3">
                   <button type="button" onClick={() => updateRow(tx.id, 'type', 'expense')} className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 border-2 transition-all ${tx.type === 'expense' ? 'border-red-500 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}>
-                    <ArrowUpCircle className="w-4 h-4" /> Keluar
+                    Keluar
                   </button>
                   <button type="button" onClick={() => updateRow(tx.id, 'type', 'income')} className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 border-2 transition-all ${tx.type === 'income' ? 'border-green-500 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}>
-                    <ArrowDownCircle className="w-4 h-4" /> Masuk
+                    Masuk
                   </button>
                 </div>
 
@@ -232,8 +233,8 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
                 <div className="mb-3">
                   <div className="flex flex-wrap gap-1.5">
                     {presets.map(p => (
-                      <button key={p.id} type="button" onClick={() => updateRow(tx.id, 'selectedPreset', `${p.emoji} ${p.label}`)} className={`px-2 py-1 rounded-lg text-xs font-medium transition-all border ${tx.selectedPreset === `${p.emoji} ${p.label}` ? 'bg-teal-50 dark:bg-teal-900/30 border-teal-500 text-teal-700 dark:text-teal-400' : 'bg-gray-50 dark:bg-gray-700 border-transparent text-gray-600 dark:text-gray-300'}`}>
-                        {p.emoji} {p.label}
+                      <button key={p.id} type="button" onClick={() => updateRow(tx.id, 'selectedPreset', presetValue(p))} className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all border ${tx.selectedPreset === presetValue(p) ? 'bg-teal-50 dark:bg-teal-900/30 border-teal-500 text-teal-700 dark:text-teal-400' : 'bg-gray-50 dark:bg-gray-700 border-transparent text-gray-600 dark:text-gray-300'}`}>
+                        {p.label}
                       </button>
                     ))}
                   </div>
@@ -257,7 +258,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
                   <div className="mt-3 p-3 bg-teal-50 dark:bg-teal-900/20 border border-teal-100 dark:border-teal-800 rounded-xl">
                     <p className="text-[10px] font-bold text-teal-700 dark:text-teal-400 mb-2">Tercatat otomatis, ulangi:</p>
                     <FrequencyPicker value={tx.frequency} onChange={(v) => updateRow(tx.id, 'frequency', v)} />
-                    <p className="text-[9px] text-teal-700/70 dark:text-teal-400/70 mt-2">Kamu tidak perlu mencatat lagi. Kelola di Riwayat → Transaksi Rutin.</p>
+                    <p className="text-[9px] text-teal-700/70 dark:text-teal-400/70 mt-2">Kamu tidak perlu mencatat lagi. Kelola di Tagihan → Transaksi Rutin.</p>
                   </div>
                 )}
               </div>
@@ -285,7 +286,6 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
             <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4 text-center">Kelola Kategori</h2>
             
             <div className="flex items-center gap-1.5 mb-4 bg-gray-50 dark:bg-gray-700 p-2 rounded-xl border border-gray-100 dark:border-gray-600 w-full">
-              <input type="text" value={newPresetEmoji} onChange={(e) => setNewPresetEmoji(e.target.value)} className="w-10 h-10 shrink-0 text-center border border-gray-300 dark:border-gray-500 rounded-lg text-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 transition-all" placeholder="🍔" />
               <input type="text" value={newPresetLabel} onChange={(e) => setNewPresetLabel(e.target.value)} className="flex-1 min-w-0 h-10 border border-gray-300 dark:border-gray-500 rounded-lg px-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 transition-all" placeholder="Nama..." />
               <button type="button" onClick={handleSavePreset} className="h-10 shrink-0 bg-teal-600 text-white px-3 rounded-lg text-xs font-bold hover:bg-teal-700 transition-all shadow-sm">
                 {editingPresetId ? 'Update' : 'Tambah'}
@@ -296,7 +296,6 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
               {presets.map(p => (
                 <div key={p.id} className="flex justify-between items-center p-2.5 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-100 dark:border-gray-600">
                   <div className="flex items-center gap-2">
-                    <span className="text-lg">{p.emoji}</span>
                     <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{p.label}</span>
                   </div>
                   <div className="flex gap-1">

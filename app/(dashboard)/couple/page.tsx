@@ -8,6 +8,7 @@ import { formatRupiah } from '@/lib/utils';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import AppHeader from '@/components/AppHeader';
+import SubTabs, { BARENG_TABS } from '@/components/SubTabs';
 import SkeletonLoader from '@/components/SkeletonLoader';
 
 const BANKS = [
@@ -239,21 +240,7 @@ export default function SharedSpacePage() {
       <AppHeader title="Bareng" action={<button onClick={handleOpenAdd} className="bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 p-2.5 rounded-xl hover:bg-teal-200 dark:hover:bg-teal-900/50 transition-all font-bold text-xs flex items-center gap-1"><Plus className="w-4 h-4" /> Buat</button>} />
 
       <main className="px-5 mt-4 space-y-5">
-        <div className="bg-teal-50 dark:bg-teal-900/20 border border-teal-100 dark:border-teal-800 rounded-2xl overflow-hidden transition-all duration-300">
-          <button onClick={() => setShowInfo(!showInfo)} className="w-full flex items-center justify-between p-4 hover:bg-teal-100/50 dark:hover:bg-teal-900/40 transition-colors">
-            <div className="flex items-center gap-2 text-teal-800 dark:text-teal-300 font-bold text-sm">
-              <Info className="w-5 h-5 text-teal-600 dark:text-teal-400" /> Apa itu Bareng?
-            </div>
-            {showInfo ? <ChevronUp className="w-5 h-5 text-teal-600 dark:text-teal-400" /> : <ChevronDown className="w-5 h-5 text-teal-600 dark:text-teal-400" />}
-          </button>
-          {showInfo && (
-            <div className="px-4 pb-4 pt-0">
-              <p className="text-[11px] text-teal-700/80 dark:text-teal-400/80 leading-relaxed pl-7">
-                Buat target tabungan bersama pasangan (Couple) atau teman-temanmu (Grup). Kalian bisa nabung bareng, memantau siapa yang menabung, dan melihat riwayat transaksi secara transparan.
-              </p>
-            </div>
-          )}
-        </div>
+        <SubTabs items={BARENG_TABS} />
 
         <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
           <button onClick={() => setFilterCategory('all')} className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${filterCategory === 'all' ? 'bg-teal-600 text-white shadow-md' : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300'}`}>Semua</button>

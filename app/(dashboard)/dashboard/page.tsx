@@ -49,7 +49,7 @@ const [todayStr, setTodayStr] = useState('');
   const [showCalendar, setShowCalendar] = useState(true);
   const [greeting, setGreeting] = useState('Halo');
   const [paydayLater, setPaydayLater] = useState(false);
-  const [showRecent, setShowRecent] = useState(true);
+  const [showRecent, setShowRecent] = useState(false); // Riwayat Terakhir tersembunyi dulu, buka lewat tombol Tampilkan
   const [showMonth, setShowMonth] = useState(false); // lipatan Kalender + Statistik bulan ini
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -245,7 +245,7 @@ const [todayStr, setTodayStr] = useState('');
         tone: crit ? 'danger' : 'warning',
         icon: crit ? 'crit' : 'warn',
         title: crit ? 'Peringatan Kritis!' : 'Peringatan Belanja',
-        body: <>Target <strong className="capitalize">{w.period_type}</strong> terpakai {Math.round(w.percent)}%.</>,
+        body: <>Tantangan <strong className="capitalize">{w.period_type}</strong> terpakai {Math.round(w.percent)}%.</>,
         href: '/spending-challenge',
       };
     }),
@@ -253,7 +253,7 @@ const [todayStr, setTodayStr] = useState('');
       key: `praise-${p.id}-${p.end_date}`,
       tone: 'praise',
       icon: 'praise',
-      title: 'Target Tercapai! 🎉',
+      title: 'Tantangan Tercapai! 🎉',
       body: <>Pemasukan target <strong className="capitalize">{p.period_type}</strong> tercapai ({Math.round(p.percent)}%).</>,
       href: '/spending-challenge',
     })),
@@ -319,7 +319,7 @@ const [todayStr, setTodayStr] = useState('');
       key: `w-${w.id}`,
       tone: w.percent >= 90 ? 'danger' : 'warning',
       kind: 'target',
-      title: `Target ${w.period_type} ${Math.round(w.percent)}%`,
+      title: `Tantangan ${w.period_type} ${Math.round(w.percent)}%`,
       sub: w.percent >= 100 ? 'Sudah melewati batas' : 'Hampir habis',
       href: '/spending-challenge',
     })),
@@ -327,7 +327,7 @@ const [todayStr, setTodayStr] = useState('');
       key: `p-${p.id}`,
       tone: 'praise',
       kind: 'praise',
-      title: 'Target tercapai',
+      title: 'Tantangan tercapai',
       sub: `Pemasukan ${p.period_type} ${Math.round(p.percent)}%`,
       href: '/spending-challenge',
     })),
@@ -414,19 +414,6 @@ const currentMonth = calendarMonth;
               <div><p className="text-white/80 text-[10px] uppercase font-bold">Keluar</p><p className="font-bold text-red-300">{isBalanceHidden ? '-Rp ***' : `-${formatRupiah(totalExpense)}`}</p></div>
             </div>
 
-            {/* Chip dompet (bila punya 2 dompet atau lebih) */}
-            {wallets.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto hide-scrollbar mb-3">
-                {wallets.map(w => (
-                  <button key={w.id} onClick={() => router.push('/wallets')} className="shrink-0 bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-full px-3 py-1.5 text-[11px] font-bold flex items-center gap-1.5 transition-colors">
-                    <span>{w.emoji}</span>
-                    <span className="truncate max-w-[70px]">{w.name}</span>
-                    <span className="text-white/80">{isBalanceHidden ? '***' : formatRupiah(walletCalc.balances[w.id] || 0)}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-
             {/* Status jatah hari ini */}
             {primaryTarget ? (
               <button onClick={() => setShowInfoJatah(true)} className="w-full bg-white/15 backdrop-blur-sm rounded-2xl px-4 py-3 flex items-center justify-between text-left active:scale-[0.99] transition-transform">
@@ -439,7 +426,7 @@ const currentMonth = calendarMonth;
             ) : (
               <button onClick={() => router.push('/spending-challenge')} className="w-full bg-white/15 backdrop-blur-sm rounded-2xl px-4 py-3 flex items-center justify-between text-left">
                 <div>
-                  <p className="text-sm font-bold">Atur target utama</p>
+                  <p className="text-sm font-bold">Atur tantangan utama</p>
                   <p className="text-[11px] text-white/80">Biar kamu tahu boleh jajan berapa tiap hari</p>
                 </div>
                 <ChevronRight className="w-5 h-5 shrink-0" />
@@ -653,18 +640,18 @@ const currentMonth = calendarMonth;
             <button onClick={() => setShowInfoJatah(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-2">Apa itu Jatah Hari Ini?</h2>
             <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
-              Angka ini adalah batas maksimal uang yang <strong>boleh kamu belanjakan hari ini</strong> agar target keuanganmu tidak jebol.
+              Angka ini adalah batas maksimal uang yang <strong>boleh kamu belanjakan hari ini</strong> agar tantangan hematmu tidak jebol.
             </p>
             <div className="bg-teal-50 dark:bg-teal-900/30 p-3 rounded-xl border border-teal-100 dark:border-teal-800 mb-4">
               <p className="text-[11px] font-bold text-teal-800 dark:text-teal-300 mb-1">Rumus Perhitungan:</p>
               <ul className="text-[10px] text-teal-700 dark:text-teal-400 space-y-1 list-disc pl-4">
-                <li>Total Batas Pengeluaran dibagi Total Hari Periode Target.</li>
+                <li>Total Batas Pengeluaran dibagi Total Hari Periode Tantangan.</li>
                 <li>Hasilnya jadi patokan harian.</li>
                 <li>Lalu dikurangi pengeluaran yang sudah kamu catat hari ini.</li>
               </ul>
             </div>
             <p className="text-[10px] text-gray-500 dark:text-gray-400 text-center">
-              Data diambil dari target yang sedang kamu aktifkan sebagai <strong>Target Utama</strong>.
+              Data diambil dari target yang sedang kamu aktifkan sebagai <strong>Tantangan Utama</strong>.
             </p>
           </div>
         </div>

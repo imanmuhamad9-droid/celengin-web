@@ -8,28 +8,32 @@ import TransactionModal from './TransactionModal';
 import CustomDialog from './CustomDialog';
 
 type Item =
-  | { key: string; label: string; href: string; img: string }
+  | { key: string; label: string; href: string; img: string; also?: string[] }
   | { key: 'catat'; label: string; action: 'catat' };
 
-// Bar melayang berisi 5 menu utama. Di sub menu (Tagihan, Dompet, Laporan, dst.) bar mengecil jadi tombol burger
+// Bar melayang berisi 5 menu utama. Di sub menu (Riwayat, Laporan, Tagihan, dst.) bar mengecil jadi tombol burger
 // di pojok kanan bawah; kalau diketuk, 5 menu utama yang sama melebar ke kiri. Sub menu dibuka dari Home -> "Semua".
 const ITEMS: Item[] = [
   { key: 'home', label: 'Home', href: '/dashboard', img: '/icon-home.png' },
-  { key: 'target', label: 'Target', href: '/spending-challenge', img: '/icon-target.png' },
+  { key: 'target', label: 'Tantangan', href: '/spending-challenge', img: '/icon-target.png' },
   { key: 'catat', label: 'Catat', action: 'catat' },
   { key: 'impian', label: 'Impian', href: '/dream-planner', img: '/icon-dream.png' },
-  { key: 'bareng', label: 'Bareng', href: '/couple', img: '/icon-couple.png' },
+  // Bareng mencakup Nabung Bareng (/couple) dan Patungan & Bayarin (/splitbill, /gantian)
+  { key: 'bareng', label: 'Bareng', href: '/couple', img: '/icon-couple.png', also: ['/splitbill', '/gantian'] },
 ];
 
 // Posisi sorotan terakhir. Setiap halaman memasang BottomNav sendiri, jadi posisi ini disimpan di level modul
 // supaya sorotan bisa meluncur dari menu lama ke menu baru setelah halaman berganti.
 let lastIdx: number | null = null;
 
+const matches = (pathname: string, it: Item) =>
+  'href' in it && [it.href, ...(it.also || [])].some((p) => pathname === p || pathname.startsWith(p + '/'));
+
 export default function BottomNav() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const curIdx = ITEMS.findIndex((it) => 'href' in it && (pathname === it.href || pathname.startsWith(it.href + '/')));
+  const curIdx = ITEMS.findIndex((it) => matches(pathname, it));
   const [pos, setPos] = useState<number>(lastIdx !== null && lastIdx >= 0 ? lastIdx : Math.max(curIdx, 0));
   useEffect(() => {
     if (curIdx < 0) return;
@@ -130,7 +134,7 @@ export default function BottomNav() {
     }
   };
 
-  const isMain = ITEMS.some((it) => 'href' in it && (pathname === it.href || pathname.startsWith(it.href + '/')));
+  const isMain = ITEMS.some((it) => matches(pathname, it));
   const bottomStyle: React.CSSProperties = { bottom: 'calc(env(safe-area-inset-bottom, 0px) + 14px)' };
 
   const renderItem = (item: Item) => {
@@ -150,7 +154,7 @@ export default function BottomNav() {
       );
     }
 
-    const active = pathname === item.href || pathname.startsWith(item.href + '/');
+    const active = matches(pathname, item);
     const showDot = item.key === 'home' && unread > 0;
 
     return (

@@ -92,10 +92,6 @@ export default function DreamPlannerPage() {
       <AppHeader title="Impian" />
 
       <main className="max-w-md mx-auto px-5 mt-4 space-y-6">
-        <div className="bg-gradient-to-r from-teal-500 to-teal-400 p-4 rounded-2xl text-white shadow-md">
-          <p className="text-xs leading-relaxed"><Target className="w-4 h-4 inline mr-1" /> Rencanakan impianmu di sini. Klik kartu untuk melihat riwayat!</p>
-        </div>
-
         <button onClick={() => setIsModalOpen(true)} className="w-full bg-white dark:bg-gray-800 border-2 border-dashed border-teal-300 dark:border-teal-700 text-teal-600 dark:text-teal-400 font-bold py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-teal-50 dark:hover:bg-gray-700 transition-all shadow-sm">
           <Plus className="w-5 h-5" /> Tambah Impian Baru
         </button>

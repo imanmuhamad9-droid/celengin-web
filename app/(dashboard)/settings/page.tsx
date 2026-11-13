@@ -3,13 +3,14 @@ import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import AppHeader from '@/components/AppHeader';
 import { useRouter } from 'next/navigation';
-import { Save, Upload, Sun, Moon, Monitor, User, LogOut, Lock, Camera, Trash2, Eye, EyeOff, ChevronRight, CalendarClock, Wallet, Image as ImageIcon, Palette, Bell } from 'lucide-react';
+import { Save, Upload, Sun, Moon, Monitor, User, LogOut, Lock, Camera, Trash2, Eye, EyeOff, ChevronRight, CalendarClock, Wallet, Image as ImageIcon, Palette, Bell, Repeat, Trophy } from 'lucide-react';
 import CardBgEditor from '@/components/CardBgEditor';
 import PhotoCropper from '@/components/PhotoCropper';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import PasswordRequirements from '@/components/PasswordRequirements';
 import CustomDialog from '@/components/CustomDialog';
 import PushSettingsCard from '@/components/PushSettingsCard';
+import RecurringRulesModal from '@/components/RecurringRulesModal';
 import { cycleFor, normalizePayday } from '@/lib/cycle';
 import { toLocalDateStr, formatRupiah } from '@/lib/utils';
 
@@ -56,6 +57,7 @@ function Group({ label, children }: { label: string; children: React.ReactNode }
 
 export default function SettingsPage() {
   const [view, setView] = useState<View>('hub');
+  const [isRoutineOpen, setIsRoutineOpen] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -350,11 +352,13 @@ export default function SettingsPage() {
               <Row icon={<CalendarClock className="w-5 h-5" />} title="Tanggal Gajian" sub={payday === 1 ? 'Tanggal 1 (bulan kalender)' : `Tanggal ${payday}`} onClick={() => go('gajian')} />
               <Row icon={<Wallet className="w-5 h-5" />} title="Batas Saldo Aman" sub={formatRupiah(safeLimitRaw)} onClick={() => go('saldo')} />
               <Row icon={<ImageIcon className="w-5 h-5" />} title="Kartu Saldo" sub="Gambar saat saldo aman dan menipis" onClick={() => go('kartu')} />
+              <Row icon={<Repeat className="w-5 h-5" />} title="Transaksi Rutin" sub="Gaji, langganan, cicilan otomatis" onClick={() => setIsRoutineOpen(true)} />
             </Group>
 
             <Group label="Aplikasi">
               <Row icon={<Palette className="w-5 h-5" />} title="Tampilan" sub={themeLabel} onClick={() => go('tampilan')} />
               <Row icon={<Bell className="w-5 h-5" />} title="Notifikasi" sub="Pengingat di HP kamu" onClick={() => go('notif')} />
+              <Row icon={<Trophy className="w-5 h-5" />} title="Pencapaian" sub="Badge bonus buat kamu" onClick={() => router.push('/badges')} />
             </Group>
 
             <Group label="Sesi">
@@ -512,6 +516,7 @@ export default function SettingsPage() {
         />
       )}
 
+      <RecurringRulesModal isOpen={isRoutineOpen} onClose={() => setIsRoutineOpen(false)} showDialog={showDialog} />
       <CustomDialog isOpen={dialog.isOpen} onClose={closeDialog} title={dialog.title} message={dialog.msg} type={dialog.type} onConfirm={dialog.onConfirm} />
     </div>
   );

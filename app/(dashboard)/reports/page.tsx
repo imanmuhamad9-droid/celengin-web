@@ -11,6 +11,7 @@ import { listWallets, Wallet } from '@/lib/wallets';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import AppHeader from '@/components/AppHeader';
+import SubTabs, { RIWAYAT_TABS } from '@/components/SubTabs';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import { buildReportPdf, savePdf } from '@/lib/pdfReport';
 
@@ -111,6 +112,8 @@ export default function ReportsPage() {
       <AppHeader title="Laporan" />
 
       <main className="px-5 mt-4 space-y-5">
+        <SubTabs items={RIWAYAT_TABS} />
+
         {/* Pilih periode */}
         <div className="flex gap-2">
           {PERIODS.map((p) => (

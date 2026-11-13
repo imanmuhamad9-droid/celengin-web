@@ -10,7 +10,7 @@ import AppHeader from '@/components/AppHeader';
 import DateField from '@/components/DateField';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import EditTransactionModal from '@/components/EditTransactionModal';
-import RecurringRulesModal from '@/components/RecurringRulesModal';
+import SubTabs, { RIWAYAT_TABS } from '@/components/SubTabs';
 import { listWallets, Wallet } from '@/lib/wallets';
 
 function TransactionsContent() {
@@ -29,7 +29,6 @@ function TransactionsContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
 
-  const [isRoutineModalOpen, setIsRoutineModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTx, setSelectedTx] = useState<any>(null);
   const [wallets, setWallets] = useState<Wallet[]>([]);
@@ -107,21 +106,17 @@ function TransactionsContent() {
 
   const totalPages = Math.ceil(filteredTx.length / itemsPerPage);
   const paginatedTx = filteredTx.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-  // Transaksi lama yang bertanda rutin tapi belum punya aturan otomatis
-  const routineTx = transactions.filter(t => t.is_routine && !t.recurring_rule_id);
   const walletLabel = (id?: string | null) => { const w = wallets.find(x => x.id === id); return w ? `${w.emoji} ${w.name}` : ''; };
 
   if (isLoading) return <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950"><SkeletonLoader /></div>;
 
   return (
     <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-40 transition-colors">
-      <AppHeader title="Riwayat" action={
-        <button onClick={() => setIsRoutineModalOpen(true)} className="text-xs font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30 px-3 py-1.5 rounded-lg border border-teal-100 dark:border-teal-800 transition-colors">
-          Transaksi Rutin
-        </button>
-      } />
+      <AppHeader title="Riwayat" />
 
       <main className="max-w-md mx-auto px-5 mt-4 space-y-4">
+        <SubTabs items={RIWAYAT_TABS} />
+
         {errorMsg && <div className="bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 text-xs p-3 rounded-xl border border-red-100 dark:border-red-800">{errorMsg}</div>}
 
         <div className="relative">
@@ -181,9 +176,6 @@ function TransactionsContent() {
           </div>
         )}
       </main>
-
-      {/* MODAL KELOLA TRANSAKSI RUTIN (otomatis) */}
-      <RecurringRulesModal isOpen={isRoutineModalOpen} onClose={() => setIsRoutineModalOpen(false)} showDialog={showDialog} legacyTx={routineTx} onChanged={() => fetchTx(true)} />
 
       <EditTransactionModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} onSuccess={() => fetchTx()} showDialog={showDialog} txData={selectedTx} />
       <CustomDialog isOpen={dialog.isOpen} onClose={closeDialog} title={dialog.title} message={dialog.msg} type={dialog.type} onConfirm={dialog.onConfirm} />

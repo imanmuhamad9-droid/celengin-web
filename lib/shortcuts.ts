@@ -1,10 +1,10 @@
-// Katalog pintasan fitur di Home. Menu burger hanya berisi Home, Target, Catat, Impian, Bareng;
-// semua fitur lain ada di sini. Pilihan 4 favorit disimpan di profiles.shortcuts (+ cadangan localStorage).
+// Katalog pintasan fitur di Home. Menu burger berisi Home, Tantangan, Catat, Impian, Bareng.
+// Pintasan di Home hanya 4 fitur yang paling sering dipakai, semuanya selalu tampil (tidak perlu diatur).
 import type { ComponentType } from 'react';
-import { History, Receipt, BarChart3, Users2, ArrowLeftRight, Wallet, Trophy, Settings } from 'lucide-react';
+import { History, Receipt, BarChart3, ArrowLeftRight } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 
-export type ShortcutKey = 'riwayat' | 'tagihan' | 'laporan' | 'split' | 'gantian' | 'dompet' | 'badge' | 'setelan';
+export type ShortcutKey = 'riwayat' | 'laporan' | 'tagihan' | 'split';
 
 export type ShortcutDef = {
   key: ShortcutKey;
@@ -18,17 +18,13 @@ export type ShortcutDef = {
 
 export const SHORTCUTS: ShortcutDef[] = [
   { key: 'riwayat', label: 'Riwayat', desc: 'Semua transaksi', href: '/transactions', Icon: History, img: '/menu-icons/riwayat.png' },
-  { key: 'tagihan', label: 'Tagihan', desc: 'Tagihan & langganan', href: '/bills', Icon: Receipt, img: '/menu-icons/tagihan.png' },
   { key: 'laporan', label: 'Laporan', desc: 'Grafik, insight, PDF', href: '/reports', Icon: BarChart3, img: '/menu-icons/laporan.png' },
-  { key: 'split', label: 'Split Bill', desc: 'Patungan makan & jalan', href: '/splitbill', Icon: Users2, img: '/menu-icons/split.png' },
-  { key: 'gantian', label: 'Bayarin', desc: 'Saling bayarin, catat dan lunasi', href: '/gantian', Icon: ArrowLeftRight, img: '/menu-icons/gantian.png' },
-  { key: 'dompet', label: 'Dompet', desc: 'Saldo tiap dompet', href: '/wallets', Icon: Wallet, img: '/menu-icons/dompet.png' },
-  { key: 'badge', label: 'Badge', desc: 'Pencapaian kamu', href: '/badges', Icon: Trophy, img: '/menu-icons/badge.png' },
-  { key: 'setelan', label: 'Setelan', desc: 'Profil, tema, notifikasi', href: '/settings', Icon: Settings, img: '/menu-icons/setelan.png' },
+  { key: 'tagihan', label: 'Tagihan', desc: 'Pengingat tagihan & rutin', href: '/bills', Icon: Receipt, img: '/menu-icons/tagihan.png' },
+  { key: 'split', label: 'Bayarin', desc: 'Patungan & utang teman', href: '/splitbill', Icon: ArrowLeftRight, img: '/menu-icons/gantian.png' },
 ];
 
 export const MAX_FAVS = 4;
-export const DEFAULT_SHORTCUTS: ShortcutKey[] = ['tagihan', 'laporan', 'dompet', 'badge'];
+export const DEFAULT_SHORTCUTS: ShortcutKey[] = ['riwayat', 'laporan', 'tagihan', 'split'];
 const LS_KEY = 'celengin:shortcuts';
 
 const VALID = new Set<string>(SHORTCUTS.map((s) => s.key));

@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Plus, Receipt, Edit3, Trash2, CheckCircle2, Info, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { ArrowLeft, Plus, Receipt, Edit3, Trash2, CheckCircle2, Info, ChevronDown, ChevronUp, ChevronRight, Repeat, X } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { formatRupiah, formatDateID, parseRupiahInput, toLocalDateStr } from '@/lib/utils';
 import { nextOccurrence, diffDays, dayOfMonth, FREQ_LABEL } from '@/lib/recurring';
@@ -9,6 +9,8 @@ import { listWallets, Wallet } from '@/lib/wallets';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import AppHeader from '@/components/AppHeader';
+import SubTabs, { RIWAYAT_TABS } from '@/components/SubTabs';
+import RecurringRulesModal from '@/components/RecurringRulesModal';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import DateField from '@/components/DateField';
 import FrequencyPicker from '@/components/FrequencyPicker';
@@ -34,6 +36,7 @@ export default function BillsPage() {
   const [missingTable, setMissingTable] = useState(false);
   const [today, setToday] = useState('');
   const [showInfo, setShowInfo] = useState(true);
+  const [isRoutineOpen, setIsRoutineOpen] = useState(false);
 
   // Form
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -202,6 +205,8 @@ export default function BillsPage() {
       <AppHeader title="Tagihan" action={<button onClick={openAdd} className="bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 p-2.5 rounded-xl hover:bg-teal-200 dark:hover:bg-teal-900/50 transition-all font-bold text-xs flex items-center gap-1"><Plus className="w-4 h-4" /> Tambah</button>} />
 
       <main className="px-5 mt-4 space-y-5">
+        <SubTabs items={RIWAYAT_TABS} />
+
         {missingTable && <div className="bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 text-xs p-3 rounded-xl border border-red-100 dark:border-red-800">Tabel bills belum ada. Jalankan 01_fitur_baru.sql di Supabase.</div>}
 
         <div className="rounded-3xl p-6 text-white shadow-lg bg-teal-700">
@@ -214,19 +219,15 @@ export default function BillsPage() {
           </div>
         </div>
 
-        <div className="bg-teal-50 dark:bg-teal-900/20 border border-teal-100 dark:border-teal-800 rounded-2xl overflow-hidden transition-all duration-300">
-          <button onClick={() => setShowInfo(!showInfo)} className="w-full flex items-center justify-between p-4 hover:bg-teal-100/50 dark:hover:bg-teal-900/40 transition-colors">
-            <div className="flex items-center gap-2 text-teal-800 dark:text-teal-300 font-bold text-sm"><Info className="w-5 h-5 text-teal-600 dark:text-teal-400" /> Cara kerja Tagihan</div>
-            {showInfo ? <ChevronUp className="w-5 h-5 text-teal-600 dark:text-teal-400" /> : <ChevronDown className="w-5 h-5 text-teal-600 dark:text-teal-400" />}
-          </button>
-          {showInfo && (
-            <div className="px-4 pb-4 pt-0">
-              <p className="text-[11px] text-teal-700/80 dark:text-teal-400/80 leading-relaxed pl-7">
-                Catat tagihan atau langganan bulananmu. Celengin mengingatkan sebelum jatuh tempo (di Dashboard dan lewat notifikasi). Tekan <strong>Tandai Lunas</strong> dan pembayarannya langsung masuk sebagai pengeluaran, lalu jatuh tempo berikutnya otomatis dijadwalkan.
-              </p>
-            </div>
-          )}
-        </div>
+        {/* Transaksi Rutin: dulu tombol kecil di Riwayat yang susah ditemukan */}
+        <button onClick={() => setIsRoutineOpen(true)} className="w-full flex items-center gap-3 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-3xl p-4 shadow-sm text-left active:scale-[0.99] transition-all">
+          <span className="w-11 h-11 rounded-2xl bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0"><Repeat className="w-5 h-5" /></span>
+          <span className="flex-1 min-w-0">
+            <span className="block text-sm font-bold text-gray-800 dark:text-gray-100">Transaksi Rutin</span>
+            <span className="block text-[11px] text-gray-500 dark:text-gray-400">Gaji, langganan, cicilan yang tercatat otomatis. Atur, ubah tanggal, atau hentikan.</span>
+          </span>
+          <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-500 shrink-0" />
+        </button>
 
         <Section title="Terlambat" list={overdue} tone="text-red-500" />
         <Section title="Segera Jatuh Tempo" list={soon} tone="text-yellow-600 dark:text-yellow-400" />
@@ -291,6 +292,7 @@ export default function BillsPage() {
         </div>
       )}
 
+      <RecurringRulesModal isOpen={isRoutineOpen} onClose={() => setIsRoutineOpen(false)} showDialog={showDialog} />
       <CustomDialog isOpen={dialog.isOpen} onClose={closeDialog} title={dialog.title} message={dialog.msg} type={dialog.type} onConfirm={dialog.onConfirm} />
       <BottomNav />
     </div>

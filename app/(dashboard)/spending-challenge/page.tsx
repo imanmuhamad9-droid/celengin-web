@@ -42,7 +42,7 @@ export default function TargetPage() {
   useEffect(() => { fetchData(); }, []);
 
   const handleDeleteTarget = (id: string) => {
-    showDialog('Hapus Target?', 'Target ini akan dihapus.', 'danger', async () => {
+    showDialog('Hapus Tantangan?', 'Tantangan ini akan dihapus.', 'danger', async () => {
       await supabase.from('targets').delete().eq('id', id);
       fetchData();
     });
@@ -53,38 +53,20 @@ export default function TargetPage() {
   const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 
   return (
-    <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-24 transition-colors">
-      <AppHeader title="Target" action={
+    <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-40 transition-colors">
+      <AppHeader title="Tantangan" action={
         <button onClick={() => { setSelectedTarget(null); setIsModalOpen(true); }} className="bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 p-2 rounded-xl hover:bg-teal-200 dark:hover:bg-teal-900/50 transition-all font-bold text-xs flex items-center gap-1">
           <Plus className="w-4 h-4" /> Buat
         </button>
       } />
 
       <main className="px-5 mt-4 space-y-5">
-        <p className="text-xs text-gray-500 dark:text-gray-400">Atur batas pemasukan & pengeluaran.</p>
-
-        <div className="bg-teal-50 dark:bg-teal-900/20 border border-teal-100 dark:border-teal-800 rounded-2xl overflow-hidden transition-all duration-300">
-          <button onClick={() => setShowInfo(!showInfo)} className="w-full flex items-center justify-between p-4 hover:bg-teal-100/50 dark:hover:bg-teal-900/40 transition-colors">
-            <div className="flex items-center gap-2 text-teal-800 dark:text-teal-300 font-bold text-sm">
-              <Info className="w-5 h-5 text-teal-600 dark:text-teal-400" /> Apa bedanya Target & Impian?
-            </div>
-            {showInfo ? <ChevronUp className="w-5 h-5 text-teal-600 dark:text-teal-400" /> : <ChevronDown className="w-5 h-5 text-teal-600 dark:text-teal-400" />}
-          </button>
-          {showInfo && (
-            <div className="px-4 pb-4 pt-0">
-              <p className="text-[11px] text-teal-700/80 dark:text-teal-400/80 leading-relaxed pl-7">
-                <strong>Target</strong> berfungsi untuk membatasi uang masuk dan uang keluar dalam periode tertentu. Kamu bisa membuat banyak target sekaligus. Sedangkan <strong>Impian</strong> untuk mengumpulkan dana membeli sesuatu.
-              </p>
-            </div>
-          )}
-        </div>
-
         {targets.length === 0 ? (
           <div className="bg-white dark:bg-gray-800 rounded-3xl p-10 text-center border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
             <ShieldAlert className="w-12 h-12 text-gray-200 dark:text-gray-600 mx-auto mb-3" />
-            <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">Belum ada target yang dibuat.</p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">Belum ada tantangan yang dibuat.</p>
             <button onClick={() => { setSelectedTarget(null); setIsModalOpen(true); }} className="bg-teal-600 text-white font-bold px-6 py-2.5 rounded-xl hover:bg-teal-700 transition-all text-sm">
-              Buat Target Pertama
+              Buat Tantangan Pertama
             </button>
           </div>
         ) : (

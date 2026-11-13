@@ -13,6 +13,7 @@ import { buildExpenseMessage, buildPersonMessage, buildDebtSummaryMessage, build
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import AppHeader from '@/components/AppHeader';
+import SubTabs, { BARENG_TABS, PATUNGAN_TABS } from '@/components/SubTabs';
 import SkeletonLoader from '@/components/SkeletonLoader';
 
 interface GroupCard extends SplitGroup { memberCount: number; total: number }
@@ -45,15 +46,15 @@ function labelsFor(running: boolean) {
     delExp: 'Hapus catatan',
     sqlFile: 'sql/05_gantian.sql',
   } : {
-    title: 'Split Bill',
-    menu: 'Split Bill',
-    create: 'Buat Grup Split Bill',
-    modalTitle: 'Grup Split Bill Baru',
+    title: 'Patungan',
+    menu: 'Patungan',
+    create: 'Buat Grup Patungan',
+    modalTitle: 'Grup Patungan Baru',
     nameLabel: 'Nama grup',
     namePh: 'Makan malam Sabtu',
     friends: 'Teman yang ikut',
     empty: 'Belum ada grup. Buat satu untuk mulai patungan.',
-    inviteLabel: 'Kamu diundang ke grup Split Bill',
+    inviteLabel: 'Kamu diundang ke grup Patungan',
     entity: 'grup',
     addExp: 'Tambah Pengeluaran',
     tabs: { ringkasan: 'ringkasan', pengeluaran: 'pengeluaran', anggota: 'anggota' },
@@ -485,6 +486,13 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
       />
 
       <main className="px-5 mt-4 space-y-4">
+        {/* Di daftar (bukan di dalam sebuah grup): tab Bareng + pilihan Patungan / Bayarin */}
+        {!group && (
+          <div className="space-y-3">
+            <SubTabs items={BARENG_TABS} />
+            <SubTabs items={PATUNGAN_TABS} size="sub" />
+          </div>
+        )}
         {missingTable && (
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-4 rounded-2xl text-xs text-yellow-800 dark:text-yellow-300">
             Database {L.menu} belum siap. Jalankan <strong>{L.sqlFile}</strong> (versi terbaru) di Supabase SQL Editor, lalu muat ulang halaman ini.
