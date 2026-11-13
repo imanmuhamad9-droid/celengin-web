@@ -13,12 +13,14 @@ type Props = {
   initial: unknown;
   /** Angka merah kecil di ikon, mis. { tagihan: 2 } */
   counts?: Partial<Record<ShortcutKey, number>>;
+  /** Tampilan chip ramping satu baris (untuk Home) */
+  compact?: boolean;
 };
 
 // Semua ikon memakai satu warna yang sama
 const TILE = 'bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400';
 
-export default function FeatureShortcuts({ userId, initial, counts = {} }: Props) {
+export default function FeatureShortcuts({ userId, initial, counts = {}, compact = false }: Props) {
   const router = useRouter();
   const [favs, setFavs] = useState<ShortcutKey[]>(DEFAULT_SHORTCUTS);
   const [open, setOpen] = useState(false);
@@ -83,20 +85,39 @@ export default function FeatureShortcuts({ userId, initial, counts = {} }: Props
 
   return (
     <>
-      {/* KARTU DI HOME: favorit + Semua */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
-        <div className="grid grid-cols-5 gap-2">
-          {favs.map((k) => renderTile(k, () => go(shortcutByKey(k).href)))}
-          {/* Sel kosong menjaga tombol "Semua" tetap di kolom paling kanan */}
-          {Array.from({ length: MAX_FAVS - favs.length }).map((_, i) => <div key={`gap-${i}`} />)}
-          <button onClick={() => setOpen(true)} className="flex flex-col items-center gap-1.5 active:scale-95 transition-transform">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${TILE}`}>
-              <LayoutGrid className="w-5 h-5" />
-            </div>
-            <span className="text-[10px] font-bold text-gray-600 dark:text-gray-300">Semua</span>
+      {/* DI HOME: favorit + Semua */}
+      {compact ? (
+        <div className="flex gap-2 overflow-x-auto hide-scrollbar -mx-1 px-1">
+          {favs.map((k) => {
+            const s = shortcutByKey(k);
+            const count = counts[k] || 0;
+            return (
+              <button key={k} onClick={() => go(s.href)} className="relative shrink-0 flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm rounded-full pl-3 pr-3.5 py-2 text-xs font-bold text-gray-700 dark:text-gray-200 active:scale-95 transition-transform">
+                <s.Icon className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                {s.label}
+                {count > 0 && <span className="min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{count}</span>}
+              </button>
+            );
+          })}
+          <button onClick={() => setOpen(true)} className="shrink-0 flex items-center gap-1.5 bg-teal-50 dark:bg-teal-900/30 rounded-full pl-3 pr-3.5 py-2 text-xs font-bold text-teal-700 dark:text-teal-300 active:scale-95 transition-transform">
+            <LayoutGrid className="w-4 h-4" /> Semua
           </button>
         </div>
-      </div>
+      ) : (
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
+          <div className="grid grid-cols-5 gap-2">
+            {favs.map((k) => renderTile(k, () => go(shortcutByKey(k).href)))}
+            {/* Sel kosong menjaga tombol "Semua" tetap di kolom paling kanan */}
+            {Array.from({ length: MAX_FAVS - favs.length }).map((_, i) => <div key={`gap-${i}`} />)}
+            <button onClick={() => setOpen(true)} className="flex flex-col items-center gap-1.5 active:scale-95 transition-transform">
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${TILE}`}>
+                <LayoutGrid className="w-5 h-5" />
+              </div>
+              <span className="text-[10px] font-bold text-gray-600 dark:text-gray-300">Semua</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* DAFTAR SEMUA MENU */}
       {open && (

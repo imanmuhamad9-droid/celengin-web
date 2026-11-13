@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { Trash2, User, X, Upload, Camera, LogOut, KeyRound, Eye, EyeOff, CalendarDays, Flame, Info, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Trash2, User, X, Upload, Camera, LogOut, KeyRound, Eye, EyeOff, CalendarDays, Flame, Info, ChevronLeft, ChevronRight, ChevronDown, CheckCircle2, AlertCircle } from 'lucide-react';
 import { formatRupiah, toLocalDateStr } from '@/lib/utils';
 import { diffDays } from '@/lib/recurring';
 import { listWallets, computeWalletBalances, Wallet, WalletTransfer } from '@/lib/wallets';
@@ -12,6 +12,7 @@ import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import NotificationBell, { LocalNotif } from '@/components/NotificationBell';
 import FeatureShortcuts from '@/components/FeatureShortcuts';
+import AttentionStrip, { AttentionItem } from '@/components/AttentionStrip';
 import WeeklyChart from '@/components/WeeklyChart';
 import MonthCalendar from '@/components/MonthCalendar';
 import PhotoCropper from '@/components/PhotoCropper';
@@ -44,6 +45,8 @@ const [todayStr, setTodayStr] = useState('');
   // State untuk Kalender
   const [calendarView, setCalendarView] = useState<'expense' | 'income' | 'all'>('expense');
   const [showCalendar, setShowCalendar] = useState(true);
+  const [greeting, setGreeting] = useState('Halo');
+  const [showMonth, setShowMonth] = useState(false); // lipatan Kalender + Statistik bulan ini
 
   const [chartTheme, setChartTheme] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -144,6 +147,8 @@ const [todayStr, setTodayStr] = useState('');
     const localToday = toLocalDateStr(now);
     setCurrentMonthStr(localToday.substring(0, 7));
     setTodayStr(localToday);
+    const h = now.getHours();
+    setGreeting(h < 11 ? 'Pagi' : h < 15 ? 'Siang' : h < 18 ? 'Sore' : 'Malam');
     setMaxDateStr(localToday);
 
     // 2. Set Bulan & Tahun untuk Kalender
@@ -381,6 +386,46 @@ const [todayStr, setTodayStr] = useState('');
     }
   }
 
+
+  // ---- Data untuk Home yang lebih ringkas ----
+  const todayExpenseAmt = transactions.filter(t => t.transaction_date === todayStr && t.type === 'expense').reduce((a, b) => a + Number(b.amount), 0);
+  let targetUsedPct = 0; // persen pengeluaran target utama yang sudah terpakai
+  if (primaryTarget && primaryTarget.target_expense > 0) {
+    const used = transactions
+      .filter(t => t.type === 'expense' && t.transaction_date >= primaryTarget.start_date && t.transaction_date <= primaryTarget.end_date)
+      .reduce((a, b) => a + Number(b.amount), 0);
+    targetUsedPct = Math.round((used / primaryTarget.target_expense) * 100);
+  }
+
+  const attentionItems: AttentionItem[] = [
+    ...dueBills.slice(0, 4).map((b): AttentionItem => ({
+      key: `b-${b.id}`,
+      tone: b.daysLeft <= 0 ? 'danger' : 'warning',
+      kind: 'bill',
+      title: b.name,
+      sub: `${formatRupiah(b.amount)} · ${b.daysLeft < 0 ? `telat ${-b.daysLeft} hari` : b.daysLeft === 0 ? 'hari ini' : b.daysLeft === 1 ? 'besok' : `${b.daysLeft} hari lagi`}`,
+      href: '/bills',
+    })),
+    ...activeWarnings.slice(0, 2).map((w): AttentionItem => ({
+      key: `w-${w.id}`,
+      tone: w.percent >= 90 ? 'danger' : 'warning',
+      kind: 'target',
+      title: `Target ${w.period_type} ${Math.round(w.percent)}%`,
+      sub: w.percent >= 100 ? 'Sudah melewati batas' : 'Hampir habis',
+      href: '/spending-challenge',
+    })),
+    ...activePraise.slice(0, 1).map((p): AttentionItem => ({
+      key: `p-${p.id}`,
+      tone: 'praise',
+      kind: 'praise',
+      title: 'Target tercapai',
+      sub: `Pemasukan ${p.period_type} ${Math.round(p.percent)}%`,
+      href: '/spending-challenge',
+    })),
+  ];
+
+  const recentTx = transactions.slice(0, 3);
+
   const currentYear = calendarYear;
 const currentMonth = calendarMonth;
   const firstDay = new Date(currentYear, currentMonth, 1).getDay();
@@ -412,39 +457,39 @@ const currentMonth = calendarMonth;
       </header>
 
       <main className="px-5 mt-4 space-y-6">
-        
-        <div className="flex justify-between items-center mb-2">
-          <div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Halo, selamat datang 👋</p>
+
+        {/* SAPAAN + STREAK + PROFIL */}
+        <div className="flex justify-between items-center">
+          <div className="min-w-0">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">{greeting} 👋</p>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white truncate">{profile?.nickname || profile?.full_name || user?.email?.split('@')[0]}</h2>
           </div>
-          <button 
-            onClick={() => setIsProfileModalOpen(true)} 
-            className="w-14 h-14 rounded-full border-[3px] border-teal-500 shadow-md overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0 hover:scale-105 transition-all"
-          >
-            {profile?.avatar_url ? (
-              <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-            ) : (
-              <User className="w-6 h-6 text-gray-400" />
+          <div className="flex items-center gap-3 shrink-0">
+            {dailyAllowance > 0 && (
+              <button onClick={() => setShowInfoStreak(true)} aria-label="Streak hemat" className="flex items-center gap-1 bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800/40 text-orange-600 dark:text-orange-400 text-xs font-bold px-2.5 py-1.5 rounded-full active:scale-95 transition-transform">
+                <Flame className="w-3.5 h-3.5" /> {streak}
+              </button>
             )}
-          </button>
-        </div>
-        <div className="flex gap-3">
-          <button onClick={() => { setTxType('income'); setIsTxModalOpen(true); }} className="flex-1 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 py-3 rounded-xl flex items-center justify-center gap-2 font-bold hover:bg-green-100 dark:hover:bg-green-900/40 transition-all text-xs">
-            + Pemasukan
-          </button>
-          <button onClick={() => { setTxType('expense'); setIsTxModalOpen(true); }} className="flex-1 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 py-3 rounded-xl flex items-center justify-center gap-2 font-bold hover:bg-red-100 dark:hover:bg-red-900/40 transition-all text-xs">
-            - Pengeluaran
-          </button>
+            <button
+              onClick={() => setIsProfileModalOpen(true)}
+              className="w-12 h-12 rounded-full border-[3px] border-teal-500 shadow-md overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:scale-105 transition-all"
+            >
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-5 h-5 text-gray-400" />
+              )}
+            </button>
+          </div>
         </div>
 
-        {/* Kartu Saldo */}
+        {/* KARTU SALDO (latar berubah Aman / Kritis sesuai batas saldo minimum) */}
         <div className="rounded-3xl p-6 text-white shadow-lg relative overflow-hidden bg-teal-700">
           {profile?.safe_limit && (
             <div className="absolute inset-0 z-0" style={{ backgroundImage: balance >= profile.safe_limit ? `url(${profile.bg_safe_url})` : `url(${profile.bg_low_url})`, backgroundSize: balance >= profile.safe_limit ? `${(profile.bg_safe_zoom || 1) * 100}%` : `${(profile.bg_low_zoom || 1) * 100}%`, backgroundPosition: balance >= profile.safe_limit ? (profile.bg_safe_pos || 'center') : (profile.bg_low_pos || 'center'), backgroundRepeat: 'no-repeat' }}></div>
           )}
           <div className="absolute inset-0 bg-black/40 z-0"></div>
-          
+
           {profile?.safe_limit && (
             <div className={`absolute top-4 right-4 z-20 px-3 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-sm backdrop-blur-md border border-white/20 ${balance >= profile.safe_limit ? 'bg-green-500/80 text-white' : 'bg-red-500/80 text-white'}`}>
               <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
@@ -459,79 +504,102 @@ const currentMonth = calendarMonth;
                 {isBalanceHidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               </button>
             </div>
-            <h3 className="text-3xl font-extrabold mb-4">{isBalanceHidden ? 'Rp ******' : formatRupiah(balance)}</h3>
-            <div className="flex gap-6 text-sm">
+            <h3 className="text-3xl font-extrabold mb-3">{isBalanceHidden ? 'Rp ******' : formatRupiah(balance)}</h3>
+
+            <div className="flex gap-6 text-sm mb-3">
               <div><p className="text-white/80 text-[10px] uppercase font-bold">Masuk</p><p className="font-bold text-green-300">{isBalanceHidden ? '+Rp ***' : `+${formatRupiah(totalIncome)}`}</p></div>
               <div><p className="text-white/80 text-[10px] uppercase font-bold">Keluar</p><p className="font-bold text-red-300">{isBalanceHidden ? '-Rp ***' : `-${formatRupiah(totalExpense)}`}</p></div>
             </div>
+
+            {/* Chip dompet (bila punya 2 dompet atau lebih) */}
+            {wallets.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto hide-scrollbar mb-3">
+                {wallets.map(w => (
+                  <button key={w.id} onClick={() => router.push('/wallets')} className="shrink-0 bg-white/15 hover:bg-white/25 backdrop-blur-sm rounded-full px-3 py-1.5 text-[11px] font-bold flex items-center gap-1.5 transition-colors">
+                    <span>{w.emoji}</span>
+                    <span className="truncate max-w-[70px]">{w.name}</span>
+                    <span className="text-white/80">{isBalanceHidden ? '***' : formatRupiah(walletCalc.balances[w.id] || 0)}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Status jatah hari ini */}
+            {primaryTarget ? (
+              <button onClick={() => setShowInfoJatah(true)} className="w-full bg-white/15 backdrop-blur-sm rounded-2xl px-4 py-3 flex items-center justify-between text-left active:scale-[0.99] transition-transform">
+                <div className="min-w-0">
+                  <p className="text-sm font-bold">{todayExpenseAmt > dailyAllowance ? 'Jatah hari ini habis' : jatahHariIni < dailyAllowance * 0.25 ? 'Hati-hati, jatah tinggal sedikit' : 'Aman, hari ini boleh jajan'}</p>
+                  <p className="text-[11px] text-white/80">{todayExpenseAmt > dailyAllowance ? `Lewat ${formatRupiah(todayExpenseAmt - dailyAllowance)}` : `${formatRupiah(jatahHariIni)} lagi`} · target bulan ini {targetUsedPct}%</p>
+                </div>
+                {todayExpenseAmt > dailyAllowance ? <AlertCircle className="w-6 h-6 text-red-300 shrink-0" /> : <CheckCircle2 className="w-6 h-6 text-green-300 shrink-0" />}
+              </button>
+            ) : (
+              <button onClick={() => router.push('/spending-challenge')} className="w-full bg-white/15 backdrop-blur-sm rounded-2xl px-4 py-3 flex items-center justify-between text-left">
+                <div>
+                  <p className="text-sm font-bold">Atur target utama</p>
+                  <p className="text-[11px] text-white/80">Biar kamu tahu boleh jajan berapa tiap hari</p>
+                </div>
+                <ChevronRight className="w-5 h-5 shrink-0" />
+              </button>
+            )}
           </div>
         </div>
 
-        {/* DOMPET (muncul bila punya 2 dompet atau lebih) */}
-        {wallets.length > 1 && (
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Dompet</p>
-              <button onClick={() => router.push('/wallets')} className="text-[10px] font-bold text-teal-600 dark:text-teal-400">Kelola</button>
-            </div>
-            <div className="flex gap-3 overflow-x-auto pb-1 hide-scrollbar">
-              {wallets.map(w => (
-                <button key={w.id} onClick={() => router.push('/wallets')} className="shrink-0 min-w-[130px] bg-white dark:bg-gray-800 p-3 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm text-left transition-colors">
-                  <p className="text-lg leading-none mb-1">{w.emoji}</p>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">{w.name}</p>
-                  <p className="font-bold text-sm text-gray-800 dark:text-gray-100">{isBalanceHidden ? 'Rp ******' : formatRupiah(walletCalc.balances[w.id] || 0)}</p>
+        {/* PINTASAN (chip) */}
+        <FeatureShortcuts compact userId={user?.id ?? null} initial={profile?.shortcuts} counts={{ tagihan: dueBills.length }} />
+
+        {/* PERLU PERHATIAN (hilang bila kosong) */}
+        <AttentionStrip items={attentionItems} />
+
+        {/* MINGGU INI */}
+        <div>
+          <WeeklyChart
+            days={weeklyData}
+            rangeLabel={last7Days.length > 0 ? `${new Date(last7Days[0] + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} - ${new Date(last7Days[6] + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}` : ''}
+          />
+          <button onClick={() => router.push('/reports')} className="mt-2 w-full text-center text-[11px] font-bold text-teal-600 dark:text-teal-400">Lihat laporan lengkap</button>
+        </div>
+
+        {/* TERAKHIR */}
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100">Terakhir</h3>
+            <button onClick={() => router.push('/transactions')} className="text-[10px] font-bold text-teal-600 dark:text-teal-400">Lihat riwayat</button>
+          </div>
+          {recentTx.length === 0 ? (
+            <p className="text-xs text-gray-400 dark:text-gray-500 py-3 text-center">Belum ada transaksi. Ketuk Catat untuk mulai.</p>
+          ) : (
+            <div className="divide-y divide-gray-100 dark:divide-gray-700">
+              {recentTx.map(t => (
+                <button key={t.id} onClick={() => router.push(`/transactions?date=${t.transaction_date}`)} className="w-full flex items-center justify-between py-2.5 text-left">
+                  <div className="min-w-0 mr-3">
+                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{t.merchant_name}</p>
+                    <p className="text-[10px] text-gray-400">{new Date(t.transaction_date + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</p>
+                  </div>
+                  <span className={`text-sm font-bold shrink-0 ${t.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
+                    {t.type === 'income' ? '+' : '-'}{formatRupiah(Number(t.amount))}
+                  </span>
                 </button>
               ))}
             </div>
-          </div>
-        )}
-
-                {/* JATAH HARIAN & STREAK */}
-        <div className="flex gap-3 relative">
-          {/* Kotak Jatah Harian */}
-          <div className="flex-1 bg-white dark:bg-gray-800 p-3 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col justify-center relative">
-            <button 
-              onClick={() => setShowInfoJatah(true)} 
-              className="absolute top-2 right-2 text-gray-400 hover:text-teal-600 dark:hover:text-teal-400"
-            >
-              <Info className="w-4 h-4" />
-            </button>
-            <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-1">Jatah Hari Ini</p>
-            <p className="font-bold text-gray-800 dark:text-gray-100 text-sm">{primaryTarget ? formatRupiah(jatahHariIni) : 'Belum ada'}</p>
-            <p className="text-[9px] text-gray-400 mt-0.5">{primaryTarget ? `dari ${formatRupiah(dailyAllowance)}` : 'Aktifkan Target Utama'}</p>
-          </div>
-
-          {/* Kotak Streak Hemat */}
-          <div className="flex-1 bg-white dark:bg-gray-800 p-3 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col justify-center relative">
-            <button 
-              onClick={() => setShowInfoStreak(true)} 
-              className="absolute top-2 right-2 text-gray-400 hover:text-orange-500 dark:hover:text-orange-400"
-            >
-              <Info className="w-4 h-4" />
-            </button>
-            <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-1">Streak Hemat</p>
-            <p className="font-bold text-orange-500 text-sm flex items-center gap-1"><Flame className="w-3.5 h-3.5" /> {dailyAllowance > 0 ? `${streak} Hari` : 'Belum ada'}</p>
-            <p className="text-[9px] text-gray-400 mt-0.5">{dailyAllowance > 0 ? 'di bawah jatah harian' : 'Aktifkan Target Utama'}</p>
-          </div>
+          )}
         </div>
 
-        {/* PINTASAN FITUR (4 favorit + Semua, bisa diatur) */}
-        <FeatureShortcuts userId={user?.id ?? null} initial={profile?.shortcuts} counts={{ tagihan: dueBills.length }} />
+        {/* LIPATAN: KALENDER + STATISTIK BULAN INI */}
+        <button onClick={() => setShowMonth(v => !v)} className="w-full bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm rounded-2xl px-4 py-3 flex items-center justify-between text-sm font-bold text-gray-700 dark:text-gray-200 transition-colors">
+          <span className="flex items-center gap-2"><CalendarDays className="w-4 h-4 text-teal-600 dark:text-teal-400" /> Kalender dan statistik bulan ini</span>
+          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showMonth ? 'rotate-180' : ''}`} />
+        </button>
 
-        {/* GRAFIK MINGGUAN */}
-        <WeeklyChart
-          days={weeklyData}
-          rangeLabel={last7Days.length > 0 ? `${new Date(last7Days[0] + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} - ${new Date(last7Days[6] + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}` : ''}
-        />
-
-        {/* KALENDER */}
-        <MonthCalendar
-          transactions={transactions}
-          bills={bills}
-          todayStr={todayStr}
-          onOpenHistory={(d) => router.push(`/transactions?date=${d}`)}
-          onAddOnDate={(d) => { setTxType('expense'); setTxDate(d); setIsTxModalOpen(true); }}
-        />
+        {showMonth && (
+          <div className="space-y-6">
+            <MonthCalendar
+              transactions={transactions}
+              bills={bills}
+              todayStr={todayStr}
+              onOpenHistory={(d) => router.push(`/transactions?date=${d}`)}
+              onAddOnDate={(d) => { setTxType('expense'); setTxDate(d); setIsTxModalOpen(true); }}
+            />
 
         {/* DONUT CHART BULAN INI */}
         {totalMonthly > 0 && (
@@ -615,10 +683,8 @@ const currentMonth = calendarMonth;
             </div>
           </div>
         )}
-
-        <button onClick={() => router.push('/transactions')} className="w-full bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-teal-300 transition-all shadow-sm">
-          Lihat Semua Riwayat Transaksi
-        </button>
+          </div>
+        )}
 
       </main>
 
