@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { X, ArrowDownCircle, ArrowUpCircle, Star } from 'lucide-react';
+import { toLocalDateStr } from '@/lib/utils';
 
 export default function TargetSetupModal({ isOpen, onClose, onSuccess, showDialog, existingTarget }: any) {
   const [periodType, setPeriodType] = useState('week');
@@ -13,6 +14,7 @@ export default function TargetSetupModal({ isOpen, onClose, onSuccess, showDialo
   const [incomeRaw, setIncomeRaw] = useState(0);
   const [expenseDisplay, setExpenseDisplay] = useState('');
   const [expenseRaw, setExpenseRaw] = useState(0);
+  
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -27,14 +29,15 @@ export default function TargetSetupModal({ isOpen, onClose, onSuccess, showDialo
         setExpenseRaw(Number(existingTarget.target_expense));
         setExpenseDisplay(new Intl.NumberFormat('id-ID').format(existingTarget.target_expense));
       } else {
+        // Default saat buat target baru: Minggu ini
         const today = new Date();
         const day = today.getDay() === 0 ? 7 : today.getDay();
         const start = new Date(today); start.setDate(today.getDate() - day + 1);
         const end = new Date(start); end.setDate(start.getDate() + 6);
         
         setPeriodType('week');
-        setStartDate(start.toISOString().split('T')[0]);
-        setEndDate(end.toISOString().split('T')[0]);
+        setStartDate(toLocalDateStr(start));
+        setEndDate(toLocalDateStr(end));
         setIsPrimary(false);
         setIncomeDisplay(''); setIncomeRaw(0); setExpenseDisplay(''); setExpenseRaw(0);
       }
@@ -44,14 +47,14 @@ export default function TargetSetupModal({ isOpen, onClose, onSuccess, showDialo
   const handlePeriodChange = (type: string) => {
     setPeriodType(type);
     const today = new Date();
-    let start = new Date();
-    let end = new Date();
+    let start = new Date(today);
+    let end = new Date(today);
 
-    if (type === 'day') { start = today; end = today; } 
+    if (type === 'day') { start = new Date(today); end = new Date(today); } 
     else if (type === 'week') {
       const day = today.getDay() === 0 ? 7 : today.getDay();
-      start.setDate(today.getDate() - day + 1);
-      end.setDate(start.getDate() + 6);
+      start = new Date(today); start.setDate(today.getDate() - day + 1);
+      end = new Date(start); end.setDate(start.getDate() + 6);
     } 
     else if (type === 'month') {
       start = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -63,8 +66,8 @@ export default function TargetSetupModal({ isOpen, onClose, onSuccess, showDialo
     }
     
     if (type !== 'custom') {
-      setStartDate(start.toISOString().split('T')[0]);
-      setEndDate(end.toISOString().split('T')[0]);
+      setStartDate(toLocalDateStr(start));
+      setEndDate(toLocalDateStr(end));
     }
   };
 
@@ -75,7 +78,7 @@ export default function TargetSetupModal({ isOpen, onClose, onSuccess, showDialo
 
     setLoading(true);
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
+    if (!session) { setLoading(false); return; }
 
     // Jika target ini dijadikan utama, matikan target utama lainnya
     if (isPrimary) {
@@ -92,24 +95,25 @@ export default function TargetSetupModal({ isOpen, onClose, onSuccess, showDialo
       is_primary: isPrimary
     };
 
-    if (existingTarget) {
-      await supabase.from('targets').update(payload).eq('id', existingTarget.id);
-    } else {
-      await supabase.from('targets').insert(payload);
-    }
-    
-    onSuccess(); onClose(); setLoading(false);
+    const { error } = existingTarget
+      ? await supabase.from('targets').update(payload).eq('id', existingTarget.id)
+      : await supabase.from('targets').insert(payload);
+    setLoading(false);
+    if (error) return showDialog('Gagal', error.message, 'danger');
+
+    onSuccess(); onClose();
   };
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-4 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative max-h-[90vh] overflow-y-auto transition-colors">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-5 relative max-h-[90vh] overflow-y-auto transition-colors">
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
         <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4 text-center">Atur Target</h2>
 
         <form onSubmit={handleSave} className="space-y-4">
+          {/* Pilih Periode */}
           <div>
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Periode Target</label>
             <div className="grid grid-cols-5 gap-1">
@@ -124,14 +128,15 @@ export default function TargetSetupModal({ isOpen, onClose, onSuccess, showDialo
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-1">
-            <div className="w-[48%]">
-              <label className="block text-[10px] font-medium text-gray-700 dark:text-gray-300 mb-1">Mulai</label>
-              <input type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setPeriodType('custom'); }} required className="w-full p-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-[10px] focus:ring-2 focus:ring-teal-500 transition-colors" />
+          {/* Input Tanggal: dua kolom sama lebar, tidak saling menimpa */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="min-w-0">
+              <label className="block text-[11px] font-medium text-gray-700 dark:text-gray-300 mb-1">Mulai</label>
+              <input type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setPeriodType('custom'); }} required className="block w-full min-w-0 h-10 px-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xs appearance-none focus:ring-2 focus:ring-teal-500 transition-colors" />
             </div>
-            <div className="w-[48%]">
-              <label className="block text-[10px] font-medium text-gray-700 dark:text-gray-300 mb-1">Selesai</label>
-              <input type="date" value={endDate} onChange={e => { setEndDate(e.target.value); setPeriodType('custom'); }} required className="w-full p-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-[10px] focus:ring-2 focus:ring-teal-500 transition-colors" />
+            <div className="min-w-0">
+              <label className="block text-[11px] font-medium text-gray-700 dark:text-gray-300 mb-1">Selesai</label>
+              <input type="date" value={endDate} min={startDate || undefined} onChange={e => { setEndDate(e.target.value); setPeriodType('custom'); }} required className="block w-full min-w-0 h-10 px-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xs appearance-none focus:ring-2 focus:ring-teal-500 transition-colors" />
             </div>
           </div>
 
@@ -146,6 +151,7 @@ export default function TargetSetupModal({ isOpen, onClose, onSuccess, showDialo
             </button>
           </div>
 
+          {/* Target Pemasukan */}
           <div className="bg-green-50 dark:bg-green-900/20 p-2.5 rounded-xl border border-green-100 dark:border-green-800">
             <label className="flex items-center gap-1 text-[11px] font-bold text-green-700 dark:text-green-400 mb-1.5"><ArrowDownCircle className="w-3.5 h-3.5" /> Target Pemasukan</label>
             <div className="relative">
@@ -157,6 +163,7 @@ export default function TargetSetupModal({ isOpen, onClose, onSuccess, showDialo
             </div>
           </div>
 
+          {/* Batas Pengeluaran */}
           <div className="bg-red-50 dark:bg-red-900/20 p-2.5 rounded-xl border border-red-100 dark:border-red-800">
             <label className="flex items-center gap-1 text-[11px] font-bold text-red-700 dark:text-red-400 mb-1.5"><ArrowUpCircle className="w-3.5 h-3.5" /> Batas Pengeluaran</label>
             <div className="relative">

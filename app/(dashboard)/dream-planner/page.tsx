@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { Plus, Calendar, Edit3, Trash2, Target, X, ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
+import { Plus, Target, X, ArrowDownCircle, ArrowUpCircle, Edit3, Trash2, CalendarDays } from 'lucide-react';
 import { formatRupiah } from '@/lib/utils';
 import UpdateGoalModal from '@/components/UpdateGoalModal';
 import CustomDialog from '@/components/CustomDialog';
@@ -87,11 +87,11 @@ export default function DreamPlannerPage() {
 
   return (
     <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-24 transition-colors">
-  <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md px-5 py-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 transition-colors">
-  <div className="flex items-center gap-2">
-    <img src="/icon.png" alt="Logo" className="w-8 h-8 rounded-lg object-contain" />
-    <span className="font-bold text-xl text-teal-800 dark:text-teal-400">Celengin.</span>
-  </div>
+      <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md px-5 py-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 transition-colors">
+        <div className="flex items-center gap-2">
+          <img src="/icon.png" alt="Logo" className="w-8 h-8 rounded-lg object-contain" />
+          <span className="font-bold text-xl text-teal-800 dark:text-teal-400">Celengin.</span>
+        </div>
       </header>
 
       <main className="max-w-md mx-auto px-5 mt-4 space-y-6">
@@ -108,7 +108,6 @@ export default function DreamPlannerPage() {
             const percentage = Math.min((goal.current_amount / goal.target_amount) * 100, 100);
             const daysLeft = calculateDaysLeft(goal.target_date);
             
-            // Estimasi tabungan per bulan
             const remainingAmount = Math.max(0, goal.target_amount - goal.current_amount);
             const monthsLeft = daysLeft && daysLeft > 0 ? Math.max(1, Math.ceil(daysLeft / 30)) : 1;
             const monthlySaving = remainingAmount / monthsLeft;
@@ -193,9 +192,25 @@ export default function DreamPlannerPage() {
             <button onClick={() => setIsModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-center mb-4 text-gray-800 dark:text-white">Tambah Impian</h2>
             <form onSubmit={handleAddGoal} className="space-y-4">
-              <input type="text" placeholder="Nama Target" value={title} onChange={e => setTitle(e.target.value)} required className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm" />
-              <input type="text" inputMode="numeric" placeholder="Nominal (Rp)" value={targetDisplay} onChange={handleTargetChange} required className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm font-bold" />
-              <input type="date" value={targetDate} onChange={e => setTargetDate(e.target.value)} className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm" />
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Impian</label>
+                <input type="text" placeholder="Cth: Liburan ke Bali" value={title} onChange={e => setTitle(e.target.value)} required className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Nominal</label>
+                <input type="text" inputMode="numeric" placeholder="Nominal (Rp)" value={targetDisplay} onChange={handleTargetChange} required className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm font-bold" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Kalender <span className="text-gray-400 font-normal">(target tercapai, opsional)</span></label>
+                <div className="relative">
+                  <input type="date" value={targetDate} onChange={e => setTargetDate(e.target.value)} className={`w-full min-w-0 p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-xl text-sm ${targetDate ? 'text-gray-800 dark:text-gray-100' : 'text-transparent'}`} />
+                  {!targetDate && (
+                    <span className="pointer-events-none absolute inset-y-0 left-3 right-12 flex items-center gap-2 text-sm text-gray-400 dark:text-gray-400">
+                      <CalendarDays className="w-4 h-4 shrink-0" /> Kalender
+                    </span>
+                  )}
+                </div>
+              </div>
               <button type="submit" className="w-full bg-teal-600 text-white font-bold py-3 rounded-xl mt-2">Simpan</button>
             </form>
           </div>

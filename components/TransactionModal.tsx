@@ -8,6 +8,7 @@ import { createRecurringRule } from '@/lib/recurringClient';
 import { listWallets, Wallet } from '@/lib/wallets';
 import FrequencyPicker from '@/components/FrequencyPicker';
 import WalletChips from '@/components/WalletChips';
+import { triggerMoneyRain } from '@/components/MoneyRain';
 
 export default function TransactionModal({ isOpen, onClose, onSuccess, showDialog, initialType }: { isOpen: boolean, onClose: () => void, onSuccess: () => void, showDialog: (title: string, msg: string, type: 'info'|'success'|'danger', onConfirm?: () => void) => void, initialType?: 'income' | 'expense' }) {
   
@@ -136,6 +137,9 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
       
       const routineCount = createdRuleIds.length;
       showDialog('Berhasil', routineCount > 0 ? `${txList.length} transaksi tersimpan. ${routineCount} transaksi rutin akan tercatat otomatis sesuai jadwal.` : `${txList.length} transaksi berhasil disimpan!`, 'success');
+      const hasIn = txList.some((t: any) => t.type === 'income');
+      const hasOut = txList.some((t: any) => t.type === 'expense');
+      triggerMoneyRain(hasIn && hasOut ? 'mixed' : hasIn ? 'income' : 'expense');
       onSuccess(); onClose();   
     } catch (error: any) {
       showDialog('Gagal', error.message, 'danger');

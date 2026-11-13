@@ -5,11 +5,12 @@ import { ArrowLeft, ChevronLeft, ChevronRight, Download, Printer, Info, X, Trend
 import { supabase } from '@/lib/supabaseClient';
 import { formatRupiah, toLocalDateStr } from '@/lib/utils';
 import { Period, Tx, getRange, shiftAnchor, summarize, pctChange, healthScore, buildInsights } from '@/lib/insights';
-import { downloadCsv, printReport } from '@/lib/exportReport';
+import { downloadCsv } from '@/lib/exportReport';
 import { listWallets, Wallet } from '@/lib/wallets';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import SkeletonLoader from '@/components/SkeletonLoader';
+import PrintReportView from '@/components/PrintReportView';
 
 const PERIODS: { id: Period; label: string }[] = [
   { id: 'week', label: 'Mingguan' },
@@ -27,6 +28,7 @@ export default function ReportsPage() {
   const [anchor, setAnchor] = useState('');
   const [today, setToday] = useState('');
   const [showHealthInfo, setShowHealthInfo] = useState(false);
+  const [showPrint, setShowPrint] = useState(false);
 
   const [dialog, setDialog] = useState({ isOpen: false, title: '', msg: '', type: 'info' as 'info' | 'success' | 'danger', onConfirm: undefined as (() => void) | undefined });
   const showDialog = (title: string, msg: string, type: 'info' | 'success' | 'danger', onConfirm?: () => void) => setDialog({ isOpen: true, title, msg, type, onConfirm });
@@ -75,8 +77,8 @@ export default function ReportsPage() {
   };
 
   const handlePrint = () => {
-    const ok = printReport({ title: 'Laporan Keuangan Celengin', periodLabel: range.label, summary: cur, transactions: inPeriod, fmt: formatRupiah, nickname });
-    if (!ok) showDialog('Pop-up Diblokir', 'Izinkan pop-up untuk situs ini, lalu coba lagi.', 'danger');
+    if (inPeriod.length === 0) return showDialog('Tidak Ada Data', 'Tidak ada transaksi di periode ini untuk dicetak.', 'info');
+    setShowPrint(true);
   };
 
   const Delta = ({ now, before, inverse }: { now: number; before: number; inverse?: boolean }) => {
@@ -248,6 +250,18 @@ export default function ReportsPage() {
           </div>
         </div>
       </main>
+
+      {showPrint && (
+        <PrintReportView
+          title="Laporan Keuangan Celengin"
+          periodLabel={range.label}
+          summary={cur}
+          transactions={inPeriod}
+          fmt={formatRupiah}
+          nickname={nickname}
+          onClose={() => setShowPrint(false)}
+        />
+      )}
 
       {showHealthInfo && health && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">

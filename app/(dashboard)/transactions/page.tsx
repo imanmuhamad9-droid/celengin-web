@@ -61,6 +61,14 @@ function TransactionsContent() {
     }
   };
 
+  // Muat ulang diam-diam saat transaksi baru dicatat lewat tombol Catat di menu
+  useEffect(() => {
+    const onSaved = () => { fetchTx(true); };
+    window.addEventListener('celengin:tx-saved', onSaved);
+    return () => window.removeEventListener('celengin:tx-saved', onSaved);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => { 
     fetchTx(); 
     // Jika ada parameter tanggal, set filter tanggal

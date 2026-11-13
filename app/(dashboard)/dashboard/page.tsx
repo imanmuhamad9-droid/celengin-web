@@ -123,6 +123,14 @@ const [todayStr, setTodayStr] = useState('');
     } catch (_) { /* badge bersifat tambahan, abaikan error */ }
   };
 
+  // Muat ulang data saat transaksi baru dicatat lewat tombol Catat di menu
+  useEffect(() => {
+    const onSaved = () => { fetchData(); };
+    window.addEventListener('celengin:tx-saved', onSaved);
+    return () => window.removeEventListener('celengin:tx-saved', onSaved);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
      useEffect(() => { 
     // 1. Set Tanggal Hari Ini
     const now = new Date();
@@ -889,6 +897,7 @@ const currentMonth = calendarMonth;
           </div>
         </div>
       )}
+      <TransactionModal isOpen={isTxModalOpen} onClose={() => setIsTxModalOpen(false)} onSuccess={() => fetchData()} showDialog={showDialog} initialType={txType} />
       <CustomDialog isOpen={dialog.isOpen} onClose={closeDialog} title={dialog.title} message={dialog.msg} type={dialog.type} onConfirm={dialog.onConfirm} />
       <BottomNav />
     </div>

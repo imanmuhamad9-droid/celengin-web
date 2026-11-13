@@ -30,7 +30,7 @@ export const BADGES: BadgeDef[] = [
   { key: 'bills_5',     emoji: '🧾', title: 'Tepat Waktu',        desc: 'Tandai lunas 5 tagihan.',                    target: 5,   unit: 'tagihan' },
   { key: 'wallets_3',   emoji: '👛', title: 'Multi Dompet',       desc: 'Punya 3 dompet atau lebih.',                 target: 3,   unit: 'dompet' },
   { key: 'bareng_1',    emoji: '👫', title: 'Bareng-bareng',      desc: 'Gabung target Bareng dengan minimal 2 anggota.', target: 1, unit: 'target' },
-  { key: 'split_1',     emoji: '🤝', title: 'Patungan Pertama',   desc: 'Catat satu Split Bill di Bareng.',           target: 1,   unit: 'split bill' },
+  { key: 'split_1',     emoji: '🤝', title: 'Patungan Pertama',   desc: 'Catat satu Split Bill.',           target: 1,   unit: 'split bill' },
 ];
 
 export const LEVELS = [
@@ -153,7 +153,7 @@ export async function fetchBadgeContext(
     safe<any[]>(supabase.from('bills').select('paid_count').eq('user_id', userId), []),
     safe<any[]>(supabase.from('wallets').select('id').eq('user_id', userId), []),
     safe<any[]>(supabase.from('couple_members').select('goal_id').eq('user_id', userId).eq('status', 'accepted'), []),
-    safe<any[]>(supabase.from('shared_expenses').select('id').eq('created_by', userId).limit(1), []),
+    safe<any[]>(supabase.from('split_expenses').select('id').limit(1), []),
   ]);
 
   let baregCount = 0;
