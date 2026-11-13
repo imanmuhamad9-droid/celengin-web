@@ -9,6 +9,7 @@ import PhotoCropper from '@/components/PhotoCropper';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import PasswordRequirements from '@/components/PasswordRequirements';
 import CustomDialog from '@/components/CustomDialog';
+import BottomNav from '@/components/BottomNav';
 import PushSettingsCard from '@/components/PushSettingsCard';
 import RecurringRulesModal from '@/components/RecurringRulesModal';
 import { cycleFor, normalizePayday } from '@/lib/cycle';
@@ -324,7 +325,7 @@ export default function SettingsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-16 transition-colors">
+    <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-40 transition-colors">
       <AppHeader title={TITLES[view]} onBack={view !== 'hub' ? () => go('hub') : undefined} />
 
       <main className="max-w-md mx-auto p-5 mt-2 space-y-5">
@@ -517,6 +518,7 @@ export default function SettingsPage() {
       )}
 
       <RecurringRulesModal isOpen={isRoutineOpen} onClose={() => setIsRoutineOpen(false)} showDialog={showDialog} />
+      <BottomNav />
       <CustomDialog isOpen={dialog.isOpen} onClose={closeDialog} title={dialog.title} message={dialog.msg} type={dialog.type} onConfirm={dialog.onConfirm} />
     </div>
   );

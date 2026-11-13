@@ -11,6 +11,7 @@ import DateField from '@/components/DateField';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import EditTransactionModal from '@/components/EditTransactionModal';
 import SubTabs, { RIWAYAT_TABS } from '@/components/SubTabs';
+import { DateStack, RowActions } from '@/components/ui';
 import { listWallets, Wallet } from '@/lib/wallets';
 
 function TransactionsContent() {
@@ -140,28 +141,25 @@ function TransactionsContent() {
           {(startDate || endDate) && <button onClick={() => { setStartDate(''); setEndDate(''); router.push('/transactions'); }} className="h-10 w-10 shrink-0 flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-900/30 text-red-400 hover:text-red-600" aria-label="Hapus filter tanggal"><XCircle className="w-5 h-5" /></button>}
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-3xl p-2 shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
+        <div className="space-y-3">
           {paginatedTx.length === 0 ? (
-            <p className="text-center text-xs text-gray-400 dark:text-gray-500 py-10">Tidak ada transaksi yang cocok.</p>
+            <p className="text-center text-xs text-gray-400 dark:text-gray-500 py-10 bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700">Tidak ada transaksi yang cocok.</p>
           ) : (
             paginatedTx.map(tx => (
-              <div key={tx.id} className="flex items-center justify-between p-3 border-b border-gray-50 dark:border-gray-700 last:border-0 group">
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${tx.type === 'income' ? 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400' : 'bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400'}`}>
-                    {tx.type === 'income' ? <ArrowDownCircle className="w-5 h-5" /> : <ArrowUpCircle className="w-5 h-5" />}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-bold text-gray-800 dark:text-gray-100 text-sm truncate">{tx.merchant_name}</p>
-                    <p className="text-[10px] text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 flex-wrap"><Calendar className="w-3 h-3 shrink-0" /> {tx.transaction_date}{tx.is_routine && <span className="text-[9px] bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 px-1.5 py-0.5 rounded font-bold">Rutin</span>}</p>
-                    {((wallets.length > 1 && tx.wallet_id) || tx.notes) && (
-                      <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate mt-0.5">{[wallets.length > 1 ? walletLabel(tx.wallet_id) : '', tx.notes].filter(Boolean).join(' · ')}</p>
+              <div key={tx.id} className="bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
+                <div className="flex items-center gap-3">
+                  <DateStack ymd={tx.transaction_date} />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-extrabold text-gray-900 dark:text-white text-base truncate">{tx.merchant_name}</p>
+                    <p className={`font-extrabold text-base mt-0.5 ${tx.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>{formatRupiah(tx.amount)}</p>
+                    {(tx.is_routine || (wallets.length > 1 && tx.wallet_id) || tx.notes) && (
+                      <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate mt-0.5">
+                        {tx.is_routine && <span className="text-[9px] bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 px-1.5 py-0.5 rounded font-bold mr-1">Rutin</span>}
+                        {[wallets.length > 1 ? walletLabel(tx.wallet_id) : '', tx.notes].filter(Boolean).join(' · ')}
+                      </p>
                     )}
                   </div>
-                </div>
-                <div className="flex items-center gap-2.5 shrink-0 pl-2">
-                  <p className={`font-bold text-[13px] whitespace-nowrap ${tx.type === 'income' ? 'text-green-500' : 'text-red-500'}`}>{tx.type === 'income' ? '+' : '-'}{formatRupiah(tx.amount)}</p>
-                  <button onClick={() => { setSelectedTx(tx); setIsEditModalOpen(true); }} className="text-gray-300 dark:text-gray-600 hover:text-teal-500 transition-colors"><Edit3 className="w-4 h-4" /></button>
-                  <button onClick={() => handleDelete(tx.id)} className="text-gray-300 dark:text-gray-600 hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                  <RowActions vertical onEdit={() => { setSelectedTx(tx); setIsEditModalOpen(true); }} onDelete={() => handleDelete(tx.id)} />
                 </div>
               </div>
             ))

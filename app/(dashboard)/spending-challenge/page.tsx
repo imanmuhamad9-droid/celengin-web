@@ -2,7 +2,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { ShieldAlert, ChevronDown, ChevronUp, Edit3, ArrowDownCircle, ArrowUpCircle, Info, CalendarDays, Plus, Trash2 } from 'lucide-react';
+import { ShieldAlert, ChevronDown, ChevronUp, ArrowDownCircle, ArrowUpCircle, Info, CalendarDays } from 'lucide-react';
+import { Btn, HeaderBtn, RowActions } from '@/components/ui';
 import { formatRupiah } from '@/lib/utils';
 import TargetSetupModal from '@/components/TargetSetupModal';
 import CustomDialog from '@/components/CustomDialog';
@@ -54,20 +55,14 @@ export default function TargetPage() {
 
   return (
     <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-40 transition-colors">
-      <AppHeader title="Tantangan" action={
-        <button onClick={() => { setSelectedTarget(null); setIsModalOpen(true); }} className="bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 p-2 rounded-xl hover:bg-teal-200 dark:hover:bg-teal-900/50 transition-all font-bold text-xs flex items-center gap-1">
-          <Plus className="w-4 h-4" /> Buat
-        </button>
-      } />
+      <AppHeader title="Tantangan" infoKey="Tantangan" action={<HeaderBtn onClick={() => { setSelectedTarget(null); setIsModalOpen(true); }} />} />
 
       <main className="px-5 mt-4 space-y-5">
         {targets.length === 0 ? (
           <div className="bg-white dark:bg-gray-800 rounded-3xl p-10 text-center border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
             <ShieldAlert className="w-12 h-12 text-gray-200 dark:text-gray-600 mx-auto mb-3" />
             <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">Belum ada tantangan yang dibuat.</p>
-            <button onClick={() => { setSelectedTarget(null); setIsModalOpen(true); }} className="bg-teal-600 text-white font-bold px-6 py-2.5 rounded-xl hover:bg-teal-700 transition-all text-sm">
-              Buat Tantangan Pertama
-            </button>
+            <Btn variant="primary" size="md" onClick={() => { setSelectedTarget(null); setIsModalOpen(true); }}>Buat Tantangan Pertama</Btn>
           </div>
         ) : (
           <div className="space-y-4">
@@ -93,10 +88,7 @@ export default function TargetPage() {
                         <p className="text-[10px] text-gray-500 dark:text-gray-400">{formatDate(target.start_date)} - {formatDate(target.end_date)}</p>
                       </div>
                     </div>
-                    <div className="flex gap-1">
-                      <button onClick={() => { setSelectedTarget(target); setIsModalOpen(true); }} className="text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30 p-1.5 rounded-lg hover:bg-teal-100 dark:hover:bg-teal-900/50"><Edit3 className="w-3.5 h-3.5" /></button>
-                      <button onClick={() => handleDeleteTarget(target.id)} className="text-red-400 bg-red-50 dark:bg-red-900/30 p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50"><Trash2 className="w-3.5 h-3.5" /></button>
-                    </div>
+                    <RowActions onEdit={() => { setSelectedTarget(target); setIsModalOpen(true); }} onDelete={() => handleDeleteTarget(target.id)} />
                   </div>
                   
                   <div className="flex gap-3">

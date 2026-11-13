@@ -10,7 +10,7 @@ import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import AppHeader from '@/components/AppHeader';
 import SubTabs, { RIWAYAT_TABS } from '@/components/SubTabs';
-import RecurringRulesModal from '@/components/RecurringRulesModal';
+import { Btn, HeaderBtn, RowActions, Toggle } from '@/components/ui';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import DateField from '@/components/DateField';
 import FrequencyPicker from '@/components/FrequencyPicker';
@@ -36,7 +36,6 @@ export default function BillsPage() {
   const [missingTable, setMissingTable] = useState(false);
   const [today, setToday] = useState('');
   const [showInfo, setShowInfo] = useState(true);
-  const [isRoutineOpen, setIsRoutineOpen] = useState(false);
 
   // Form
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -180,13 +179,10 @@ export default function BillsPage() {
             {b.is_active && <span className={`text-[10px] font-bold px-2 py-1 rounded-lg shrink-0 ${status.c}`}>{status.t}</span>}
             <span className="text-[10px] text-gray-500 dark:text-gray-400 truncate">{b.is_active ? formatDateID(b.due_date) : 'Dijeda / selesai'}</span>
           </div>
-          <div className="flex items-center gap-1 shrink-0">
-            <button onClick={() => openEdit(b)} className="text-gray-400 hover:text-teal-600 bg-gray-50 dark:bg-gray-700 p-1.5 rounded-md transition-colors"><Edit3 className="w-3.5 h-3.5" /></button>
-            <button onClick={() => handleDelete(b)} className="text-gray-400 hover:text-red-500 bg-gray-50 dark:bg-gray-700 p-1.5 rounded-md transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
-          </div>
+          <RowActions onEdit={() => openEdit(b)} onDelete={() => handleDelete(b)} />
         </div>
         {b.is_active && (
-          <button onClick={() => handlePay(b)} className="w-full mt-3 bg-green-500 hover:bg-green-600 text-white text-xs font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all"><CheckCircle2 className="w-4 h-4" /> Tandai Lunas</button>
+          <Btn variant="success" size="md" full className="mt-3" onClick={() => handlePay(b)}><CheckCircle2 className="w-4 h-4" /> Tandai Lunas</Btn>
         )}
       </div>
     );
@@ -202,7 +198,7 @@ export default function BillsPage() {
 
   return (
     <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-40 transition-colors">
-      <AppHeader title="Tagihan" action={<button onClick={openAdd} className="bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 p-2.5 rounded-xl hover:bg-teal-200 dark:hover:bg-teal-900/50 transition-all font-bold text-xs flex items-center gap-1"><Plus className="w-4 h-4" /> Tambah</button>} />
+      <AppHeader title="Tagihan" action={<HeaderBtn onClick={openAdd} label="Tambah" />} />
 
       <main className="px-5 mt-4 space-y-5">
         <SubTabs items={RIWAYAT_TABS} />
@@ -218,16 +214,6 @@ export default function BillsPage() {
             <div><p className="text-white/80 text-[10px] uppercase font-bold">Aktif</p><p className="font-bold">{active.length} tagihan</p></div>
           </div>
         </div>
-
-        {/* Transaksi Rutin: dulu tombol kecil di Riwayat yang susah ditemukan */}
-        <button onClick={() => setIsRoutineOpen(true)} className="w-full flex items-center gap-3 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-3xl p-4 shadow-sm text-left active:scale-[0.99] transition-all">
-          <span className="w-11 h-11 rounded-2xl bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0"><Repeat className="w-5 h-5" /></span>
-          <span className="flex-1 min-w-0">
-            <span className="block text-sm font-bold text-gray-800 dark:text-gray-100">Transaksi Rutin</span>
-            <span className="block text-[11px] text-gray-500 dark:text-gray-400">Gaji, langganan, cicilan yang tercatat otomatis. Atur, ubah tanggal, atau hentikan.</span>
-          </span>
-          <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-500 shrink-0" />
-        </button>
 
         <Section title="Terlambat" list={overdue} tone="text-red-500" />
         <Section title="Segera Jatuh Tempo" list={soon} tone="text-yellow-600 dark:text-yellow-400" />
@@ -281,9 +267,7 @@ export default function BillsPage() {
               {editingId && (
                 <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
                   <span className="text-xs font-bold text-gray-600 dark:text-gray-300">Tagihan aktif</span>
-                  <button type="button" onClick={() => setIsActive(!isActive)} className={`w-9 h-5 rounded-full transition-colors relative shrink-0 ${isActive ? 'bg-teal-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
-                    <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${isActive ? 'left-4.5' : 'left-0.5'}`}></div>
-                  </button>
+                  <Toggle checked={isActive} onChange={setIsActive} label="Tagihan aktif" />
                 </div>
               )}
               <button type="submit" disabled={saving} className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-xl mt-2 transition-all disabled:opacity-50">{saving ? 'Menyimpan...' : editingId ? 'Simpan Perubahan' : 'Simpan Tagihan'}</button>
@@ -292,7 +276,6 @@ export default function BillsPage() {
         </div>
       )}
 
-      <RecurringRulesModal isOpen={isRoutineOpen} onClose={() => setIsRoutineOpen(false)} showDialog={showDialog} />
       <CustomDialog isOpen={dialog.isOpen} onClose={closeDialog} title={dialog.title} message={dialog.msg} type={dialog.type} onConfirm={dialog.onConfirm} />
       <BottomNav />
     </div>

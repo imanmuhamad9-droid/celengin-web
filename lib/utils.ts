@@ -35,3 +35,8 @@ export function formatDateID(dateStr: string, withYear = true): string {
   const dt = new Date(y, m - 1, d);
   return dt.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', ...(withYear ? { year: 'numeric' } : {}) });
 }
+
+// Nomor rekening / nomor HP: hanya angka
+export const digitsOnly = (v: string) => v.replace(/\D/g, '');
+// Nama orang: tanpa angka
+export const noDigits = (v: string) => v.replace(/[0-9]/g, '');

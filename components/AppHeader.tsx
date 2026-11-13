@@ -14,6 +14,8 @@ type Props = {
   /** Tombol aksi di pojok kanan, mis. "+ Tambah" */
   action?: React.ReactNode;
   z?: 'z-40' | 'z-50';
+  /** Kunci penjelasan ⓘ bila berbeda dari judul (mis. judul 'Kolektif' tapi penjelasannya milik tab Patungan) */
+  infoKey?: string;
 };
 
 const SEEN_PREFIX = 'celengin:menu-info-seen:';
@@ -21,20 +23,21 @@ const SEEN_PREFIX = 'celengin:menu-info-seen:';
 // Header seragam satu baris: logo + nama menu (Home = "Celengin."). Menekan logo selalu kembali ke Home.
 // Menu yang punya penjelasan (lib/menuInfo.ts) otomatis mendapat tombol ⓘ di pojok kanan. Penjelasannya terbuka
 // saat menu pertama kali dibuka, lalu tersembunyi setelah ditutup dan bisa dibuka lagi lewat ⓘ.
-export default function AppHeader({ title, onBack, topRight, action, z = 'z-50' }: Props) {
+export default function AppHeader({ title, onBack, topRight, action, z = 'z-50', infoKey }: Props) {
   const router = useRouter();
-  const info = title ? MENU_INFO[title] : undefined;
+  const key = infoKey || title;
+  const info = key ? MENU_INFO[key] : undefined;
   const [infoOpen, setInfoOpen] = useState(false);
 
   useEffect(() => {
-    if (!title || !MENU_INFO[title]) { setInfoOpen(false); return; }
-    try { setInfoOpen(localStorage.getItem(SEEN_PREFIX + title) !== '1'); } catch (_) { setInfoOpen(true); }
-  }, [title]);
+    if (!key || !MENU_INFO[key]) { setInfoOpen(false); return; }
+    try { setInfoOpen(localStorage.getItem(SEEN_PREFIX + key) !== '1'); } catch (_) { setInfoOpen(true); }
+  }, [key]);
 
   const closeInfo = () => {
     setInfoOpen(false);
-    if (!title) return;
-    try { localStorage.setItem(SEEN_PREFIX + title, '1'); } catch (_) { /* abaikan */ }
+    if (!key) return;
+    try { localStorage.setItem(SEEN_PREFIX + key, '1'); } catch (_) { /* abaikan */ }
   };
 
   return (

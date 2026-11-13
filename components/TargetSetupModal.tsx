@@ -1,4 +1,5 @@
 'use client';
+import { Toggle } from '@/components/ui';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { X, ArrowDownCircle, ArrowUpCircle, Star } from 'lucide-react';
@@ -160,9 +161,7 @@ export default function TargetSetupModal({ isOpen, onClose, onSuccess, showDialo
               <p className="text-xs font-bold text-gray-800 dark:text-white flex items-center gap-1"><Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" /> Jadikan Target Utama</p>
               <p className="text-[10px] text-gray-500 dark:text-gray-400">Ditampilkan di Jatah Harian & Streak Dashboard</p>
             </div>
-            <button type="button" onClick={() => setIsPrimary(!isPrimary)} className={`w-10 h-5 rounded-full transition-colors relative shrink-0 ${isPrimary ? 'bg-teal-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
-              <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${isPrimary ? 'left-5' : 'left-0.5'}`}></div>
-            </button>
+            <Toggle checked={isPrimary} onChange={setIsPrimary} label="Jadikan utama" onText="Ya" offText="Tidak" />
           </div>
 
           {/* Target Pemasukan */}

@@ -1,12 +1,13 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { XCircle, Trash2, Repeat, Edit3, ArrowLeft } from 'lucide-react';
+import { XCircle, Repeat, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { formatRupiah, formatDateID, toLocalDateStr } from '@/lib/utils';
 import { Frequency, describeFrequency, firstRunAfter, dayOfMonth } from '@/lib/recurring';
 import { createRecurringRule } from '@/lib/recurringClient';
 import FrequencyPicker from '@/components/FrequencyPicker';
 import DateField from '@/components/DateField';
+import { Toggle, RowActions, Btn } from '@/components/ui';
 
 type ShowDialog = (title: string, msg: string, type: 'info' | 'success' | 'danger', onConfirm?: () => void) => void;
 
@@ -169,9 +170,7 @@ export default function RecurringRulesModal({ isOpen, onClose, showDialog, legac
               <p className="text-[10px] text-gray-500 dark:text-gray-400">Transaksi yang sudah tercatat tidak berubah. Tanggal di masa lalu tidak disusulkan; jadwal langsung lompat ke berikutnya.</p>
             </div>
 
-            <button onClick={saveEdit} disabled={saving} className="w-full mt-4 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-bold py-3 rounded-xl transition-all">
-              {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
-            </button>
+            <Btn variant="primary" size="md" full className="mt-4" onClick={saveEdit} disabled={saving}>{saving ? 'Menyimpan...' : 'Simpan Perubahan'}</Btn>
           </>
         ) : (
           <>
@@ -189,19 +188,16 @@ export default function RecurringRulesModal({ isOpen, onClose, showDialog, legac
               )}
 
               {rules.map((rule) => (
-                <div key={rule.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-100 dark:border-gray-600">
-                  <div className="min-w-0 pr-2">
+                <div key={rule.id} className="p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-100 dark:border-gray-600">
+                  <div className="min-w-0">
                     <p className="font-bold text-gray-800 dark:text-gray-100 text-sm truncate">{rule.merchant_name}</p>
                     <p className={`text-xs font-bold mt-0.5 ${rule.type === 'income' ? 'text-green-600' : 'text-red-500'}`}>{rule.type === 'income' ? '+' : '-'}{formatRupiah(rule.amount)}</p>
                     <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{describeFrequency(rule)}</p>
                     <p className="text-[10px] text-teal-600 dark:text-teal-400 font-semibold">{rule.is_active ? `Berikutnya: ${formatDateID(rule.next_run_date)}` : 'Dijeda'}</p>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button onClick={() => toggleActive(rule)} aria-label={rule.is_active ? 'Jeda' : 'Aktifkan'} className={`w-12 h-6 rounded-full transition-colors relative ${rule.is_active ? 'bg-teal-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
-                      <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${rule.is_active ? 'left-7' : 'left-1'}`}></div>
-                    </button>
-                    <button onClick={() => startEdit(rule)} aria-label="Ubah jadwal" className="text-gray-300 dark:text-gray-500 hover:text-teal-500 transition-colors"><Edit3 className="w-4 h-4" /></button>
-                    <button onClick={() => deleteRule(rule)} aria-label="Hapus" className="text-gray-300 dark:text-gray-500 hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                  <div className="flex items-center justify-between gap-2 mt-3">
+                    <Toggle checked={rule.is_active} onChange={() => toggleActive(rule)} label="Aktifkan transaksi rutin" onText="Aktif" offText="Jeda" />
+                    <RowActions onEdit={() => startEdit(rule)} onDelete={() => deleteRule(rule)} />
                   </div>
                 </div>
               ))}
@@ -217,7 +213,7 @@ export default function RecurringRulesModal({ isOpen, onClose, showDialog, legac
                           <p className={`text-xs font-bold shrink-0 ${t.type === 'income' ? 'text-green-600' : 'text-red-500'}`}>{t.type === 'income' ? '+' : '-'}{formatRupiah(t.amount)}</p>
                         </div>
                         <FrequencyPicker value={legacyFreq[key] || 'monthly'} onChange={(v) => setLegacyFreq((p) => ({ ...p, [key]: v }))} />
-                        <button onClick={() => activateLegacy(key, t)} className="w-full mt-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-lg transition-all">Jadikan Otomatis</button>
+                        <Btn variant="primary" size="sm" full className="mt-2" onClick={() => activateLegacy(key, t)}>Jadikan Otomatis</Btn>
                       </div>
                     ))}
                   </div>

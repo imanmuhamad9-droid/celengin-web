@@ -2,16 +2,47 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { Plus, Target, X, ArrowDownCircle, ArrowUpCircle, Edit3, Trash2 } from 'lucide-react';
-import { formatRupiah } from '@/lib/utils';
+import { Target, X, ArrowDownCircle, ArrowUpCircle, Info, TrendingUp } from 'lucide-react';
+import { formatRupiah, formatDateID, toLocalDateStr } from '@/lib/utils';
+import { cycleFor, shiftCycle, normalizePayday } from '@/lib/cycle';
 import UpdateGoalModal from '@/components/UpdateGoalModal';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import AppHeader from '@/components/AppHeader';
+import { Btn, HeaderBtn, RowActions } from '@/components/ui';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import DateField from '@/components/DateField';
 
+// Cincin progres bundar: terisi pelan-pelan saat tampil dan setiap kali jumlahnya bertambah, persen di tengah.
+function ProgressRing({ percent, color, size = 96 }: { percent: number; color: string; size?: number }) {
+  const [shown, setShown] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => setShown(percent), 60);
+    return () => clearTimeout(t);
+  }, [percent]);
+  const stroke = 10;
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  return (
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="currentColor" strokeWidth={stroke} className="text-gray-100 dark:text-gray-700" />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round"
+          strokeDasharray={c} strokeDashoffset={c * (1 - Math.min(shown, 100) / 100)} style={{ transition: 'stroke-dashoffset 900ms cubic-bezier(0.34, 1.2, 0.64, 1)' }} />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
+        <span className="text-xl font-extrabold text-gray-900 dark:text-white">{Math.round(percent)}%</span>
+        <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500 mt-1">tercapai</span>
+      </div>
+    </div>
+  );
+}
+
 export default function DreamPlannerPage() {
+  // Referensi menabung: murni dari uangmu sendiri (rata-rata pemasukan dan pengeluaran bulanan dari transaksimu)
+  const [cap, setCap] = useState<{ income: number; expense: number; months: number } | null>(null);
+  const [estimate, setEstimate] = useState<{ goal: any; daysLeft: number | null } | null>(null);
+
   const [goals, setGoals] = useState<any[]>([]);
   const [title, setTitle] = useState('');
   const [targetDisplay, setTargetDisplay] = useState('');
@@ -38,6 +69,44 @@ export default function DreamPlannerPage() {
   };
 
   useEffect(() => { fetchGoals(); }, []);
+
+  // Rata-rata pemasukan/pengeluaran per periode gajian dari transaksimu sendiri.
+  // Memakai maks. 3 periode gajian yang sudah selesai dan ada datanya; kalau belum ada, memakai periode berjalan.
+  useEffect(() => {
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const { data: prof } = await supabase.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
+      const payday = normalizePayday((prof as any)?.payday);
+      const today = toLocalDateStr(new Date());
+      const current = cycleFor(today, payday);
+      const past = [shiftCycle(today, -1, payday)];
+      past.push(shiftCycle(past[0].start, -1, payday));
+      past.push(shiftCycle(past[1].start, -1, payday));
+      const { data } = await supabase.from('transactions').select('amount, type, transaction_date').gte('transaction_date', past[2].start).lte('transaction_date', current.end);
+      const txs = (data || []) as any[];
+      const sum = (c: { start: string; end: string }) => {
+        let i = 0, e = 0;
+        for (const t of txs) {
+          if (t.transaction_date < c.start || t.transaction_date > c.end) continue;
+          if (t.type === 'income') i += Number(t.amount); else e += Number(t.amount);
+        }
+        return { i, e, has: i > 0 || e > 0 };
+      };
+      let used = past.map(sum).filter(x => x.has);
+      if (used.length === 0) used = [sum(current)].filter(x => x.has);
+      if (used.length === 0) { setCap({ income: 0, expense: 0, months: 0 }); return; }
+      setCap({
+        income: used.reduce((a, x) => a + x.i, 0) / used.length,
+        expense: used.reduce((a, x) => a + x.e, 0) / used.length,
+        months: used.length,
+      });
+    })();
+  }, []);
+
+  const openEstimate = (goal: any) => {
+    setEstimate({ goal, daysLeft: calculateDaysLeft(goal.target_date) });
+  };
 
   const fetchHistory = async (goalId: string) => {
     const { data } = await supabase.from('goal_transactions').select('*').eq('goal_id', goalId).order('created_at', { ascending: false });
@@ -89,58 +158,67 @@ export default function DreamPlannerPage() {
 
   return (
     <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-40 transition-colors">
-      <AppHeader title="Impian" />
+      <AppHeader title="Impian" action={<HeaderBtn onClick={() => setIsModalOpen(true)} />} />
 
-      <main className="max-w-md mx-auto px-5 mt-4 space-y-6">
-        <button onClick={() => setIsModalOpen(true)} className="w-full bg-white dark:bg-gray-800 border-2 border-dashed border-teal-300 dark:border-teal-700 text-teal-600 dark:text-teal-400 font-bold py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-teal-50 dark:hover:bg-gray-700 transition-all shadow-sm">
-          <Plus className="w-5 h-5" /> Tambah Impian Baru
-        </button>
+      <main className="max-w-md mx-auto px-5 mt-4 space-y-4">
+
+        {/* REFERENSI: kemampuan menabung dari uangmu sendiri */}
+        {cap && (
+          <div className="rounded-3xl p-4 bg-teal-500/10 dark:bg-teal-400/10 border border-teal-500/20 dark:border-teal-400/20">
+            <div className="flex items-center gap-2 mb-2">
+              <TrendingUp className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+              <p className="text-[11px] font-extrabold text-teal-800 dark:text-teal-300 uppercase">Kemampuan menabungmu</p>
+            </div>
+            {cap.months === 0 ? (
+              <p className="text-xs text-gray-600 dark:text-gray-300">Belum ada transaksi. Catat pemasukan dan pengeluaranmu dulu supaya saran menabung bisa dihitung dari uangmu sendiri.</p>
+            ) : (
+              <>
+                <p className={`text-2xl font-extrabold ${cap.income - cap.expense >= 0 ? 'text-teal-700 dark:text-teal-300' : 'text-red-500'}`}>{formatRupiah(Math.round(Math.abs(cap.income - cap.expense)))}<span className="text-xs font-bold text-gray-500 dark:text-gray-400"> / periode gajian</span></p>
+                <p className="text-[11px] text-gray-600 dark:text-gray-300 mt-0.5">
+                  {cap.income - cap.expense >= 0 ? 'Rata-rata sisa uangmu tiap periode gajian' : 'Rata-rata pengeluaranmu melebihi pemasukan tiap periode gajian'}, dihitung dari {cap.months} periode gajian transaksimu.
+                </p>
+              </>
+            )}
+          </div>
+        )}
 
         <div className="space-y-4">
           {goals.map(goal => {
-            const percentage = Math.min((goal.current_amount / goal.target_amount) * 100, 100);
+            const percentage = Math.min((Number(goal.current_amount) / Number(goal.target_amount)) * 100, 100);
             const daysLeft = calculateDaysLeft(goal.target_date);
-            
-            const remainingAmount = Math.max(0, goal.target_amount - goal.current_amount);
-            const monthsLeft = daysLeft && daysLeft > 0 ? Math.max(1, Math.ceil(daysLeft / 30)) : 1;
-            const monthlySaving = remainingAmount / monthsLeft;
+            const remainingAmount = Math.max(0, Number(goal.target_amount) - Number(goal.current_amount));
+            const done = remainingAmount <= 0;
 
             return (
-              <div key={goal.id} onClick={() => handleCardClick(goal)} className="bg-white dark:bg-gray-800 p-4 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden cursor-pointer hover:border-teal-300 transition-all">
-                <div className="flex items-center gap-4">
-                  
-                  {/* Ring Progress Bar */}
-                  <div className="relative w-16 h-16 shrink-0">
-                    <svg viewBox="0 0 80 80" className="w-full h-full transform -rotate-90">
-                      <circle cx="40" cy="40" r="33" fill="none" stroke="currentColor" strokeWidth="8" className="text-gray-100 dark:text-gray-700" />
-                      <circle cx="40" cy="40" r="33" fill="none" stroke="currentColor" strokeWidth="8" strokeLinecap="round" strokeDasharray={`${percentage * 2.0735} 207.35`} className={percentage >= 100 ? 'text-green-500' : 'text-teal-500'} />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-[10px] font-bold text-gray-800 dark:text-gray-100">{Math.round(percentage)}%</span>
-                    </div>
+              <div key={goal.id} className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-teal-100 dark:border-teal-900/30 shadow-sm transition-colors">
+                <div className="flex justify-between items-start gap-3 mb-4">
+                  <div className="min-w-0">
+                    {daysLeft !== null && (
+                      <span className="inline-block text-[10px] font-bold px-2.5 py-1 rounded-lg bg-teal-500/10 text-teal-700 dark:text-teal-300">H-{daysLeft < 0 ? 0 : daysLeft}</span>
+                    )}
+                    <h3 className="font-extrabold text-gray-900 dark:text-white text-lg mt-1.5 truncate">{goal.title}</h3>
                   </div>
+                  <button onClick={() => openEstimate(goal)} aria-label="Perkiraan menabung" className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center border transition-all active:scale-95 bg-teal-500/10 border-teal-500/30 text-teal-600"><Info className="w-4 h-4" /></button>
+                </div>
 
-                  {/* Detail Impian */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start mb-1">
-                      <h3 className="font-bold text-gray-800 dark:text-gray-100 text-lg truncate pr-2">{goal.title}</h3>
-                      {daysLeft !== null && (
-                        <span className="text-[9px] font-bold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded-md shrink-0">
-                          H-{daysLeft < 0 ? 0 : daysLeft}
-                        </span>
-                      )}
-                    </div>
-                    <p className="font-bold text-teal-600 dark:text-teal-400 text-sm">{formatRupiah(goal.current_amount)}</p>
-                    <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
-                      {percentage >= 100 ? 'Target Tercapai! 🎉' : `Nabung ${formatRupiah(monthlySaving)}/bln dari ${formatRupiah(goal.target_amount)}`}
-                    </p>
+                <div className="flex items-center gap-4 mb-4">
+                  <ProgressRing percent={percentage} color={done ? '#22c55e' : '#14b8a6'} />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase">Terkumpul</p>
+                    <p className="font-extrabold text-xl text-teal-600 dark:text-teal-400">{formatRupiah(goal.current_amount)}</p>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400">dari {formatRupiah(goal.target_amount)}</p>
+                    <p className="text-xs font-extrabold text-gray-800 dark:text-gray-100 mt-1.5">{done ? 'Target tercapai 🎉' : `Kurang ${formatRupiah(remainingAmount)} lagi`}</p>
+                    {goal.target_date && <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">Target: {formatDateID(goal.target_date)}</p>}
                   </div>
                 </div>
 
-                <div className="flex gap-2 mt-4">
-                  <button onClick={(e) => { e.stopPropagation(); setSelectedGoal(goal); setIsUpdateModalOpen(true); }} className="flex-1 bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 text-xs font-bold py-2 rounded-xl hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-all">Nabung</button>
-                  <button onClick={(e) => { e.stopPropagation(); setSelectedGoal(goal); setIsUpdateModalOpen(true); }} className="flex-1 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-bold py-2 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all">Kepake</button>
-                  <button onClick={(e) => { e.stopPropagation(); handleDeleteGoal(goal.id); }} className="bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 px-3 py-2 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Trash2 className="w-4 h-4" /></button>
+                <div className="grid grid-cols-2 gap-2">
+                  <Btn variant="soft" onClick={() => { setSelectedGoal(goal); setIsUpdateModalOpen(true); }}>Catat Tabungan</Btn>
+                  <Btn variant="soft" onClick={() => handleCardClick(goal)}>Riwayat</Btn>
+                </div>
+
+                <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-end">
+                  <RowActions onDelete={() => handleDeleteGoal(goal.id)} />
                 </div>
               </div>
             );
@@ -153,6 +231,77 @@ export default function DreamPlannerPage() {
           )}
         </div>
       </main>
+
+      {estimate && (() => {
+        const g = estimate.goal;
+        const remaining = Math.max(0, Number(g.target_amount) - Number(g.current_amount));
+        const dl = estimate.daysLeft;
+        const monthsLeft = dl !== null && dl > 0 ? dl / 30.4 : null;
+        const perMonthNeed = monthsLeft ? remaining / Math.max(1, Math.ceil(monthsLeft)) : 0;
+        const perWeekNeed = monthsLeft ? remaining / Math.max(1, Math.ceil(monthsLeft * 4.345)) : 0;
+        const surplus = cap ? cap.income - cap.expense : 0;
+        const monthsAtCapacity = surplus > 0 ? Math.ceil(remaining / surplus) : null;
+        const row = 'flex justify-between gap-3 text-xs py-1.5';
+        return (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative max-h-[85vh] overflow-y-auto transition-colors">
+              <button onClick={() => setEstimate(null)} aria-label="Tutup" className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
+              <h2 className="text-lg font-extrabold text-center text-gray-800 dark:text-white">Perkiraan Menabung</h2>
+              <p className="text-[11px] text-center text-gray-500 dark:text-gray-400 mb-4 truncate">{g.title}</p>
+
+              {remaining <= 0 ? (
+                <p className="text-sm text-center font-bold text-green-600 dark:text-green-400 py-6">Impian ini sudah tercapai 🎉</p>
+              ) : (
+                <div className="space-y-4">
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-4 border border-gray-100 dark:border-gray-600">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase">Kurang</p>
+                    <p className="text-2xl font-extrabold text-teal-600 dark:text-teal-400">{formatRupiah(remaining)}</p>
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Kemampuan menabung (dari transaksimu)</p>
+                    {cap && cap.months > 0 ? (
+                      <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                        <div className={row}><span className="text-gray-600 dark:text-gray-300">Rata-rata masuk / periode gajian</span><span className="font-bold text-green-600 dark:text-green-400">{formatRupiah(Math.round(cap.income))}</span></div>
+                        <div className={row}><span className="text-gray-600 dark:text-gray-300">Rata-rata keluar / periode gajian</span><span className="font-bold text-red-500">{formatRupiah(Math.round(cap.expense))}</span></div>
+                        <div className={row}><span className="font-bold text-gray-800 dark:text-gray-100">Bisa disisihkan / periode gajian</span><span className="font-extrabold text-gray-900 dark:text-white">{surplus >= 0 ? formatRupiah(Math.round(surplus)) : `Minus ${formatRupiah(Math.round(-surplus))}`}</span></div>
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">Belum ada transaksi. Catat pemasukan dan pengeluaranmu dulu supaya perkiraannya mendekati kenyataan.</p>
+                    )}
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1.5 leading-relaxed">Murni dari uangmu sendiri, rata-rata {cap?.months || 0} periode gajian (sesuai tanggal gajianmu). Kalau punya beberapa impian, sisa uang ini dibagi di antara semuanya.</p>
+                  </div>
+
+                  {monthsLeft ? (
+                    <div>
+                      <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Agar tercapai pada {formatDateID(g.target_date)}</p>
+                      <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                        <div className={row}><span className="text-gray-600 dark:text-gray-300">Sisihkan per bulan</span><span className="font-extrabold text-gray-900 dark:text-white">{formatRupiah(Math.ceil(perMonthNeed))}</span></div>
+                        <div className={row}><span className="text-gray-600 dark:text-gray-300">Atau per minggu</span><span className="font-extrabold text-gray-900 dark:text-white">{formatRupiah(Math.ceil(perWeekNeed))}</span></div>
+                      </div>
+                      {cap && cap.months > 0 && (
+                        <p className={`text-[11px] font-bold mt-2 ${surplus >= perMonthNeed ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400'}`}>
+                          {surplus >= perMonthNeed ? 'Dengan kemampuanmu sekarang, impian ini aman tercapai tepat waktu.' : 'Dengan kemampuanmu sekarang, impian ini kemungkinan meleset dari tanggalnya. Coba majukan target waktunya atau kurangi pengeluaran.'}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">{dl !== null ? 'Tanggal target sudah lewat. Pilihan waktu baru:' : 'Pilihan waktu (belum ada tanggal target)'}</p>
+                      <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                        {[3, 6, 12].map((m) => (
+                          <div key={m} className={row}><span className="text-gray-600 dark:text-gray-300">Selesai dalam {m} bulan</span><span className="font-bold text-gray-900 dark:text-white">{formatRupiah(Math.ceil(remaining / m))} / bln</span></div>
+                        ))}
+                      </div>
+                      {monthsAtCapacity && <p className="text-[11px] font-bold mt-2 text-gray-700 dark:text-gray-200">Dengan kemampuanmu sekarang, kira-kira tercapai dalam {monthsAtCapacity} bulan.</p>}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {isDetailOpen && selectedGoal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">

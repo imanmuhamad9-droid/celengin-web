@@ -12,13 +12,12 @@ import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import AppHeader from '@/components/AppHeader';
 import NotificationBell, { LocalNotif } from '@/components/NotificationBell';
-import FeatureShortcuts from '@/components/FeatureShortcuts';
 import AttentionStrip, { AttentionItem } from '@/components/AttentionStrip';
 import PaydayPrompt from '@/components/PaydayPrompt';
 import SectionToggle from '@/components/SectionToggle';
 import { cycleFor, normalizePayday } from '@/lib/cycle';
 import WeeklyChart from '@/components/WeeklyChart';
-import MonthCalendar from '@/components/MonthCalendar';
+import { getRange } from '@/lib/insights';
 import SkeletonLoader from '@/components/SkeletonLoader';
 
 export default function DashboardPage() {
@@ -50,7 +49,8 @@ const [todayStr, setTodayStr] = useState('');
   const [greeting, setGreeting] = useState('Halo');
   const [paydayLater, setPaydayLater] = useState(false);
   const [showRecent, setShowRecent] = useState(false); // Riwayat Terakhir tersembunyi dulu, buka lewat tombol Tampilkan
-  const [showMonth, setShowMonth] = useState(false); // lipatan Kalender + Statistik bulan ini
+  const [showMonth, setShowMonth] = useState(false); // lipatan Statistik
+  const [statsView, setStatsView] = useState<'week' | 'month'>('month');
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [categoryDetails, setCategoryDetails] = useState<any[]>([]);
@@ -184,6 +184,17 @@ const [todayStr, setTodayStr] = useState('');
   const expenseCategories = monthlyTx.filter(t => t.type === 'expense').reduce((acc: any, curr) => { acc[curr.merchant_name] = (acc[curr.merchant_name] || 0) + Number(curr.amount); return acc; }, {});
 
   const totalMonthly = monthlyIncome + monthlyExpense;
+
+  // Statistik bisa dilihat per minggu (Senin-Minggu) atau per bulan/siklus gajian. Logika bulanan tidak berubah.
+  const weekRange = todayStr ? getRange('week', todayStr, payday) : null;
+  const statsTx = statsView === 'week' && weekRange
+    ? transactions.filter(t => t.transaction_date >= weekRange.start && t.transaction_date <= weekRange.end)
+    : monthlyTx;
+  const sIncome = statsTx.filter(t => t.type === 'income').reduce((acc, curr) => acc + Number(curr.amount), 0);
+  const sExpense = statsTx.filter(t => t.type === 'expense').reduce((acc, curr) => acc + Number(curr.amount), 0);
+  const sIncomeCats = statsTx.filter(t => t.type === 'income').reduce((acc: any, curr) => { acc[curr.merchant_name] = (acc[curr.merchant_name] || 0) + Number(curr.amount); return acc; }, {});
+  const sExpenseCats = statsTx.filter(t => t.type === 'expense').reduce((acc: any, curr) => { acc[curr.merchant_name] = (acc[curr.merchant_name] || 0) + Number(curr.amount); return acc; }, {});
+  const sTotal = sIncome + sExpense;
 
   const weeklyData = last7Days.map(date => {
     const dayTx = transactions.filter(t => t.transaction_date === date);
@@ -436,7 +447,6 @@ const currentMonth = calendarMonth;
         </div>
 
         {/* PINTASAN (chip) */}
-        <FeatureShortcuts compact userId={user?.id ?? null} initial={profile?.shortcuts} counts={{ tagihan: dueBills.length }} />
 
         {/* PERLU PERHATIAN (hilang bila kosong) */}
         <AttentionStrip items={attentionItems} />
@@ -452,7 +462,6 @@ const currentMonth = calendarMonth;
             days={weeklyData}
             rangeLabel={last7Days.length > 0 ? `${new Date(last7Days[0] + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} - ${new Date(last7Days[6] + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}` : ''}
           />
-          <button onClick={() => router.push('/reports')} className="mt-2 w-full text-center text-[11px] font-bold text-teal-600 dark:text-teal-400">Lihat laporan lengkap</button>
         </div>
 
         {/* TERAKHIR */}
@@ -462,15 +471,15 @@ const currentMonth = calendarMonth;
           {recentTx.length === 0 ? (
             <p className="text-xs text-gray-400 dark:text-gray-500 py-3 text-center">Belum ada transaksi. Ketuk Catat untuk mulai.</p>
           ) : (
-            <div className="divide-y divide-gray-100 dark:divide-gray-700">
+            <div className="space-y-2">
               {recentTx.map(t => (
-                <button key={t.id} onClick={() => router.push(`/transactions?date=${t.transaction_date}`)} className="w-full flex items-center justify-between py-2.5 text-left">
+                <button key={t.id} onClick={() => router.push(`/transactions?date=${t.transaction_date}`)} className={`w-full flex items-center justify-between px-3.5 py-3 text-left rounded-2xl border active:scale-[0.99] transition-all ${t.type === 'income' ? 'bg-green-50/70 dark:bg-green-900/10 border-green-100 dark:border-green-900/30' : 'bg-red-50/60 dark:bg-red-900/10 border-red-100 dark:border-red-900/30'}`}>
                   <div className="min-w-0 mr-3">
                     <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{t.merchant_name}</p>
                     <p className="text-[10px] text-gray-400">{new Date(t.transaction_date + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</p>
                   </div>
                   <span className={`text-sm font-bold shrink-0 ${t.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
-                    {t.type === 'income' ? '+' : '-'}{formatRupiah(Number(t.amount))}
+                    {formatRupiah(Number(t.amount))}
                   </span>
                 </button>
               ))}
@@ -479,21 +488,17 @@ const currentMonth = calendarMonth;
           <button onClick={() => router.push('/transactions')} className="mt-4 w-full h-11 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold shadow-sm active:scale-[0.98] transition-all flex items-center justify-center gap-1.5">
             Buka Riwayat <ChevronRight className="w-4 h-4" />
           </button>
-          <p className="text-[10px] text-gray-400 dark:text-gray-500 text-center mt-2">Hanya 5 transaksi terakhir yang tampil di sini. Untuk melihat yang lainnya, buka Riwayat.</p>
           </div>)}
         </div>
 
-        {/* LIPATAN: KALENDER + STATISTIK BULAN INI */}
+        {/* LIPATAN: STATISTIK (mingguan / bulanan) */}
         <div className="bg-white dark:bg-gray-800 p-4 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
-          <SectionToggle title="Statistik dan Kalender Bulan Ini" open={showMonth} onToggle={() => setShowMonth(v => !v)} />
-        </div>
-
+          <SectionToggle title="Statistik" open={showMonth} onToggle={() => setShowMonth(v => !v)} />
         {showMonth && (
-          <div className="space-y-4">
-        {/* STATISTIK BULAN/SIKLUS INI */}
-        {totalMonthly > 0 && (() => {
-          const spentPct = monthlyIncome > 0 ? Math.round((monthlyExpense / monthlyIncome) * 100) : null;
-          const net = monthlyIncome - monthlyExpense;
+          <div className="mt-4">
+        {(() => {
+          const spentPct = sIncome > 0 ? Math.round((sExpense / sIncome) * 100) : null;
+          const net = sIncome - sExpense;
           const mood = spentPct === null
             ? { color: '#f59e0b', title: 'Belum ada pemasukan', sub: 'Pengeluaran sudah tercatat, tapi belum ada uang masuk di periode ini.' }
             : spentPct <= 70
@@ -502,15 +507,24 @@ const currentMonth = calendarMonth;
                 ? { color: '#f59e0b', title: 'Hati-hati, hampir habis', sub: `${spentPct}% dari pemasukan sudah terpakai.` }
                 : { color: '#ef4444', title: 'Boncos, lebih besar pasak', sub: `Pengeluaran ${spentPct}% dari pemasukan.` };
           const palette = ['#ef4444', '#f97316', '#f59e0b', '#8b5cf6', '#0ea5e9', '#94a3b8'];
-          const incomeRows = Object.entries(incomeCategories).sort(([, a]: any, [, b]: any) => b - a) as [string, any][];
-          const expenseRows = Object.entries(expenseCategories).sort(([, a]: any, [, b]: any) => b - a) as [string, any][];
+          const incomeRows = Object.entries(sIncomeCats).sort(([, a]: any, [, b]: any) => b - a) as [string, any][];
+          const expenseRows = Object.entries(sExpenseCats).sort(([, a]: any, [, b]: any) => b - a) as [string, any][];
           return (
-            <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
+            <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
               <div className="mb-4">
-                <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100">{payday > 1 ? 'Statistik Siklus Ini' : 'Statistik Bulan Ini'}</h3>
-                {payday > 1 && cycle && <p className="text-[10px] text-gray-400 dark:text-gray-500">{cycle.label}</p>}
+                <div className="flex p-1 rounded-2xl bg-teal-500/10 border border-teal-500/20">
+                  <button onClick={() => setStatsView('week')} className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition-all active:scale-95 ${statsView === 'week' ? 'bg-teal-600 text-white shadow-sm' : 'text-gray-600 dark:text-gray-300'}`}>Mingguan</button>
+                  <button onClick={() => setStatsView('month')} className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition-all active:scale-95 ${statsView === 'month' ? 'bg-teal-600 text-white shadow-sm' : 'text-gray-600 dark:text-gray-300'}`}>{payday > 1 ? 'Siklus Gajian' : 'Bulanan'}</button>
+                </div>
+                <p className="text-[10px] text-gray-400 dark:text-gray-500 text-center mt-2">
+                  {statsView === 'week' && weekRange ? `Minggu ini: ${weekRange.label}` : payday > 1 && cycle ? cycle.label : 'Bulan ini'}
+                </p>
               </div>
 
+              {sTotal === 0 && (
+                <p className="text-xs text-gray-400 dark:text-gray-500 text-center py-8">{statsView === 'week' ? 'Belum ada transaksi minggu ini.' : 'Belum ada transaksi di periode ini.'}</p>
+              )}
+              {sTotal > 0 && (<>
               {/* Ringkasan: satu kalimat + satu bar */}
               <div className="rounded-2xl p-4 mb-4" style={{ backgroundColor: mood.color + '1a' }}>
                 <p className="text-sm font-extrabold" style={{ color: mood.color }}>{mood.title}</p>
@@ -519,14 +533,17 @@ const currentMonth = calendarMonth;
                   <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(spentPct ?? 100, 100)}%`, backgroundColor: mood.color }}></div>
                 </div>
                 <div className="flex justify-between text-[10px] text-gray-500 dark:text-gray-400 mt-1.5">
-                  <span>Terpakai</span><span>Pemasukan {formatRupiah(monthlyIncome)}</span>
+                  <span>Terpakai</span><span>Pemasukan {formatRupiah(sIncome)}</span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 mb-5">
-                <div className="rounded-xl bg-green-50 dark:bg-green-900/20 px-3 py-2"><p className="text-[10px] text-gray-500 dark:text-gray-400">Masuk</p><p className="text-xs font-bold text-green-600 dark:text-green-400">{formatRupiah(monthlyIncome)}</p></div>
-                <div className="rounded-xl bg-red-50 dark:bg-red-900/20 px-3 py-2"><p className="text-[10px] text-gray-500 dark:text-gray-400">Keluar</p><p className="text-xs font-bold text-red-500 dark:text-red-400">{formatRupiah(monthlyExpense)}</p></div>
-                <div className="rounded-xl bg-gray-50 dark:bg-gray-700/50 px-3 py-2"><p className="text-[10px] text-gray-500 dark:text-gray-400">{net >= 0 ? 'Sisa' : 'Kurang'}</p><p className="text-xs font-bold" style={{ color: net >= 0 ? '#0d9488' : '#ef4444' }}>{formatRupiah(Math.abs(net))}</p></div>
+              <div className="grid grid-cols-2 gap-2 mb-2">
+                <div className="rounded-xl bg-green-50 dark:bg-green-900/20 px-3 py-2.5"><p className="text-[10px] text-gray-500 dark:text-gray-400">Masuk</p><p className="text-sm font-extrabold text-green-600 dark:text-green-400">{formatRupiah(sIncome)}</p></div>
+                <div className="rounded-xl bg-red-50 dark:bg-red-900/20 px-3 py-2.5"><p className="text-[10px] text-gray-500 dark:text-gray-400">Keluar</p><p className="text-sm font-extrabold text-red-500 dark:text-red-400">{formatRupiah(sExpense)}</p></div>
+              </div>
+              <div className="rounded-xl bg-gray-50 dark:bg-gray-700/50 px-3 py-2.5 mb-5 flex items-center justify-between">
+                <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400">{net >= 0 ? 'Sisa' : 'Kurang'}</p>
+                <p className="text-sm font-extrabold" style={{ color: net >= 0 ? '#0d9488' : '#ef4444' }}>{formatRupiah(Math.abs(net))}</p>
               </div>
 
               {expenseRows.length > 0 && (
@@ -534,15 +551,16 @@ const currentMonth = calendarMonth;
                   <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-2">Uangmu habis buat apa?</p>
                   <div className="space-y-3">
                     {expenseRows.map(([name, amount], i) => {
-                      const pct = monthlyExpense > 0 ? Math.round((Number(amount) / monthlyExpense) * 100) : 0;
+                      const pct = sExpense > 0 ? Math.round((Number(amount) / sExpense) * 100) : 0;
                       const color = palette[Math.min(i, palette.length - 1)];
                       return (
                         <div key={name} onClick={() => handleCategoryClick(name)} className="cursor-pointer">
-                          <div className="flex justify-between items-baseline text-xs mb-1">
-                            <span className={`truncate mr-2 ${i === 0 ? 'font-bold text-gray-800 dark:text-gray-100' : 'text-gray-600 dark:text-gray-300'}`}>{i === 0 ? '🔥 ' : ''}{name}</span>
-                            <span className="shrink-0"><span className="font-semibold text-gray-800 dark:text-gray-100">{formatRupiah(Number(amount))}</span> <span className="font-bold text-gray-500 dark:text-gray-400">{pct}%</span></span>
+                          <div className="flex items-center justify-between gap-2 mb-1.5">
+                            <span className={`truncate text-sm ${i === 0 ? 'font-extrabold text-gray-800 dark:text-gray-100' : 'font-semibold text-gray-700 dark:text-gray-200'}`}>{i === 0 ? '🔥 ' : ''}{name}</span>
+                            <span className="shrink-0 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold text-white" style={{ backgroundColor: color }}>{pct}%</span>
                           </div>
                           <div className="w-full h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden"><div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.max(pct, 2)}%`, backgroundColor: color }}></div></div>
+                          <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mt-1">{formatRupiah(Number(amount))}</p>
                         </div>
                       );
                     })}
@@ -555,33 +573,28 @@ const currentMonth = calendarMonth;
                   <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-2">Uang datang dari mana?</p>
                   <div className="space-y-3">
                     {incomeRows.map(([name, amount]) => {
-                      const pct = monthlyIncome > 0 ? Math.round((Number(amount) / monthlyIncome) * 100) : 0;
+                      const pct = sIncome > 0 ? Math.round((Number(amount) / sIncome) * 100) : 0;
                       return (
                         <div key={name} onClick={() => handleCategoryClick(name)} className="cursor-pointer">
-                          <div className="flex justify-between items-baseline text-xs mb-1">
-                            <span className="truncate mr-2 text-gray-600 dark:text-gray-300">{name}</span>
-                            <span className="shrink-0"><span className="font-semibold text-gray-800 dark:text-gray-100">{formatRupiah(Number(amount))}</span> <span className="font-bold text-green-600 dark:text-green-400">{pct}%</span></span>
+                          <div className="flex items-center justify-between gap-2 mb-1.5">
+                            <span className="truncate text-sm font-semibold text-gray-700 dark:text-gray-200">{name}</span>
+                            <span className="shrink-0 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold text-white bg-green-500">{pct}%</span>
                           </div>
                           <div className="w-full h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden"><div className="h-full rounded-full bg-green-500 transition-all duration-500" style={{ width: `${Math.max(pct, 2)}%` }}></div></div>
+                          <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mt-1">{formatRupiah(Number(amount))}</p>
                         </div>
                       );
                     })}
                   </div>
                 </div>
               )}
+              </>)}
             </div>
           );
         })()}
-
-            <MonthCalendar
-              transactions={transactions}
-              bills={bills}
-              todayStr={todayStr}
-              onOpenHistory={(d) => router.push(`/transactions?date=${d}`)}
-              onAddOnDate={(d) => { setTxType('expense'); setTxDate(d); setIsTxModalOpen(true); }}
-            />
           </div>
         )}
+        </div>
 
       </main>
 

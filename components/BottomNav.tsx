@@ -11,15 +11,16 @@ type Item =
   | { key: string; label: string; href: string; img: string; also?: string[] }
   | { key: 'catat'; label: string; action: 'catat' };
 
-// Bar melayang berisi 5 menu utama. Di sub menu (Riwayat, Laporan, Tagihan, dst.) bar mengecil jadi tombol burger
+// Bar melayang berisi menu utama. Di halaman lain (Pengaturan, Pencapaian, dst.) bar mengecil jadi tombol burger
 // di pojok kanan bawah; kalau diketuk, 5 menu utama yang sama melebar ke kiri. Sub menu dibuka dari Home -> "Semua".
 const ITEMS: Item[] = [
-  { key: 'home', label: 'Home', href: '/dashboard', img: '/icon-home.png' },
-  { key: 'target', label: 'Tantangan', href: '/spending-challenge', img: '/icon-target.png' },
-  { key: 'catat', label: 'Catat', action: 'catat' },
-  { key: 'impian', label: 'Impian', href: '/dream-planner', img: '/icon-dream.png' },
-  // Bareng mencakup Nabung Bareng (/couple) dan Patungan & Bayarin (/splitbill, /gantian)
-  { key: 'bareng', label: 'Bareng', href: '/couple', img: '/icon-couple.png', also: ['/splitbill', '/gantian'] },
+  { key: 'home', label: 'Home', href: '/dashboard', img: '/nav-icons/home.png' },
+  { key: 'target', label: 'Tantangan', href: '/spending-challenge', img: '/nav-icons/tantangan.png' },
+  { key: 'impian', label: 'Impian', href: '/dream-planner', img: '/nav-icons/impian.png' },
+  // Kolektif mencakup tiga tab: Nabung Bareng (/couple), Patungan (/splitbill), Bayarin (/gantian)
+  { key: 'bareng', label: 'Kolektif', href: '/couple', img: '/nav-icons/kolektif.png', also: ['/splitbill', '/gantian'] },
+  // Laporan mencakup tiga tab: Tagihan, Riwayat, Laporan
+  { key: 'laporan', label: 'Laporan', href: '/reports', img: '/menu-icons/laporan.png', also: ['/transactions', '/bills'] },
 ];
 
 // Posisi sorotan terakhir. Setiap halaman memasang BottomNav sendiri, jadi posisi ini disimpan di level modul
@@ -134,7 +135,8 @@ export default function BottomNav() {
     }
   };
 
-  const isMain = ITEMS.some((it) => matches(pathname, it));
+  // Bar menu selalu tampil di semua halaman (termasuk Pengaturan) supaya mudah kembali; sorotan hanya muncul di menu utama.
+  const isMain = true;
   const bottomStyle: React.CSSProperties = { bottom: 'calc(env(safe-area-inset-bottom, 0px) + 14px)' };
 
   const renderItem = (item: Item) => {
@@ -165,7 +167,7 @@ export default function BottomNav() {
         aria-current={active ? 'page' : undefined}
         className="relative z-10 flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-full active:scale-95 transition-transform"
       >
-        <img src={item.img} alt="" className={`w-6 h-6 object-contain transition-all duration-300 ${active ? '' : 'grayscale opacity-60'}`} />
+        <img src={item.img} alt="" className={`w-7 h-7 object-contain transition-all duration-300 ${active ? '' : 'grayscale opacity-60'}`} />
         <span className={`text-[10px] font-bold transition-colors duration-300 ${active ? 'text-teal-700 dark:text-teal-300' : 'text-gray-500 dark:text-gray-400'}`}>{item.label}</span>
         {showDot && (
           <span className="absolute top-0.5 right-2 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center border-2 border-white dark:border-gray-900">
@@ -175,6 +177,18 @@ export default function BottomNav() {
       </button>
     );
   };
+
+  // Catat: gelembung tersendiri di pojok paling kanan, terpisah dari bar menu
+  const catatBubble = (
+    <button
+      onClick={() => { setOpen(false); setIsModalOpen(true); }}
+      aria-label="Catat transaksi"
+      className="shrink-0 w-14 h-14 rounded-full bg-teal-600 text-white flex flex-col items-center justify-center shadow-lg shadow-teal-900/30 border-2 border-white/70 dark:border-white/10 active:scale-95 transition-transform"
+    >
+      <Plus className="w-5 h-5" />
+      <span className="text-[9px] font-extrabold leading-none mt-0.5">Catat</span>
+    </button>
+  );
 
   const glass = 'bg-white/65 dark:bg-gray-900/65 backdrop-blur-xl border border-white/60 dark:border-white/10 shadow-lg shadow-black/10';
 
@@ -201,8 +215,9 @@ export default function BottomNav() {
       {isMain ? (
         // Menu utama: bar melayang selalu terlihat
         !isModalOpen && (
-          <nav aria-label="Menu utama" style={bottomStyle} className="fixed left-1/2 -translate-x-1/2 z-[56] w-[calc(100%-32px)] max-w-[380px]">
-            {renderBar('')}
+          <nav aria-label="Menu utama" style={bottomStyle} className="fixed left-1/2 -translate-x-1/2 z-[56] w-[calc(100%-24px)] max-w-[400px] flex items-center gap-2">
+            <div className="min-w-0 flex-1">{renderBar('')}</div>
+            {catatBubble}
           </nav>
         )
       ) : (
@@ -215,7 +230,10 @@ export default function BottomNav() {
                 aria-hidden={!open}
                 className={`min-w-0 flex-1 origin-right transition-all duration-300 ease-out ${open ? 'opacity-100 scale-x-100 pointer-events-auto' : 'opacity-0 scale-x-50 pointer-events-none'}`}
               >
-                {renderBar('w-[300px] max-w-full')}
+                <div className="flex items-center gap-2">
+                  <div className="min-w-0 flex-1">{renderBar('w-[300px] max-w-full')}</div>
+                  {catatBubble}
+                </div>
               </div>
               <button
                 onClick={() => setOpen((v) => !v)}

@@ -219,11 +219,12 @@ export default function ReportsPage() {
                       const pct = cur.expense > 0 ? (c.amount / cur.expense) * 100 : 0;
                       return (
                         <div key={c.name}>
-                          <div className="flex justify-between text-xs mb-1">
-                            <span className={`truncate mr-2 ${i === 0 ? 'text-red-600 dark:text-red-400 font-bold' : 'text-gray-600 dark:text-gray-300'}`}>{c.name}</span>
-                            <span className="shrink-0"><span className="font-semibold text-gray-800 dark:text-gray-100 mr-2">{formatRupiah(c.amount)}</span><span className="font-bold text-gray-500 dark:text-gray-400">{Math.round(pct)}%</span></span>
+                          <div className="flex items-center justify-between gap-2 mb-1.5">
+                            <span className={`truncate text-sm ${i === 0 ? 'text-red-600 dark:text-red-400 font-extrabold' : 'text-gray-700 dark:text-gray-200 font-semibold'}`}>{c.name}</span>
+                            <span className="shrink-0 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold text-white bg-red-500">{Math.round(pct)}%</span>
                           </div>
                           <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2 overflow-hidden"><div className="h-2 rounded-full bg-red-500" style={{ width: `${pct}%` }}></div></div>
+                          <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mt-1">{formatRupiah(c.amount)}</p>
                         </div>
                       );
                     })}
@@ -238,11 +239,12 @@ export default function ReportsPage() {
                       const pct = cur.income > 0 ? (c.amount / cur.income) * 100 : 0;
                       return (
                         <div key={c.name}>
-                          <div className="flex justify-between text-xs mb-1">
-                            <span className="text-gray-600 dark:text-gray-300 truncate mr-2">{c.name}</span>
-                            <span className="shrink-0"><span className="font-semibold text-gray-800 dark:text-gray-100 mr-2">{formatRupiah(c.amount)}</span><span className="font-bold text-gray-500 dark:text-gray-400">{Math.round(pct)}%</span></span>
+                          <div className="flex items-center justify-between gap-2 mb-1.5">
+                            <span className="truncate text-sm font-semibold text-gray-700 dark:text-gray-200">{c.name}</span>
+                            <span className="shrink-0 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold text-white bg-green-500">{Math.round(pct)}%</span>
                           </div>
                           <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2 overflow-hidden"><div className="h-2 rounded-full bg-green-500" style={{ width: `${pct}%` }}></div></div>
+                          <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mt-1">{formatRupiah(c.amount)}</p>
                         </div>
                       );
                     })}

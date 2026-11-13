@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import DateField from '@/components/DateField';
+import { Toggle } from '@/components/ui';
 import { X, ArrowDownCircle, ArrowUpCircle, Check, Repeat } from 'lucide-react';
 import { formatDateID } from '@/lib/utils';
 import { Frequency, describeFrequency } from '@/lib/recurring';
@@ -167,9 +168,7 @@ export default function EditTransactionModal({ isOpen, onClose, onSuccess, showD
             
             <div className="flex items-center gap-2 mt-4">
               <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400">Rutin</span>
-              <button type="button" onClick={() => setIsRoutine(!isRoutine)} className={`w-9 h-5 rounded-full transition-colors relative shrink-0 ${isRoutine ? 'bg-teal-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
-                <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${isRoutine ? 'left-4.5' : 'left-0.5'}`}></div>
-              </button>
+              <Toggle checked={isRoutine} onChange={setIsRoutine} label="Transaksi rutin" onText="Ya" offText="Tidak" />
             </div>
           </div>
 

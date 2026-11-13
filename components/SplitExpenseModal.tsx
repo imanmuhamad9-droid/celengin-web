@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
-import { X, Plus, Trash2, Receipt, Calculator } from 'lucide-react';
+import { X, Plus, Receipt, Calculator } from 'lucide-react';
+import { Btn } from '@/components/ui';
 import { supabase } from '@/lib/supabaseClient';
 import { formatRupiah, parseRupiahInput, toLocalDateStr } from '@/lib/utils';
 import { splitEqual } from '@/lib/splitbill';
@@ -294,7 +295,7 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
                       <div key={it.key} className={`rounded-2xl border p-3 space-y-2.5 ${it.memberIds.length === 0 && (it.name || it.priceRaw) ? 'border-yellow-300 dark:border-yellow-700 bg-yellow-50/40 dark:bg-yellow-900/10' : 'border-gray-100 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-700/30'}`}>
                         <div className="flex gap-2">
                           <input value={it.name} onChange={(e) => updateItem(it.key, { name: e.target.value })} placeholder={`Item ${idx + 1} (cth: Nasi goreng)`} className={`${inputCls} flex-1`} />
-                          {items.length > 1 && <button type="button" onClick={() => setItems((p) => p.filter((x) => x.key !== it.key))} className="h-11 w-11 shrink-0 flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-900/30 text-red-400 hover:text-red-600" aria-label="Hapus item"><Trash2 className="w-4 h-4" /></button>}
+                          {items.length > 1 && <Btn variant="danger" className="h-11 shrink-0" onClick={() => setItems((p) => p.filter((x) => x.key !== it.key))}>Hapus</Btn>}
                         </div>
                         <div className="flex gap-2">
                           <div className="w-20 shrink-0">

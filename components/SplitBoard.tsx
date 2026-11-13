@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Plus, X, Trash2, UserPlus, ArrowRight, Receipt, Copy, CreditCard, Pencil, Mail, Check, ChevronDown, ChevronUp, UserCheck, MessageCircle, Info } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
-import { formatRupiah, formatDateID, parseRupiahInput, toLocalDateStr } from '@/lib/utils';
+import { formatRupiah, formatDateID, parseRupiahInput, toLocalDateStr, digitsOnly, noDigits } from '@/lib/utils';
 import { computeNet, simplifyDebts } from '@/lib/splitbill';
 import { pushInviteNow } from '@/lib/notifications';
 import { BANKS, SplitGroup, SplitMember, SplitExpense, SplitSettlement } from '@/lib/splitTypes';
@@ -13,7 +13,8 @@ import { buildExpenseMessage, buildPersonMessage, buildDebtSummaryMessage, build
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import AppHeader from '@/components/AppHeader';
-import SubTabs, { BARENG_TABS, PATUNGAN_TABS } from '@/components/SubTabs';
+import SubTabs, { BARENG_TABS } from '@/components/SubTabs';
+import { Btn, HeaderBtn } from '@/components/ui';
 import SkeletonLoader from '@/components/SkeletonLoader';
 
 interface GroupCard extends SplitGroup { memberCount: number; total: number }
@@ -477,22 +478,17 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
     <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-40 transition-colors">
       <AppHeader
         z="z-40"
-        title={group ? (isRunning ? group.name : `${group.emoji} ${group.name}`) : L.title}
+        title={group ? group.name : 'Kolektif'}
+        infoKey={group ? undefined : (isRunning ? 'Bayarin' : 'Patungan')}
         onBack={group ? goBack : undefined}
-        action={<>
-          {!group && isRunning && introHidden && <button onClick={showIntro} className="text-gray-400 hover:text-teal-600" aria-label="Menu ini untuk apa?"><Info className="w-5 h-5" /></button>}
-          {group && isOwner && <button onClick={handleDeleteGroup} className="text-gray-400 hover:text-red-500" aria-label="Hapus grup"><Trash2 className="w-5 h-5" /></button>}
-        </>}
+        action={group
+          ? (isOwner ? <Btn variant="danger" size="sm" onClick={handleDeleteGroup}>Hapus</Btn> : undefined)
+          : <HeaderBtn onClick={openNewGroup} />}
       />
 
       <main className="px-5 mt-4 space-y-4">
-        {/* Di daftar (bukan di dalam sebuah grup): tab Bareng + pilihan Patungan / Bayarin */}
-        {!group && (
-          <div className="space-y-3">
-            <SubTabs items={BARENG_TABS} />
-            <SubTabs items={PATUNGAN_TABS} size="sub" />
-          </div>
-        )}
+        {/* Di daftar (bukan di dalam sebuah grup): tiga pilihan Kolektif */}
+        {!group && <SubTabs items={BARENG_TABS} />}
         {missingTable && (
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-4 rounded-2xl text-xs text-yellow-800 dark:text-yellow-300">
             Database {L.menu} belum siap. Jalankan <strong>{L.sqlFile}</strong> (versi terbaru) di Supabase SQL Editor, lalu muat ulang halaman ini.
@@ -508,7 +504,6 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                 {invites.map((inv) => (
                   <div key={inv.memberId} className="bg-white dark:bg-gray-800 border border-teal-200 dark:border-teal-800 p-4 rounded-2xl">
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center text-xl shrink-0">{isRunning ? <img src="/menu-icons/gantian.png" alt="" className="w-9 h-9 object-contain" /> : inv.group.emoji}</div>
                       <div className="min-w-0"><p className="text-[11px] text-gray-500 dark:text-gray-400">{L.inviteLabel}</p><p className="font-bold text-sm text-gray-800 dark:text-white truncate">{inv.group.name}</p></div>
                     </div>
                     <div className="flex gap-2">
@@ -520,30 +515,6 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
               </div>
             )}
 
-            {isRunning ? (
-              !introHidden && (
-                <div className="relative bg-teal-50 dark:bg-teal-900/20 border border-teal-100 dark:border-teal-800 rounded-2xl p-4">
-                  <button onClick={hideIntro} aria-label="Sembunyikan" className="absolute top-3 right-3 text-teal-600/60 hover:text-teal-700 dark:text-teal-300/60"><X className="w-4 h-4" /></button>
-                  <p className="text-xs font-bold text-teal-800 dark:text-teal-300 mb-1 pr-6">Bayarin: untuk apa menu ini?</p>
-                  <p className="text-[11px] text-teal-700/80 dark:text-teal-400/80 leading-relaxed mb-2">Untuk adik, teman, atau pasangan yang sering saling membayarkan dan baru hitung-hitungan belakangan. Catat siapa yang bayar dan untuk siapa. Saldonya otomatis saling mengurangi, jadi tinggal satu angka: siapa bayar ke siapa.</p>
-                  <ul className="text-[11px] text-teal-700/80 dark:text-teal-400/80 leading-relaxed space-y-1 list-disc pl-4">
-                    <li>Catat satu barang, atau banyak barang dari satu struk (bisa scan struk).</li>
-                    <li>Sudah bayar? Tekan Lunas, atau Bayar sebagian. Semuanya tercatat di riwayat lengkap dengan tanggalnya.</li>
-                    <li>Berdiri sendiri: tidak mengubah transaksi atau saldo dompet.</li>
-                  </ul>
-                  <button onClick={hideIntro} className="mt-3 text-[11px] font-bold text-teal-700 dark:text-teal-300 underline underline-offset-2">Mengerti, sembunyikan</button>
-                  <p className="text-[10px] text-teal-700/60 dark:text-teal-400/60 mt-1">Bisa dibuka lagi lewat ikon ⓘ di pojok atas.</p>
-                </div>
-              )
-            ) : (
-            <div className="bg-teal-50 dark:bg-teal-900/20 border border-teal-100 dark:border-teal-800 rounded-2xl p-4">
-                <p className="text-xs font-bold text-teal-800 dark:text-teal-300 mb-1">Patungan tanpa ribet</p>
-                <p className="text-[11px] text-teal-700/80 dark:text-teal-400/80 leading-relaxed">Foto struk dalam bentuk daftar: isi tiap pesanan, pajak, dan diskon, lalu pilih siapa memakai apa. Celengin menghitung bagian tiap orang dan siapa harus transfer ke siapa. Teman bisa ditulis namanya saja, atau diundang lewat email agar melihat grup yang sama dari akunnya.</p>
-              </div>
-            )}
-
-            <button onClick={openNewGroup} className="w-full bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-all"><Plus className="w-5 h-5" /> {L.create}</button>
-
             {cards.length === 0 && invites.length === 0 ? (
               <div className="bg-white dark:bg-gray-800 rounded-3xl p-10 text-center border border-gray-100 dark:border-gray-700 shadow-sm">
                 <Receipt className="w-12 h-12 text-gray-200 dark:text-gray-600 mx-auto mb-3" />
@@ -551,7 +522,6 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
               </div>
             ) : cards.map((c) => (
               <button key={c.id} onClick={() => { setTab('ringkasan'); loadGroup(c); }} className="w-full text-left bg-white dark:bg-gray-800 p-4 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center gap-3 transition-colors active:scale-[0.99]">
-                <div className="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center text-2xl shrink-0">{isRunning ? <img src="/menu-icons/gantian.png" alt="" className="w-11 h-11 object-contain" /> : c.emoji}</div>
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-gray-800 dark:text-gray-100 truncate">{c.name}</p>
                   <p className="text-[11px] text-gray-500 dark:text-gray-400">{c.memberCount} orang · total {formatRupiah(c.total)}</p>
@@ -736,7 +706,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                             </div>
                           </div>
                           <button onClick={() => openExpenseWa(x)} className="w-full text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-900/30 text-xs font-bold py-2 rounded-lg flex items-center justify-center gap-1.5"><MessageCircle className="w-3.5 h-3.5" /> Kirim ke WhatsApp</button>
-                          {canDelete && <button onClick={() => handleDeleteExpense(x)} className="w-full text-red-500 bg-red-50 dark:bg-red-900/20 text-xs font-bold py-2 rounded-lg flex items-center justify-center gap-1.5"><Trash2 className="w-3.5 h-3.5" /> {L.delExp}</button>}
+                          {canDelete && <Btn variant="danger" size="sm" full onClick={() => handleDeleteExpense(x)}>{L.delExp}</Btn>}
                         </div>
                       )}
                     </div>
@@ -761,8 +731,8 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                         </div>
                         {m.phone && <p className="text-[10px] text-gray-400 mt-1">WhatsApp: {m.phone}</p>}
                       </div>
-                      {(isOwner || isMine(m)) && <button onClick={() => openBank(m)} className="shrink-0 p-2 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-500 hover:text-teal-600" aria-label="Ubah info rekening"><Pencil className="w-3.5 h-3.5" /></button>}
-                      {isOwner && m.user_id !== group.user_id && <button onClick={() => handleDeleteMember(m)} className="shrink-0 p-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-400 hover:text-red-500" aria-label={m.status === 'pending' ? 'Batalkan undangan' : 'Keluarkan anggota'}><Trash2 className="w-3.5 h-3.5" /></button>}
+                      {(isOwner || isMine(m)) && <Btn variant="soft" size="sm" className="shrink-0" onClick={() => openBank(m)}>Rekening</Btn>}
+                      {isOwner && m.user_id !== group.user_id && <Btn variant="danger" size="sm" className="shrink-0" onClick={() => handleDeleteMember(m)}>{m.status === 'pending' ? 'Batalkan' : 'Keluarkan'}</Btn>}
                     </div>
                     <BankLine m={m} />
                   </div>
@@ -773,7 +743,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                 <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-3">
                   <p className="text-xs font-bold text-gray-800 dark:text-gray-100">Tambah teman</p>
                   <div className="flex gap-2">
-                    <input value={newMember} onChange={(e) => setNewMember(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddMember(); } }} placeholder="Nama teman (tanpa akun)" className={inputCls} />
+                    <input value={newMember} onChange={(e) => setNewMember(noDigits(e.target.value))} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddMember(); } }} placeholder="Nama teman (tanpa akun)" className={inputCls} />
                     <button onClick={handleAddMember} className="bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 w-11 h-11 rounded-xl shrink-0 flex items-center justify-center" aria-label="Tambah"><Plus className="w-5 h-5" /></button>
                   </div>
                   <button onClick={() => setIsInviteOpen(true)} className="w-full h-11 rounded-xl border-2 border-dashed border-teal-300 dark:border-teal-700 text-teal-600 dark:text-teal-400 text-xs font-bold flex items-center justify-center gap-1.5"><UserPlus className="w-4 h-4" /> Undang pengguna Celengin (lewat email)</button>
@@ -795,14 +765,6 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">{L.nameLabel}</label>
                 <input value={gName} onChange={(e) => setGName(e.target.value)} placeholder={L.namePh} className={inputCls} />
               </div>
-              {!isRunning && <div>
-                <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Ikon</label>
-                <div className="flex flex-wrap gap-2">
-                  {(isRunning ? EMOJIS_RUNNING : EMOJIS).map((em) => (
-                    <button type="button" key={em} onClick={() => setGEmoji(em)} className={`w-10 h-10 rounded-xl text-xl border-2 ${gEmoji === em ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30' : 'border-gray-100 dark:border-gray-700'}`}>{em}</button>
-                  ))}
-                </div>
-              </div>}
               <div>
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">{L.friends}</label>
                 <div className="flex flex-wrap gap-1.5 mb-2">
@@ -818,7 +780,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                   <button type="button" onClick={() => { setGInviteMode(true); setGMemberInput(''); }} className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold ${gInviteMode ? 'bg-white dark:bg-gray-600 text-teal-700 dark:text-teal-300 shadow-sm' : 'text-gray-500 dark:text-gray-300'}`}>Undang pengguna (email)</button>
                 </div>
                 <div className="flex gap-2">
-                  <input type={gInviteMode ? 'email' : 'text'} value={gMemberInput} onChange={(e) => setGMemberInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addGroupMemberChip(); } }} placeholder={gInviteMode ? 'email@contoh.com' : 'Nama teman'} className={inputCls} />
+                  <input type={gInviteMode ? 'email' : 'text'} value={gMemberInput} onChange={(e) => setGMemberInput(gInviteMode ? e.target.value : noDigits(e.target.value))} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addGroupMemberChip(); } }} placeholder={gInviteMode ? 'email@contoh.com' : 'Nama teman'} className={inputCls} />
                   <button type="button" onClick={() => addGroupMemberChip()} disabled={gAdding} className="bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 w-11 h-11 rounded-xl shrink-0 flex items-center justify-center disabled:opacity-50"><Plus className="w-5 h-5" /></button>
                 </div>
                 <p className="text-[10px] text-gray-400 mt-1.5">{gInviteMode ? `Pengguna yang diundang melihat ${L.entity} ini dari akunnya setelah menerima.` : 'Teman tidak perlu punya akun, cukup ditulis namanya.'} Bisa ditambah lagi nanti di tab Anggota.</p>
@@ -841,9 +803,9 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                 <option value="">Pilih Bank / E-Wallet</option>
                 {BANKS.map((b) => <option key={b} value={b}>{b}</option>)}
               </select>
-              <input inputMode="numeric" value={bankNumber} onChange={(e) => setBankNumber(e.target.value)} placeholder="Nomor rekening / nomor HP" className={inputCls} />
-              <input value={bankHolder} onChange={(e) => setBankHolder(e.target.value)} placeholder="Nama pemilik rekening" className={inputCls} />
-              <input type="tel" inputMode="tel" value={bankPhone} onChange={(e) => setBankPhone(e.target.value)} placeholder="Nomor WhatsApp (opsional), cth 0812..." className={inputCls} />
+              <input inputMode="numeric" value={bankNumber} onChange={(e) => setBankNumber(digitsOnly(e.target.value))} placeholder="Nomor rekening / nomor HP" className={inputCls} />
+              <input value={bankHolder} onChange={(e) => setBankHolder(noDigits(e.target.value))} placeholder="Nama pemilik rekening" className={inputCls} />
+              <input type="tel" inputMode="tel" value={bankPhone} onChange={(e) => setBankPhone(digitsOnly(e.target.value))} placeholder="Nomor WhatsApp (opsional), cth 0812..." className={inputCls} />
               <p className="text-[10px] text-gray-400">Rekening dipakai agar yang berutang langsung tahu harus transfer ke mana. Nomor WhatsApp membuat tombol Kirim ke WhatsApp langsung membuka chat orang ini.</p>
               <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-xl transition-all">Simpan</button>
             </form>

@@ -1,4 +1,5 @@
 'use client';
+import { Toggle } from '@/components/ui';
 import { useEffect, useState } from 'react';
 import { Bell, Download, Send, Smartphone } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
@@ -157,13 +158,12 @@ export default function PushSettingsCard({ showDialog }: { showDialog: ShowDialo
             </p>
           </div>
         </div>
-        <button
+        <Toggle
+          checked={subscribed}
           disabled={busy || !supported || iosNeedsInstall || permission === 'denied'}
-          onClick={subscribed ? disable : enable}
-          className={`w-12 h-6 rounded-full transition-colors relative shrink-0 disabled:opacity-40 ${subscribed ? 'bg-teal-500' : 'bg-gray-300 dark:bg-gray-600'}`}
-        >
-          <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${subscribed ? 'left-7' : 'left-1'}`}></div>
-        </button>
+          onChange={(v) => { if (v) enable(); else disable(); }}
+          label="Notifikasi di perangkat ini"
+        />
       </div>
 
       {iosNeedsInstall && (
