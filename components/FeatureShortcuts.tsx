@@ -18,7 +18,7 @@ type Props = {
 };
 
 // Semua ikon memakai satu warna yang sama
-const TILE = 'bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400';
+const TILE = 'text-teal-600 dark:text-teal-400';
 
 export default function FeatureShortcuts({ userId, initial, counts = {}, compact = false }: Props) {
   const router = useRouter();
@@ -75,7 +75,7 @@ export default function FeatureShortcuts({ userId, initial, counts = {}, compact
     return (
       <button key={k} onClick={onClick} className="flex flex-col items-center gap-1.5 active:scale-95 transition-transform min-w-0">
         <div className={`relative w-12 h-12 rounded-2xl flex items-center justify-center ${TILE}`}>
-          <s.Icon className="w-5 h-5" />
+          <img src={s.img} alt="" draggable={false} className="w-12 h-12 object-contain" />
           {count > 0 && <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{count}</span>}
         </div>
         <span className="text-[10px] font-bold text-gray-600 dark:text-gray-300 truncate max-w-full">{s.label}</span>
@@ -87,21 +87,30 @@ export default function FeatureShortcuts({ userId, initial, counts = {}, compact
     <>
       {/* DI HOME: favorit + Semua */}
       {compact ? (
-        <div className="flex gap-2 overflow-x-auto hide-scrollbar -mx-1 px-1">
-          {favs.map((k) => {
-            const s = shortcutByKey(k);
-            const count = counts[k] || 0;
-            return (
-              <button key={k} onClick={() => go(s.href)} className="relative shrink-0 flex items-center gap-1.5 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm rounded-full pl-3 pr-3.5 py-2 text-xs font-bold text-gray-700 dark:text-gray-200 active:scale-95 transition-transform">
-                <s.Icon className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-                {s.label}
-                {count > 0 && <span className="min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{count}</span>}
-              </button>
-            );
-          })}
-          <button onClick={() => setOpen(true)} className="shrink-0 flex items-center gap-1.5 bg-teal-50 dark:bg-teal-900/30 rounded-full pl-3 pr-3.5 py-2 text-xs font-bold text-teal-700 dark:text-teal-300 active:scale-95 transition-transform">
-            <LayoutGrid className="w-4 h-4" /> Semua
-          </button>
+        // Home: kaca transparan, ikon besar, tanpa scroll samping. Maksimal 4 favorit + Semua = 5 kolom.
+        <div className="bg-white/60 dark:bg-gray-800/50 backdrop-blur-md border border-white/70 dark:border-gray-700/60 shadow-sm rounded-3xl px-3 py-4">
+          <div className="grid grid-cols-5 gap-1">
+            {favs.map((k) => {
+              const s = shortcutByKey(k);
+              const count = counts[k] || 0;
+              return (
+                <button key={k} onClick={() => go(s.href)} className="flex flex-col items-center gap-2 active:scale-95 transition-transform min-w-0">
+                  <div className="relative w-14 h-14 flex items-center justify-center">
+                    <img src={s.img} alt="" draggable={false} className="w-14 h-14 object-contain" />
+                    {count > 0 && <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">{count}</span>}
+                  </div>
+                  <span className="text-[11px] font-bold text-gray-700 dark:text-gray-200 truncate max-w-full">{s.label}</span>
+                </button>
+              );
+            })}
+            {Array.from({ length: MAX_FAVS - favs.length }).map((_, i) => <div key={`gap-${i}`} />)}
+            <button onClick={() => setOpen(true)} className="flex flex-col items-center gap-2 active:scale-95 transition-transform min-w-0">
+              <div className="w-14 h-14 rounded-2xl bg-gray-900/5 dark:bg-white/10 flex items-center justify-center text-gray-600 dark:text-gray-300">
+                <LayoutGrid className="w-6 h-6" />
+              </div>
+              <span className="text-[11px] font-bold text-gray-700 dark:text-gray-200">Semua</span>
+            </button>
+          </div>
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 p-4 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
@@ -139,7 +148,7 @@ export default function FeatureShortcuts({ userId, initial, counts = {}, compact
               </div>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-              {editing ? `Ketuk ikon untuk memilih sampai ${MAX_FAVS} pintasan yang tampil di Home.` : 'Menu utama (Home, Target, Catat, Impian, Bareng) ada di tombol burger.'}
+              {editing ? `Ketuk ikon untuk memilih sampai ${MAX_FAVS} pintasan yang tampil di Home.` : 'Ketuk fitur untuk membukanya. Ketuk Atur untuk memilih pintasan favoritmu di Home.'}
             </p>
 
             <div className="grid grid-cols-4 gap-x-2 gap-y-4">
@@ -152,8 +161,8 @@ export default function FeatureShortcuts({ userId, initial, counts = {}, compact
                     onClick={() => (editing ? toggleFav(s.key) : go(s.href))}
                     className="flex flex-col items-center gap-1.5 active:scale-95 transition-transform min-w-0"
                   >
-                    <div className={`relative w-14 h-14 rounded-2xl flex items-center justify-center ${TILE} ${editing && isFav ? 'ring-2 ring-teal-500' : ''}`}>
-                      <s.Icon className="w-6 h-6" />
+                    <div className={`relative w-16 h-16 rounded-2xl flex items-center justify-center ${TILE} ${editing && isFav ? 'ring-2 ring-teal-500' : ''}`}>
+                      <img src={s.img} alt="" draggable={false} className="w-16 h-16 object-contain" />
                       {!editing && count > 0 && <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{count}</span>}
                       {editing && (
                         <span className={`absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center border-2 border-white dark:border-gray-900 ${isFav ? 'bg-teal-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-400'}`}>
@@ -179,7 +188,7 @@ export default function FeatureShortcuts({ userId, initial, counts = {}, compact
                       const s = shortcutByKey(k);
                       return (
                         <div key={k} className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800 rounded-2xl px-3 py-2">
-                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${TILE}`}><s.Icon className="w-4 h-4" /></div>
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${TILE}`}><img src={s.img} alt="" draggable={false} className="w-9 h-9 object-contain" /></div>
                           <span className="flex-1 text-sm font-bold text-gray-700 dark:text-gray-200">{s.label}</span>
                           <button onClick={() => move(i, -1)} disabled={i === 0} aria-label="Naikkan" className="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 dark:text-gray-400 disabled:opacity-30 active:bg-gray-200 dark:active:bg-gray-700"><ChevronUp className="w-4 h-4" /></button>
                           <button onClick={() => move(i, 1)} disabled={i === favs.length - 1} aria-label="Turunkan" className="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 dark:text-gray-400 disabled:opacity-30 active:bg-gray-200 dark:active:bg-gray-700"><ChevronDown className="w-4 h-4" /></button>

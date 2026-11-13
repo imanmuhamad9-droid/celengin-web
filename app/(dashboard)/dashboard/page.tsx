@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { Trash2, User, X, Upload, Camera, LogOut, KeyRound, Eye, EyeOff, CalendarDays, Flame, Info, ChevronLeft, ChevronRight, ChevronDown, CheckCircle2, AlertCircle } from 'lucide-react';
+import { User, X, LogOut, Settings, Eye, EyeOff, CalendarDays, Flame, Info, ChevronLeft, ChevronRight, ChevronDown, CheckCircle2, AlertCircle } from 'lucide-react';
 import { formatRupiah, toLocalDateStr } from '@/lib/utils';
 import { diffDays } from '@/lib/recurring';
 import { listWallets, computeWalletBalances, Wallet, WalletTransfer } from '@/lib/wallets';
@@ -19,8 +19,6 @@ import SectionToggle from '@/components/SectionToggle';
 import { cycleFor, normalizePayday } from '@/lib/cycle';
 import WeeklyChart from '@/components/WeeklyChart';
 import MonthCalendar from '@/components/MonthCalendar';
-import PhotoCropper from '@/components/PhotoCropper';
-import PasswordRequirements from '@/components/PasswordRequirements';
 import SkeletonLoader from '@/components/SkeletonLoader';
 
 export default function DashboardPage() {
@@ -61,22 +59,6 @@ const [todayStr, setTodayStr] = useState('');
   const [txType, setTxType] = useState<'income' | 'expense'>('expense');
   const [txDate, setTxDate] = useState<string | undefined>(undefined);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const coverInputRef = useRef<HTMLInputElement>(null);
-  const [cropJob, setCropJob] = useState<{ file: File; kind: 'avatar' | 'cover' } | null>(null);
-  const [isNicknameModalOpen, setIsNicknameModalOpen] = useState(false);
-  const [newNickname, setNewNickname] = useState('');
-  const [isCheckingNickname, setIsCheckingNickname] = useState(false);
-  const [isNicknameAvailable, setIsNicknameAvailable] = useState<boolean | null>(null);
-  const [isSavingNickname, setIsSavingNickname] = useState(false);
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
-  const [passwordMsg, setPasswordMsg] = useState({ text: '', type: 'error' });
 
   const [dialog, setDialog] = useState({ isOpen: false, title: '', msg: '', type: 'info' as 'info'|'success'|'danger', onConfirm: undefined as (()=>void)|undefined });
   const showDialog = (title: string, msg: string, type: 'info'|'success'|'danger', onConfirm?: () => void) => setDialog({ isOpen: true, title, msg, type, onConfirm });
@@ -165,90 +147,8 @@ const [todayStr, setTodayStr] = useState('');
     fetchData(); 
   }, []);
 
-  useEffect(() => {
-    if (newNickname.length < 3) { setIsNicknameAvailable(null); return; }
-    if (newNickname === profile?.nickname) { setIsNicknameAvailable(true); return; }
-    const checkNickname = async () => {
-      setIsCheckingNickname(true);
-      const { data } = await supabase.from('profiles').select('nickname').eq('nickname', newNickname).single();
-      setIsNicknameAvailable(!data);
-      setIsCheckingNickname(false);
-    };
-    const timer = setTimeout(checkNickname, 500);
-    return () => clearTimeout(timer);
-  }, [newNickname, profile?.nickname]);
-
-  // Pilih foto (profil / sampul) -> layar atur zoom dulu, baru diunggah saat Simpan
-  const handlePickPhoto = (e: React.ChangeEvent<HTMLInputElement>, kind: 'avatar' | 'cover') => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-    if (!file.type.startsWith('image/')) { showDialog('Gagal', 'File yang dipilih bukan gambar.', 'danger'); return; }
-    setCropJob({ file, kind });
-  };
-
-  const uploadCropped = async (blob: Blob) => {
-    if (!cropJob) return;
-    const kind = cropJob.kind;
-    setIsUploading(true);
-    try {
-      const fileName = `${user.id}-${kind}-${Date.now()}.jpg`;
-      const { error: uploadError } = await supabase.storage.from('widget-images').upload(fileName, blob, { contentType: 'image/jpeg' });
-      if (uploadError) throw uploadError;
-      const { data: { publicUrl } } = supabase.storage.from('widget-images').getPublicUrl(fileName);
-      const { error: upErr } = await supabase.from('profiles').update({ [kind === 'avatar' ? 'avatar_url' : 'cover_url']: publicUrl }).eq('id', user.id);
-      if (upErr) throw new Error(kind === 'cover' ? 'Kolom sampul belum ada. Jalankan sql/06_cover.sql di Supabase.' : upErr.message);
-      setCropJob(null);
-      fetchData();
-    } catch (error: any) {
-      setCropJob(null);
-      showDialog('Gagal', 'Gagal upload: ' + error.message, 'danger');
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleDeleteCover = async () => {
-    await supabase.from('profiles').update({ cover_url: null }).eq('id', user.id);
-    fetchData();
-  };
-
-  const handleDeleteAvatar = async () => {
-    await supabase.from('profiles').update({ avatar_url: null }).eq('id', user.id);
-    fetchData(); setIsProfileModalOpen(false);
-  };
-
   const handleLogout = async () => {
     setIsProfileModalOpen(false); await supabase.auth.signOut(); router.push('/login');
-  };
-
-  const handleUpdateNickname = async () => {
-    if (!isNicknameAvailable || newNickname.length < 3) return;
-    setIsSavingNickname(true);
-    const { error } = await supabase.from('profiles').update({ nickname: newNickname, full_name: newNickname }).eq('id', user.id);
-    if (!error) { setIsNicknameModalOpen(false); fetchData(); }
-    setIsSavingNickname(false);
-  };
-
-  const isPasswordValid = newPassword.length >= 8 && /[A-Z]/.test(newPassword) && /[0-9]/.test(newPassword) && /[^A-Za-z0-9]/.test(newPassword);
-  const isPasswordMatch = newPassword === confirmPassword && newPassword !== '';
-
-  const handleUpdatePassword = async () => {
-    if (!isPasswordValid) return setPasswordMsg({ text: 'Password belum memenuhi syarat.', type: 'error' });
-    if (!isPasswordMatch) return setPasswordMsg({ text: 'Konfirmasi password tidak cocok.', type: 'error' });
-    setIsUpdatingPassword(true); setPasswordMsg({ text: '', type: 'error' });
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email: user.email, password: newPassword });
-    if (!signInError) {
-      setPasswordMsg({ text: 'Password baru tidak boleh sama dengan password lama.', type: 'error' });
-      setIsUpdatingPassword(false); return;
-    }
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    if (error) { setPasswordMsg({ text: error.message, type: 'error' }); }
-    else {
-      setPasswordMsg({ text: 'Password berhasil diubah!', type: 'success' });
-      setTimeout(() => { setIsPasswordModalOpen(false); setNewPassword(''); setConfirmPassword(''); setPasswordMsg({ text: '', type: 'error' }); }, 2000);
-    }
-    setIsUpdatingPassword(false);
   };
 
   // Simpan tanggal gajian. Kolom belum ada (SQL 08 belum dijalankan) -> beri petunjuk, jangan diam saja.
@@ -698,95 +598,27 @@ const currentMonth = calendarMonth;
 
       </main>
 
-      {cropJob && (
-        <PhotoCropper
-          file={cropJob.file}
-          shape={cropJob.kind === 'avatar' ? 'circle' : 'rect'}
-          aspect={cropJob.kind === 'avatar' ? 1 : 320 / 150}
-          outWidth={cropJob.kind === 'avatar' ? 512 : 960}
-          title={cropJob.kind === 'avatar' ? 'Atur foto profil' : 'Atur foto sampul'}
-          onCancel={() => setCropJob(null)}
-          onConfirm={uploadCropped}
-        />
-      )}
-
-      {/* MODAL PROFIL (VERSI RINGKAS) */}
+      {/* MODAL PROFIL: hanya Pengaturan + Keluar. Ubah foto, nama, password, dll ada di Pengaturan. */}
       {isProfileModalOpen && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-3xl w-full max-w-xs relative overflow-hidden shadow-2xl">
-            <div className="pt-6 pb-12 flex flex-col items-center relative transition-colors duration-300 bg-cover bg-center" style={{ backgroundColor: profile?.theme_color || '#0f766e', ...(profile?.cover_url ? { backgroundImage: `url(${profile.cover_url})` } : {}) }}>
+        <div onClick={() => setIsProfileModalOpen(false)} className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div onClick={(e) => e.stopPropagation()} className="bg-gray-50 dark:bg-gray-800 rounded-3xl w-full max-w-xs relative overflow-hidden shadow-2xl">
+            <div className="pt-6 pb-12 flex flex-col items-center relative bg-cover bg-center" style={{ backgroundColor: profile?.theme_color || '#0f766e', ...(profile?.cover_url ? { backgroundImage: `url(${profile.cover_url})` } : {}) }}>
               {profile?.cover_url && <div className="absolute inset-0 bg-black/25" />}
-              <button onClick={() => coverInputRef.current?.click()} className="absolute top-4 left-4 z-10 flex items-center gap-1 text-[11px] font-bold text-white bg-black/30 hover:bg-black/50 rounded-full px-2.5 py-1"><Camera className="w-3.5 h-3.5" /> Sampul</button>
-              <button onClick={() => setIsProfileModalOpen(false)} className="absolute top-4 right-4 text-white/70 hover:text-white bg-black/10 rounded-full p-1"><X className="w-5 h-5" /></button>
+              <button onClick={() => setIsProfileModalOpen(false)} aria-label="Tutup" className="absolute top-4 right-4 z-10 text-white/80 hover:text-white bg-black/20 rounded-full p-1"><X className="w-5 h-5" /></button>
               <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 border-4 border-white shadow-md relative z-10 mt-2 flex items-center justify-center">
                 {profile?.avatar_url ? <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" /> : <User className="w-10 h-10 text-gray-400" />}
               </div>
             </div>
             <div className="px-5 pb-5 -mt-6 text-center relative z-10">
-              <h2 className="text-lg font-bold text-gray-800 dark:text-white bg-white dark:bg-gray-700 rounded-xl py-2 shadow-sm mb-4 inline-block px-6 border border-gray-100 dark:border-gray-600">{profile?.nickname || profile?.full_name || user?.email?.split('@')[0]}</h2>
-              <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={(e) => handlePickPhoto(e, 'avatar')} />
-              <input type="file" accept="image/*" className="hidden" ref={coverInputRef} onChange={(e) => handlePickPhoto(e, 'cover')} />
-              <button onClick={() => fileInputRef.current?.click()} className="w-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-bold py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-all flex items-center justify-center gap-2 mb-4 shadow-sm">
-                {isUploading ? 'Mengunggah...' : <><Upload className="w-4 h-4" /> Ganti Foto Profil</>}
-              </button>
-              <div className="bg-white dark:bg-gray-700 rounded-2xl border border-gray-100 dark:border-gray-600 shadow-sm overflow-hidden text-sm">
-                <button onClick={() => coverInputRef.current?.click()} className="w-full flex items-center gap-3 px-4 py-3.5 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-gray-600 transition-all border-b border-gray-50 dark:border-gray-600 text-left"><Camera className="w-4 h-4 text-gray-400" /> Ganti Foto Sampul</button>
-                {profile?.cover_url && <button onClick={handleDeleteCover} className="w-full flex items-center gap-3 px-4 py-3.5 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-gray-600 transition-all border-b border-gray-50 dark:border-gray-600 text-left"><X className="w-4 h-4 text-gray-400" /> Hapus Foto Sampul</button>}
-                {profile?.avatar_url && <button onClick={handleDeleteAvatar} className="w-full flex items-center gap-3 px-4 py-3.5 text-red-500 font-semibold hover:bg-red-50 dark:hover:bg-red-900/30 transition-all border-b border-gray-50 dark:border-gray-600 text-left"><Trash2 className="w-4 h-4" /> Hapus Foto</button>}
-                <button onClick={() => { setNewNickname(profile?.nickname || ''); setIsNicknameModalOpen(true); }} className="w-full flex items-center gap-3 px-4 py-3.5 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-gray-600 transition-all border-b border-gray-50 dark:border-gray-600 text-left"><User className="w-4 h-4 text-gray-400" /> Ubah Nickname</button>
-                <button onClick={() => { setIsProfileModalOpen(false); setIsPasswordModalOpen(true); }} className="w-full flex items-center gap-3 px-4 py-3.5 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-gray-600 transition-all border-b border-gray-50 dark:border-gray-600 text-left"><KeyRound className="w-4 h-4 text-gray-400" /> Ganti Password</button>
-                <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3.5 text-red-500 font-semibold hover:bg-red-50 dark:hover:bg-red-900/30 transition-all text-left"><LogOut className="w-4 h-4" /> Keluar Akun</button>
+              <h2 className="text-lg font-bold text-gray-800 dark:text-white bg-white dark:bg-gray-700 rounded-xl py-2 shadow-sm mb-5 inline-block px-6 border border-gray-100 dark:border-gray-600">{profile?.nickname || profile?.full_name || user?.email?.split('@')[0]}</h2>
+              <div className="space-y-3">
+                <button onClick={() => { setIsProfileModalOpen(false); router.push('/settings'); }} className="w-full h-12 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-sm shadow-md shadow-teal-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                  <Settings className="w-4 h-4" /> Pengaturan
+                </button>
+                <button onClick={() => { setIsProfileModalOpen(false); showDialog('Keluar dari Celengin?', 'Kamu perlu masuk lagi nanti untuk membuka akunmu.', 'danger', handleLogout); }} className="w-full h-12 rounded-2xl bg-white dark:bg-gray-700 border border-red-200 dark:border-red-900/50 text-red-500 font-bold text-sm active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                  <LogOut className="w-4 h-4" /> Keluar
+                </button>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL UBAH NICKNAME */}
-      {isNicknameModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative transition-colors">
-            <button onClick={() => setIsNicknameModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
-            <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4 text-center">Ubah Nickname</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Nickname Baru</label>
-                <div className="relative">
-                  <input type="text" value={newNickname} onChange={(e) => setNewNickname(e.target.value.toLowerCase().replace(/\s/g, ''))} className={`w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-teal-500 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-white ${isNicknameAvailable === false ? 'border-red-400' : isNicknameAvailable === true ? 'border-green-400' : 'border-gray-200 dark:border-gray-600'}`} placeholder="cth: iman123" />
-                  {newNickname.length >= 3 && <div className="absolute right-3 top-3.5">{isCheckingNickname ? <span className="text-[10px] text-gray-400">Cek...</span> : isNicknameAvailable ? <span className="text-[10px] text-green-500 font-bold">Tersedia</span> : <span className="text-[10px] text-red-500 font-bold">Dipakai</span>}</div>}
-                </div>
-              </div>
-              <button onClick={handleUpdateNickname} disabled={isSavingNickname || !isNicknameAvailable || newNickname.length < 3} className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-xl transition-all disabled:opacity-50">{isSavingNickname ? 'Menyimpan...' : 'Simpan Nickname'}</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL GANTI PASSWORD */}
-      {isPasswordModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative transition-colors">
-            <button onClick={() => setIsPasswordModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
-            <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4 text-center">Ganti Password</h2>
-            {passwordMsg.text && <div className={`text-xs p-3 rounded-xl mb-4 border ${passwordMsg.type === 'error' ? 'bg-red-50 dark:bg-red-900/30 text-red-500 border-red-100 dark:border-red-800' : 'bg-green-50 dark:bg-green-900/30 text-green-600 border-green-100 dark:border-green-800'}`}>{passwordMsg.text}</div>}
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Password Baru</label>
-                <div className="relative">
-                  <input type={showNewPassword ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full pl-4 pr-12 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-teal-500 text-sm" placeholder="Buat password baru" />
-                  <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-4 top-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">{showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}</button>
-                </div>
-                {newPassword.length > 0 && <PasswordRequirements password={newPassword} />}
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Ulangi Password Baru</label>
-                <div className="relative">
-                  <input type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={`w-full pl-4 pr-12 py-3 rounded-xl border focus:ring-2 focus:ring-teal-500 text-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-white ${confirmPassword.length > 0 && !isPasswordMatch ? 'border-red-400' : 'border-gray-200 dark:border-gray-600'}`} placeholder="Ketik ulang password baru" />
-                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">{showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}</button>
-                </div>
-                {confirmPassword.length > 0 && !isPasswordMatch && <p className="text-xs text-red-500 mt-1">Password tidak cocok.</p>}
-              </div>
-              <button onClick={handleUpdatePassword} disabled={isUpdatingPassword || !isPasswordValid || !isPasswordMatch} className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-xl transition-all disabled:opacity-50 mt-2">{isUpdatingPassword ? 'Menyimpan...' : 'Simpan Password Baru'}</button>
             </div>
           </div>
         </div>

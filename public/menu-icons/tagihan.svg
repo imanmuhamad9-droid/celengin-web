@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><defs>
+<linearGradient id="g" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#1fa3aa"/><stop offset="1" stop-color="#7ee3b9"/></linearGradient>
+<linearGradient id="a" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#4fcfb4"/><stop offset="1" stop-color="#8ceab9"/></linearGradient>
+</defs>
+<!-- kaki -->
+<rect x="64" y="146" width="20" height="34" rx="10" fill="#2fb3a8"/>
+<ellipse cx="72" cy="182" rx="15" ry="8" fill="#2fb3a8"/>
+<rect x="98" y="146" width="20" height="34" rx="10" fill="#2fb3a8"/>
+<ellipse cx="108" cy="182" rx="15" ry="8" fill="#2fb3a8"/>
+<!-- cincin C -->
+<path d="M129.6 58.4 A58 58 0 1 0 137 134" fill="none" stroke="url(#g)" stroke-width="26"/>
+<!-- panah -->
+<path d="M58 140 L146 52" stroke="url(#a)" stroke-width="15" stroke-linecap="butt" fill="none"/>
+<path d="M132 34 L170 30 L166 68 Z" fill="#86e8b9"/>
+<!-- wajah -->
+<circle cx="92" cy="103" r="37" fill="#ffffff"/>
+<ellipse cx="80" cy="97" rx="6" ry="8.5" fill="#1b2a33"/>
+<ellipse cx="105" cy="97" rx="6" ry="8.5" fill="#1b2a33"/>
+<circle cx="82" cy="93.5" r="2.4" fill="#fff"/><circle cx="107" cy="93.5" r="2.4" fill="#fff"/>
+<path d="M82 112 Q92.5 126 103 112 Z" fill="#ee6a74"/>
+<path d="M88 118 Q92.5 122 97 118 Q92.5 120 88 118Z" fill="#ff9aa2"/>
+<!-- lengan kiri -->
+<ellipse cx="46" cy="140" rx="13" ry="11" fill="#2fb3a8"/>
+<ellipse cx="141" cy="148" rx="14" ry="12" fill="#2fb3a8"/><path d="M144 114 h40 v56 l-6.7 -6 l-6.7 6 l-6.6 -6 l-6.7 6 l-6.6 -6 l-6.7 6 Z" fill="#fff" stroke="#14a3a0" stroke-width="5" stroke-linejoin="round"/>
+<path d="M152 126 h24 M152 137 h24 M152 148 h14" stroke="#7ad9c0" stroke-width="5" stroke-linecap="round"/>
+<circle cx="177" cy="151" r="7" fill="#f7c948" stroke="#e0a21a" stroke-width="2"/></svg>
