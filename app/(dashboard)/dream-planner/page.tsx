@@ -88,7 +88,7 @@ export default function DreamPlannerPage() {
   if (isLoading) return <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950"><SkeletonLoader /></div>;
 
   return (
-    <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-24 transition-colors">
+    <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-40 transition-colors">
       <AppHeader title="Impian" />
 
       <main className="max-w-md mx-auto px-5 mt-4 space-y-6">

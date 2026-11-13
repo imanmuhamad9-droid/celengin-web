@@ -61,7 +61,7 @@ export default function BadgesPage() {
   const sorted = [...BADGES].sort((a, b) => Number(!!earnedMap[b.key]) - Number(!!earnedMap[a.key]));
 
   return (
-    <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-24 transition-colors">
+    <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-40 transition-colors">
       <AppHeader title="Pencapaian" />
 
       <main className="px-5 mt-4 space-y-5">

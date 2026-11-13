@@ -463,7 +463,7 @@ const currentMonth = calendarMonth;
   );
 
   return (
-    <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-24 transition-colors">
+    <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-40 transition-colors">
       <AppHeader topRight={<NotificationBell userId={user?.id ?? null} local={localNotifs} />} />
 
       <main className="px-5 mt-4 space-y-6">

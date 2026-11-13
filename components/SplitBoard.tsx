@@ -459,7 +459,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
   );
 
   return (
-    <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-32 transition-colors">
+    <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-40 transition-colors">
       <AppHeader
         z="z-40"
         title={group ? `${group.emoji} ${group.name}` : L.title}
