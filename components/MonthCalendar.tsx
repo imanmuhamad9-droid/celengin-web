@@ -24,7 +24,6 @@ const pad = (n: number) => String(n).padStart(2, '0');
 const short = (n: number) => (n >= 1_000_000 ? `${(Math.round(n / 100_000) / 10).toString().replace('.', ',')}jt` : n >= 1000 ? `${Math.round(n / 1000)}rb` : `${Math.round(n)}`);
 
 export default function MonthCalendar({ transactions, bills, todayStr, onOpenHistory, onAddOnDate }: Props) {
-  const [show, setShow] = useState(true);
   const [ym, setYm] = useState<{ y: number; m: number } | null>(null); // m: 0..11
   const [sel, setSel] = useState<string | null>(null);
 
@@ -113,14 +112,12 @@ export default function MonthCalendar({ transactions, bills, todayStr, onOpenHis
         </div>
         <div className="flex items-center gap-1">
           <button onClick={() => go(-1)} aria-label="Bulan sebelumnya" className="p-1 bg-gray-50 dark:bg-gray-700 rounded-md text-gray-500 hover:text-teal-600"><ChevronLeft className="w-4 h-4" /></button>
-          <span className="text-[11px] font-bold text-gray-600 dark:text-gray-300 w-24 text-center capitalize">{monthLabel}</span>
+          <span className="text-[11px] font-bold text-gray-600 dark:text-gray-300 w-28 text-center capitalize">{monthLabel}</span>
           <button onClick={() => go(1)} aria-label="Bulan berikutnya" className="p-1 bg-gray-50 dark:bg-gray-700 rounded-md text-gray-500 hover:text-teal-600"><ChevronRight className="w-4 h-4" /></button>
         </div>
-        <button onClick={() => setShow(!show)} className="text-[10px] font-bold text-gray-500 dark:text-gray-400 hover:text-teal-600 bg-gray-50 dark:bg-gray-700 px-2 py-1 rounded-lg transition-colors shrink-0">{show ? 'Sembunyikan' : 'Tampilkan'}</button>
       </div>
 
-      {show && (
-        <div>
+      <div>
           <div className="grid grid-cols-3 gap-2 mb-3">
             <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl px-3 py-2"><p className="text-[10px] text-gray-500 dark:text-gray-400">Masuk</p><p className="text-xs font-bold text-green-600 dark:text-green-400">{formatRupiah(monthIn)}</p></div>
             <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl px-3 py-2"><p className="text-[10px] text-gray-500 dark:text-gray-400">Keluar</p><p className="text-xs font-bold text-red-500 dark:text-red-400">{formatRupiah(monthOut)}</p></div>
@@ -211,8 +208,7 @@ export default function MonthCalendar({ transactions, bills, todayStr, onOpenHis
               </div>
             </div>
           )}
-        </div>
-      )}
+      </div>
     </div>
   );
 }

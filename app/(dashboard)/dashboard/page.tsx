@@ -52,16 +52,8 @@ const [todayStr, setTodayStr] = useState('');
   const [paydayLater, setPaydayLater] = useState(false);
   const [showMonth, setShowMonth] = useState(false); // lipatan Kalender + Statistik bulan ini
 
-  const [chartTheme, setChartTheme] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [categoryDetails, setCategoryDetails] = useState<any[]>([]);
-
-  const chartThemes = [
-    { id: 'donut', income: '#10b981', expense: '#ef4444', label: 'Donut' },
-    { id: 'pie', income: '#8b5cf6', expense: '#f43f5e', label: 'Pie' },
-    { id: 'gauge', income: '#0ea5e9', expense: '#f97316', label: 'Gauge' },
-    { id: 'bar', income: '#14b8a6', expense: '#f59e0b', label: 'Minimalis' }
-  ];
 
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
   const [txType, setTxType] = useState<'income' | 'expense'>('expense');
@@ -290,8 +282,6 @@ const [todayStr, setTodayStr] = useState('');
   const expenseCategories = monthlyTx.filter(t => t.type === 'expense').reduce((acc: any, curr) => { acc[curr.merchant_name] = (acc[curr.merchant_name] || 0) + Number(curr.amount); return acc; }, {});
 
   const totalMonthly = monthlyIncome + monthlyExpense;
-  const incomePercent = totalMonthly === 0 ? 0 : Math.round((monthlyIncome / totalMonthly) * 100);
-  const expensePercent = totalMonthly === 0 ? 0 : Math.round((monthlyExpense / totalMonthly) * 100);
 
   const weeklyData = last7Days.map(date => {
     const dayTx = transactions.filter(t => t.transaction_date === date);
@@ -616,82 +606,79 @@ const currentMonth = calendarMonth;
               onAddOnDate={(d) => { setTxType('expense'); setTxDate(d); setIsTxModalOpen(true); }}
             />
 
-        {/* DONUT CHART BULAN INI */}
-        {totalMonthly > 0 && (
-          <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
-            <div className="flex justify-between items-center mb-4">
-              <div>
+        {/* STATISTIK BULAN/SIKLUS INI */}
+        {totalMonthly > 0 && (() => {
+          const spentPct = monthlyIncome > 0 ? Math.round((monthlyExpense / monthlyIncome) * 100) : null;
+          const net = monthlyIncome - monthlyExpense;
+          const mood = spentPct === null
+            ? { color: '#f59e0b', title: 'Belum ada pemasukan', sub: 'Pengeluaran sudah tercatat, tapi belum ada uang masuk di periode ini.' }
+            : spentPct <= 70
+              ? { color: '#10b981', title: 'Aman, masih longgar', sub: `Baru ${spentPct}% dari pemasukan yang terpakai.` }
+              : spentPct <= 100
+                ? { color: '#f59e0b', title: 'Hati-hati, hampir habis', sub: `${spentPct}% dari pemasukan sudah terpakai.` }
+                : { color: '#ef4444', title: 'Boncos, lebih besar pasak', sub: `Pengeluaran ${spentPct}% dari pemasukan.` };
+          const palette = ['#ef4444', '#f97316', '#f59e0b', '#8b5cf6', '#0ea5e9', '#94a3b8'];
+          const incomeRows = Object.entries(incomeCategories).sort(([, a]: any, [, b]: any) => b - a) as [string, any][];
+          const expenseRows = Object.entries(expenseCategories).sort(([, a]: any, [, b]: any) => b - a) as [string, any][];
+          return (
+            <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
+              <div className="mb-4">
                 <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100">{payday > 1 ? 'Statistik Siklus Ini' : 'Statistik Bulan Ini'}</h3>
                 {payday > 1 && cycle && <p className="text-[10px] text-gray-400 dark:text-gray-500">{cycle.label}</p>}
               </div>
-              <button onClick={() => setChartTheme((prev) => (prev + 1) % chartThemes.length)} className="text-[10px] font-bold bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-full border border-gray-200 dark:border-gray-600 hover:bg-gray-100 transition-all">
-                Tema: {chartThemes[chartTheme].label}
-              </button>
-            </div>
-            
-            <div className="flex items-center gap-5 mb-6">
-              {chartThemes[chartTheme].id === 'donut' && (
-                <div className="relative w-20 h-20 rounded-full flex items-center justify-center shrink-0 transition-all duration-300" style={{ background: `conic-gradient(${chartThemes[chartTheme].income} ${incomePercent}%, ${chartThemes[chartTheme].expense} 0)` }}>
-                  <div className="absolute w-14 h-14 bg-white dark:bg-gray-800 rounded-full"></div>
-                </div>
-              )}
-              {chartThemes[chartTheme].id === 'pie' && (
-                <div className="w-20 h-20 rounded-full shrink-0 shadow-inner transition-all duration-300" style={{ background: `conic-gradient(${chartThemes[chartTheme].income} ${incomePercent}%, ${chartThemes[chartTheme].expense} 0)` }}></div>
-              )}
-              {chartThemes[chartTheme].id === 'gauge' && (
-                <div className="relative w-24 h-12 overflow-hidden shrink-0 transition-all duration-300">
-                  <div className="absolute top-0 left-0 w-24 h-24 rounded-full" style={{ background: `conic-gradient(from 270deg, ${chartThemes[chartTheme].income} ${incomePercent / 2}%, ${chartThemes[chartTheme].expense} 0)` }}></div>
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-16 bg-white dark:bg-gray-800 rounded-full"></div>
-                </div>
-              )}
-              {chartThemes[chartTheme].id === 'bar' && (
-                <div className="w-24 h-20 flex flex-col justify-center gap-2 shrink-0 transition-all duration-300">
-                  <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-3 overflow-hidden"><div className="h-full rounded-full transition-all duration-500" style={{ width: `${incomePercent}%`, backgroundColor: chartThemes[chartTheme].income }}></div></div>
-                  <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-3 overflow-hidden"><div className="h-full rounded-full transition-all duration-500" style={{ width: `${expensePercent}%`, backgroundColor: chartThemes[chartTheme].expense }}></div></div>
-                </div>
-              )}
-              
-              <div className="space-y-1">
-                <p className="text-xs font-semibold flex items-center gap-2" style={{ color: chartThemes[chartTheme].income }}>
-                  <span className="w-2.5 h-2.5 rounded-full block" style={{ backgroundColor: chartThemes[chartTheme].income }}></span> Masuk: {formatRupiah(monthlyIncome)} ({incomePercent}%)
-                </p>
-                <p className="text-xs font-semibold flex items-center gap-2" style={{ color: chartThemes[chartTheme].expense }}>
-                  <span className="w-2.5 h-2.5 rounded-full block" style={{ backgroundColor: chartThemes[chartTheme].expense }}></span> Keluar: {formatRupiah(monthlyExpense)} ({expensePercent}%)
-                </p>
-              </div>
-            </div>
 
-            <div className="space-y-4">
-              {Object.entries(incomeCategories).length > 0 && (
-                <div>
-                  <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-2">Sumber Pemasukan</p>
-                  <div className="space-y-1.5">
-                    {Object.entries(incomeCategories).sort(([, a]: any, [, b]: any) => b - a).map(([name, amount]: any) => (
-                      <div key={name} onClick={() => handleCategoryClick(name)} className="flex justify-between items-center text-xs cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 -mx-1 rounded transition-colors">
-                        <span className="text-gray-600 dark:text-gray-300 truncate mr-2">{name}</span>
-                        <div className="text-right shrink-0">
-                          <span className="font-semibold text-gray-800 dark:text-gray-100 mr-2">{formatRupiah(amount)}</span>
-                          <span className="font-bold" style={{ color: chartThemes[chartTheme].income }}>{Math.round((amount / monthlyIncome) * 100)}%</span>
+              {/* Ringkasan: satu kalimat + satu bar */}
+              <div className="rounded-2xl p-4 mb-4" style={{ backgroundColor: mood.color + '1a' }}>
+                <p className="text-sm font-extrabold" style={{ color: mood.color }}>{mood.title}</p>
+                <p className="text-[11px] text-gray-600 dark:text-gray-300 mt-0.5">{mood.sub}</p>
+                <div className="w-full h-3 rounded-full bg-white/70 dark:bg-gray-700 mt-3 overflow-hidden">
+                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(spentPct ?? 100, 100)}%`, backgroundColor: mood.color }}></div>
+                </div>
+                <div className="flex justify-between text-[10px] text-gray-500 dark:text-gray-400 mt-1.5">
+                  <span>Terpakai</span><span>Pemasukan {formatRupiah(monthlyIncome)}</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 mb-5">
+                <div className="rounded-xl bg-green-50 dark:bg-green-900/20 px-3 py-2"><p className="text-[10px] text-gray-500 dark:text-gray-400">Masuk</p><p className="text-xs font-bold text-green-600 dark:text-green-400">{formatRupiah(monthlyIncome)}</p></div>
+                <div className="rounded-xl bg-red-50 dark:bg-red-900/20 px-3 py-2"><p className="text-[10px] text-gray-500 dark:text-gray-400">Keluar</p><p className="text-xs font-bold text-red-500 dark:text-red-400">{formatRupiah(monthlyExpense)}</p></div>
+                <div className="rounded-xl bg-gray-50 dark:bg-gray-700/50 px-3 py-2"><p className="text-[10px] text-gray-500 dark:text-gray-400">{net >= 0 ? 'Sisa' : 'Kurang'}</p><p className="text-xs font-bold" style={{ color: net >= 0 ? '#0d9488' : '#ef4444' }}>{formatRupiah(Math.abs(net))}</p></div>
+              </div>
+
+              {expenseRows.length > 0 && (
+                <div className="mb-5">
+                  <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-2">Uangmu habis buat apa?</p>
+                  <div className="space-y-3">
+                    {expenseRows.map(([name, amount], i) => {
+                      const pct = monthlyExpense > 0 ? Math.round((Number(amount) / monthlyExpense) * 100) : 0;
+                      const color = palette[Math.min(i, palette.length - 1)];
+                      return (
+                        <div key={name} onClick={() => handleCategoryClick(name)} className="cursor-pointer">
+                          <div className="flex justify-between items-baseline text-xs mb-1">
+                            <span className={`truncate mr-2 ${i === 0 ? 'font-bold text-gray-800 dark:text-gray-100' : 'text-gray-600 dark:text-gray-300'}`}>{i === 0 ? '🔥 ' : ''}{name}</span>
+                            <span className="shrink-0"><span className="font-semibold text-gray-800 dark:text-gray-100">{formatRupiah(Number(amount))}</span> <span className="font-bold text-gray-500 dark:text-gray-400">{pct}%</span></span>
+                          </div>
+                          <div className="w-full h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden"><div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.max(pct, 2)}%`, backgroundColor: color }}></div></div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
 
-              {Object.entries(expenseCategories).length > 0 && (
+              {incomeRows.length > 0 && (
                 <div>
-                  <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-2">Pengeluaran Terbesar</p>
-                  <div className="space-y-1.5">
-                    {Object.entries(expenseCategories).sort(([, a]: any, [, b]: any) => b - a).map(([name, amount]: any, index) => {
-                      const isBiggest = index === 0;
+                  <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-2">Uang datang dari mana?</p>
+                  <div className="space-y-3">
+                    {incomeRows.map(([name, amount]) => {
+                      const pct = monthlyIncome > 0 ? Math.round((Number(amount) / monthlyIncome) * 100) : 0;
                       return (
-                        <div key={name} onClick={() => handleCategoryClick(name)} className={`flex justify-between items-center text-xs cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 -mx-1 rounded transition-colors ${isBiggest ? 'bg-red-50/50 dark:bg-red-900/20' : ''}`}>
-                          <span className={`truncate mr-2 ${isBiggest ? 'text-red-600 dark:text-red-400 font-bold' : 'text-gray-600 dark:text-gray-300'}`}>{name}</span>
-                          <div className="text-right shrink-0">
-                            <span className={`font-semibold mr-2 ${isBiggest ? 'text-red-600 dark:text-red-400' : 'text-gray-800 dark:text-gray-100'}`}>{formatRupiah(amount)}</span>
-                            <span className={`font-bold ${isBiggest ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}>{Math.round((amount / monthlyExpense) * 100)}%</span>
+                        <div key={name} onClick={() => handleCategoryClick(name)} className="cursor-pointer">
+                          <div className="flex justify-between items-baseline text-xs mb-1">
+                            <span className="truncate mr-2 text-gray-600 dark:text-gray-300">{name}</span>
+                            <span className="shrink-0"><span className="font-semibold text-gray-800 dark:text-gray-100">{formatRupiah(Number(amount))}</span> <span className="font-bold text-green-600 dark:text-green-400">{pct}%</span></span>
                           </div>
+                          <div className="w-full h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden"><div className="h-full rounded-full bg-green-500 transition-all duration-500" style={{ width: `${Math.max(pct, 2)}%` }}></div></div>
                         </div>
                       );
                     })}
@@ -699,8 +686,8 @@ const currentMonth = calendarMonth;
                 </div>
               )}
             </div>
-          </div>
-        )}
+          );
+        })()}
           </div>
         )}
 
