@@ -1,7 +1,7 @@
 // Cron harian (Vercel Cron memanggil GET ini sesuai vercel.json).
 // 1) Membuat transaksi rutin yang jatuh tempo.  2) Mengirim push: tagihan, belum mencatat, ringkasan mingguan.
 import { NextResponse } from 'next/server';
-import webpush from 'web-push';
+import * as webpush from 'web-push';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { computeNet, simplifyDebts } from '@/lib/splitbill';
 import { addDays, dayOfWeek, diffDays, nextOccurrence, todayInJakarta, Frequency } from '@/lib/recurring';

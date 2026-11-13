@@ -33,15 +33,12 @@ export async function POST(request: Request) {
     .gte('created_at', since)
     .order('created_at', { ascending: false })
     .limit(3);
-  
   if (!notifs || notifs.length === 0) return NextResponse.json({ sent: 0 });
 
   const { data: subs } = await admin.from('push_subscriptions').select('*').eq('user_id', targetUserId);
 
   // Tandai sudah diproses agar tidak terkirim dua kali, walau penerima belum berlangganan push.
-  // PERBAIKAN: Menambahkan : any pada parameter 'n'
-  await admin.from('notifications').update({ pushed_at: new Date().toISOString() }).in('id', notifs.map((n: any) => n.id));
-  
+  await admin.from('notifications').update({ pushed_at: new Date().toISOString() }).in('id', notifs.map((n) => n.id));
   if (!subs || subs.length === 0) return NextResponse.json({ sent: 0 });
 
   webpush.setVapidDetails(process.env.VAPID_SUBJECT || 'mailto:admin@example.com', pub, priv);
