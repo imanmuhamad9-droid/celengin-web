@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import DateField from '@/components/DateField';
 import { X, ArrowDownCircle, ArrowUpCircle, Check, Repeat } from 'lucide-react';
 import { formatDateID } from '@/lib/utils';
 import { Frequency, describeFrequency } from '@/lib/recurring';
@@ -162,10 +163,7 @@ export default function EditTransactionModal({ isOpen, onClose, onSuccess, showD
 
           {/* Tanggal & Rutin */}
           <div className="flex gap-2 items-center justify-between mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
-            <div className="w-[55%]">
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal</label>
-              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required className="w-full px-2 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-[11px] transition-colors focus:ring-2 focus:ring-teal-500" />
-            </div>
+            <DateField label="Tanggal" compact required value={date} onChange={setDate} className="w-[55%]" />
             
             <div className="flex items-center gap-2 mt-4">
               <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400">Rutin</span>

@@ -9,6 +9,7 @@ import { listWallets, Wallet } from '@/lib/wallets';
 import FrequencyPicker from '@/components/FrequencyPicker';
 import WalletChips from '@/components/WalletChips';
 import { triggerMoneyRain } from '@/components/MoneyRain';
+import DateField from '@/components/DateField';
 
 export default function TransactionModal({ isOpen, onClose, onSuccess, showDialog, initialType }: { isOpen: boolean, onClose: () => void, onSuccess: () => void, showDialog: (title: string, msg: string, type: 'info'|'success'|'danger', onConfirm?: () => void) => void, initialType?: 'income' | 'expense' }) {
   
@@ -242,13 +243,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
 
                 <div className="flex gap-2 items-center justify-between mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
                   {/* POIN 3: Input tanggal diubah jadi hitam (text-gray-900) */}
-                  <input 
-                    type="date" 
-                    value={tx.date} 
-                    onChange={(e) => updateRow(tx.id, 'date', e.target.value)} 
-                    className="w-[55%] px-2 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-[11px] transition-colors" 
-                    required 
-                  />
+                  <DateField compact required value={tx.date} onChange={(v) => updateRow(tx.id, 'date', v)} className="w-[55%]" />
                   
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400">Rutin</span>

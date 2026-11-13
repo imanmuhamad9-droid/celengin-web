@@ -8,6 +8,7 @@ import { Wallet, WalletTransfer, WALLET_TYPE_LABEL, computeWalletBalances, listW
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import SkeletonLoader from '@/components/SkeletonLoader';
+import DateField from '@/components/DateField';
 
 const TYPES: { id: Wallet['type']; label: string; emoji: string }[] = [
   { id: 'cash', label: 'Tunai', emoji: '💵' },
@@ -276,14 +277,11 @@ export default function WalletsPage() {
                 <input type="text" inputMode="numeric" value={trDisplay} onChange={(e) => { const p = parseRupiahInput(e.target.value); setTrRaw(p.raw); setTrDisplay(p.display); }} required placeholder="Nominal (Rp)" className={`${inputCls} font-bold`} />
                 <p className="text-[10px] text-gray-400 mt-1">Saldo tersedia: {formatRupiah(balances[fromId] || 0)}</p>
               </div>
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal</label>
-                  <input type="date" value={trDate} onChange={(e) => setTrDate(e.target.value)} required className={`${inputCls} text-[12px]`} />
-                </div>
-                <div className="flex-1">
+              <div className="grid grid-cols-2 gap-3">
+                <DateField label="Tanggal" required value={trDate} onChange={setTrDate} />
+                <div className="min-w-0">
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Catatan</label>
-                  <input type="text" value={trNote} onChange={(e) => setTrNote(e.target.value)} placeholder="Opsional" className={inputCls} />
+                  <input type="text" value={trNote} onChange={(e) => setTrNote(e.target.value)} placeholder="Opsional" className={`${inputCls} !h-11 !py-0`} />
                 </div>
               </div>
               <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-xl mt-2 transition-all">Transfer Sekarang</button>

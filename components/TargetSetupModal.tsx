@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { X, ArrowDownCircle, ArrowUpCircle, Star } from 'lucide-react';
 import { toLocalDateStr } from '@/lib/utils';
+import DateField from '@/components/DateField';
 
 export default function TargetSetupModal({ isOpen, onClose, onSuccess, showDialog, existingTarget }: any) {
   const [periodType, setPeriodType] = useState('week');
@@ -130,14 +131,8 @@ export default function TargetSetupModal({ isOpen, onClose, onSuccess, showDialo
 
           {/* Input Tanggal: dua kolom sama lebar, tidak saling menimpa */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="min-w-0">
-              <label className="block text-[11px] font-medium text-gray-700 dark:text-gray-300 mb-1">Mulai</label>
-              <input type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setPeriodType('custom'); }} required className="block w-full min-w-0 h-10 px-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xs appearance-none focus:ring-2 focus:ring-teal-500 transition-colors" />
-            </div>
-            <div className="min-w-0">
-              <label className="block text-[11px] font-medium text-gray-700 dark:text-gray-300 mb-1">Selesai</label>
-              <input type="date" value={endDate} min={startDate || undefined} onChange={e => { setEndDate(e.target.value); setPeriodType('custom'); }} required className="block w-full min-w-0 h-10 px-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xs appearance-none focus:ring-2 focus:ring-teal-500 transition-colors" />
-            </div>
+            <DateField label="Mulai" value={startDate} required compact onChange={(v) => { setStartDate(v); if (endDate && v > endDate) setEndDate(v); setPeriodType('custom'); }} />
+            <DateField label="Selesai" value={endDate} min={startDate || undefined} required compact onChange={(v) => { setEndDate(v); setPeriodType('custom'); }} />
           </div>
 
           {/* TOGGLE TARGET UTAMA */}

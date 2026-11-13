@@ -9,6 +9,7 @@ import { listWallets, Wallet } from '@/lib/wallets';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import SkeletonLoader from '@/components/SkeletonLoader';
+import DateField from '@/components/DateField';
 import FrequencyPicker from '@/components/FrequencyPicker';
 import WalletChips from '@/components/WalletChips';
 
@@ -20,6 +21,8 @@ const BILL_FREQ_OPTIONS = [
 ];
 const DEFAULT_CATEGORIES = ['🏠 Tagihan', '📌 Lainnya'];
 const inputCls = 'w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm focus:ring-2 focus:ring-teal-500';
+
+const INCOME_LIKE = /gaji|bonus|thr|pemasukan|income|dividen|bunga|salary|upah|honor/i;
 
 export default function BillsPage() {
   const router = useRouter();
@@ -60,7 +63,11 @@ export default function BillsPage() {
     else { setMissingTable(false); setBills(data || []); }
 
     const { data: presets } = await supabase.from('presets').select('*').order('created_at', { ascending: true });
-    if (presets && presets.length > 0) setCategories(presets.map((p: any) => `${p.emoji} ${p.label}`));
+    if (presets && presets.length > 0) {
+      // Tagihan = pengeluaran, jadi kategori pemasukan (Gaji, Bonus, dst.) tidak ditampilkan
+      const expenseOnly = presets.filter((p: any) => !INCOME_LIKE.test(String(p.label)));
+      setCategories((expenseOnly.length > 0 ? expenseOnly : presets).map((p: any) => `${p.emoji} ${p.label}`));
+    }
 
     setWallets(await listWallets(session.user.id, false));
     setLoading(false);
@@ -265,14 +272,11 @@ export default function BillsPage() {
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Berulang</label>
                 <FrequencyPicker value={frequency} onChange={setFrequency} options={BILL_FREQ_OPTIONS} />
               </div>
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Jatuh tempo</label>
-                  <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} required className={`${inputCls} text-[12px]`} />
-                </div>
-                <div className="flex-1">
+              <div className="grid grid-cols-2 gap-3">
+                <DateField label="Jatuh tempo" required value={dueDate} onChange={setDueDate} />
+                <div className="min-w-0">
                   <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Ingatkan</label>
-                  <select value={remindDays} onChange={(e) => setRemindDays(Number(e.target.value))} className={inputCls}>
+                  <select value={remindDays} onChange={(e) => setRemindDays(Number(e.target.value))} className={`${inputCls} !h-11 !py-0`}>
                     <option value={0}>Hari H</option><option value={1}>H-1</option><option value={3}>H-3</option><option value={7}>H-7</option>
                   </select>
                 </div>

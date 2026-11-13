@@ -10,7 +10,7 @@ import { listWallets, Wallet } from '@/lib/wallets';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import SkeletonLoader from '@/components/SkeletonLoader';
-import PrintReportView from '@/components/PrintReportView';
+import { buildReportPdf, savePdf } from '@/lib/pdfReport';
 
 const PERIODS: { id: Period; label: string }[] = [
   { id: 'week', label: 'Mingguan' },
@@ -28,7 +28,7 @@ export default function ReportsPage() {
   const [anchor, setAnchor] = useState('');
   const [today, setToday] = useState('');
   const [showHealthInfo, setShowHealthInfo] = useState(false);
-  const [showPrint, setShowPrint] = useState(false);
+  const [pdfBusy, setPdfBusy] = useState(false);
 
   const [dialog, setDialog] = useState({ isOpen: false, title: '', msg: '', type: 'info' as 'info' | 'success' | 'danger', onConfirm: undefined as (() => void) | undefined });
   const showDialog = (title: string, msg: string, type: 'info' | 'success' | 'danger', onConfirm?: () => void) => setDialog({ isOpen: true, title, msg, type, onConfirm });
@@ -76,9 +76,18 @@ export default function ReportsPage() {
     downloadCsv({ filename: `celengin-${period}-${range.start}.csv`, transactions: inPeriod, walletName });
   };
 
-  const handlePrint = () => {
-    if (inPeriod.length === 0) return showDialog('Tidak Ada Data', 'Tidak ada transaksi di periode ini untuk dicetak.', 'info');
-    setShowPrint(true);
+  const handlePdf = async () => {
+    if (inPeriod.length === 0) return showDialog('Tidak Ada Data', 'Tidak ada transaksi di periode ini untuk dibuat PDF.', 'info');
+    if (pdfBusy) return;
+    setPdfBusy(true);
+    try {
+      const bytes = await buildReportPdf({ title: 'Laporan Keuangan Celengin', periodLabel: range.label, nickname, summary: cur, transactions: inPeriod, fmt: formatRupiah });
+      await savePdf(bytes, `laporan-celengin-${period}-${range.start}.pdf`);
+    } catch (e: any) {
+      showDialog('Gagal Membuat PDF', e?.message || 'Terjadi kesalahan saat membuat PDF.', 'danger');
+    } finally {
+      setPdfBusy(false);
+    }
   };
 
   const Delta = ({ now, before, inverse }: { now: number; before: number; inverse?: boolean }) => {
@@ -243,25 +252,13 @@ export default function ReportsPage() {
         {/* Ekspor */}
         <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
           <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100 mb-1">Ekspor Laporan</h3>
-          <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-3">{inPeriod.length} transaksi di {range.label}. CSV bisa dibuka di Excel; untuk PDF pilih &quot;Simpan sebagai PDF&quot; di dialog cetak.</p>
+          <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-3">{inPeriod.length} transaksi di {range.label}. CSV bisa dibuka di Excel. PDF berisi ringkasan, kategori, dan seluruh transaksi; di HP akan muncul menu berbagi (pilih Simpan ke File).</p>
           <div className="flex gap-2">
             <button onClick={handleCsv} className="flex-1 bg-teal-50 dark:bg-teal-900/30 border border-teal-100 dark:border-teal-800 text-teal-700 dark:text-teal-400 text-xs font-bold py-3 rounded-xl flex items-center justify-center gap-1.5 hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-all"><Download className="w-4 h-4" /> Unduh CSV</button>
-            <button onClick={handlePrint} className="flex-1 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-3 rounded-xl flex items-center justify-center gap-1.5 transition-all"><Printer className="w-4 h-4" /> Cetak / PDF</button>
+            <button onClick={handlePdf} disabled={pdfBusy} className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white text-xs font-bold py-3 rounded-xl flex items-center justify-center gap-1.5 transition-all"><Printer className="w-4 h-4" /> {pdfBusy ? 'Membuat PDF...' : 'Unduh PDF'}</button>
           </div>
         </div>
       </main>
-
-      {showPrint && (
-        <PrintReportView
-          title="Laporan Keuangan Celengin"
-          periodLabel={range.label}
-          summary={cur}
-          transactions={inPeriod}
-          fmt={formatRupiah}
-          nickname={nickname}
-          onClose={() => setShowPrint(false)}
-        />
-      )}
 
       {showHealthInfo && health && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">

@@ -2,10 +2,11 @@
 import { useEffect, useState, Suspense } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, Trash2, ArrowDownCircle, ArrowUpCircle, Calendar, XCircle, ChevronLeft, ChevronRight, CalendarDays, Edit3 } from 'lucide-react';
+import { Search, Trash2, ArrowDownCircle, ArrowUpCircle, Calendar, XCircle, ChevronLeft, ChevronRight, Edit3 } from 'lucide-react';
 import { formatRupiah } from '@/lib/utils';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
+import DateField from '@/components/DateField';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import EditTransactionModal from '@/components/EditTransactionModal';
 import RecurringRulesModal from '@/components/RecurringRulesModal';
@@ -141,12 +142,10 @@ function TransactionsContent() {
           </select>
         </div>
 
-        <div className="flex items-center gap-2 bg-white dark:bg-gray-800 p-2 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors">
-          <CalendarDays className="w-4 h-4 text-gray-400 ml-1" />
-          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="text-xs bg-transparent text-gray-600 dark:text-gray-300 focus:outline-none w-full" />
-          <span className="text-gray-300 text-xs">-</span>
-          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="text-xs bg-transparent text-gray-600 dark:text-gray-300 focus:outline-none w-full" />
-          {(startDate || endDate) && <button onClick={() => { setStartDate(''); setEndDate(''); router.push('/transactions'); }} className="text-red-400 hover:text-red-600"><XCircle className="w-4 h-4" /></button>}
+        <div className="flex items-end gap-2">
+          <DateField compact label="Dari" placeholder="Semua tanggal" value={startDate} max={endDate || undefined} onChange={setStartDate} className="flex-1" />
+          <DateField compact label="Sampai" placeholder="Semua tanggal" value={endDate} min={startDate || undefined} onChange={setEndDate} className="flex-1" />
+          {(startDate || endDate) && <button onClick={() => { setStartDate(''); setEndDate(''); router.push('/transactions'); }} className="h-10 w-10 shrink-0 flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-900/30 text-red-400 hover:text-red-600" aria-label="Hapus filter tanggal"><XCircle className="w-5 h-5" /></button>}
         </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-3xl p-2 shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
@@ -155,23 +154,20 @@ function TransactionsContent() {
           ) : (
             paginatedTx.map(tx => (
               <div key={tx.id} className="flex items-center justify-between p-3 border-b border-gray-50 dark:border-gray-700 last:border-0 group">
-                <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${tx.type === 'income' ? 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400' : 'bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400'}`}>
                     {tx.type === 'income' ? <ArrowDownCircle className="w-5 h-5" /> : <ArrowUpCircle className="w-5 h-5" />}
                   </div>
                   <div className="min-w-0">
-                    <p className="font-bold text-gray-800 dark:text-gray-100 text-sm truncate flex items-center gap-1.5">
-                      {tx.merchant_name}
-                      {tx.is_routine && <span className="text-[9px] bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 px-1.5 py-0.5 rounded font-bold">Rutin</span>}
-                    </p>
-                    <p className="text-[10px] text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5"><Calendar className="w-3 h-3" /> {tx.transaction_date}</p>
+                    <p className="font-bold text-gray-800 dark:text-gray-100 text-sm truncate">{tx.merchant_name}</p>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 flex-wrap"><Calendar className="w-3 h-3 shrink-0" /> {tx.transaction_date}{tx.is_routine && <span className="text-[9px] bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 px-1.5 py-0.5 rounded font-bold">Rutin</span>}</p>
                     {((wallets.length > 1 && tx.wallet_id) || tx.notes) && (
                       <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate mt-0.5">{[wallets.length > 1 ? walletLabel(tx.wallet_id) : '', tx.notes].filter(Boolean).join(' · ')}</p>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-3 shrink-0 pl-2">
-                  <p className={`font-bold text-sm ${tx.type === 'income' ? 'text-green-500' : 'text-red-500'}`}>{tx.type === 'income' ? '+' : '-'}{formatRupiah(tx.amount)}</p>
+                <div className="flex items-center gap-2.5 shrink-0 pl-2">
+                  <p className={`font-bold text-[13px] whitespace-nowrap ${tx.type === 'income' ? 'text-green-500' : 'text-red-500'}`}>{tx.type === 'income' ? '+' : '-'}{formatRupiah(tx.amount)}</p>
                   <button onClick={() => { setSelectedTx(tx); setIsEditModalOpen(true); }} className="text-gray-300 dark:text-gray-600 hover:text-teal-500 transition-colors"><Edit3 className="w-4 h-4" /></button>
                   <button onClick={() => handleDelete(tx.id)} className="text-gray-300 dark:text-gray-600 hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
                 </div>
