@@ -1,5 +1,6 @@
 // Perhitungan Laporan & Insight (murni). Tanggal = string "YYYY-MM-DD".
 import { addDays, addMonths, dayOfWeek, diffDays, DAY_NAMES } from '@/lib/recurring';
+import { cycleFor, shiftCycle } from '@/lib/cycle';
 
 export type Period = 'week' | 'month' | 'year';
 
@@ -25,7 +26,7 @@ function ymd(d: string) {
 }
 function pad(n: number) { return String(n).padStart(2, '0'); }
 
-export function getRange(period: Period, anchor: string): RangeInfo {
+export function getRange(period: Period, anchor: string, payday: number = 1): RangeInfo {
   const { y, m, day } = ymd(anchor);
   if (period === 'week') {
     const dow = (new Date(Date.UTC(y, m - 1, day)).getUTCDay() + 6) % 7; // 0 = Senin
@@ -38,6 +39,12 @@ export function getRange(period: Period, anchor: string): RangeInfo {
       label: `${s.day} ${BULAN_PENDEK[s.m - 1]} - ${e.day} ${BULAN_PENDEK[e.m - 1]} ${e.y}`,
       prevStart: addDays(start, -7), prevEnd: addDays(start, -1), totalDays: 7,
     };
+  }
+  if (period === 'month' && payday > 1) {
+    // Siklus gajian: mis. 25 Okt - 24 Nov
+    const c = cycleFor(anchor, payday);
+    const p = shiftCycle(anchor, -1, payday);
+    return { start: c.start, end: c.end, label: c.label, prevStart: p.start, prevEnd: p.end, totalDays: c.totalDays };
   }
   if (period === 'month') {
     const start = `${y}-${pad(m)}-01`;
@@ -54,8 +61,9 @@ export function getRange(period: Period, anchor: string): RangeInfo {
 }
 
 /** Geser anchor satu periode ke depan (+1) / belakang (-1). */
-export function shiftAnchor(period: Period, anchor: string, dir: 1 | -1): string {
+export function shiftAnchor(period: Period, anchor: string, dir: 1 | -1, payday: number = 1): string {
   if (period === 'week') return addDays(anchor, 7 * dir);
+  if (period === 'month' && payday > 1) return shiftCycle(anchor, dir, payday).start;
   if (period === 'month') return addMonths(anchor, dir);
   return addMonths(anchor, 12 * dir);
 }

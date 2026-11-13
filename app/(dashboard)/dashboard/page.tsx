@@ -14,6 +14,8 @@ import AppHeader from '@/components/AppHeader';
 import NotificationBell, { LocalNotif } from '@/components/NotificationBell';
 import FeatureShortcuts from '@/components/FeatureShortcuts';
 import AttentionStrip, { AttentionItem } from '@/components/AttentionStrip';
+import PaydayPrompt from '@/components/PaydayPrompt';
+import { cycleFor, normalizePayday } from '@/lib/cycle';
 import WeeklyChart from '@/components/WeeklyChart';
 import MonthCalendar from '@/components/MonthCalendar';
 import PhotoCropper from '@/components/PhotoCropper';
@@ -47,6 +49,7 @@ const [todayStr, setTodayStr] = useState('');
   const [calendarView, setCalendarView] = useState<'expense' | 'income' | 'all'>('expense');
   const [showCalendar, setShowCalendar] = useState(true);
   const [greeting, setGreeting] = useState('Halo');
+  const [paydayLater, setPaydayLater] = useState(false);
   const [showMonth, setShowMonth] = useState(false); // lipatan Kalender + Statistik bulan ini
 
   const [chartTheme, setChartTheme] = useState(0);
@@ -254,6 +257,14 @@ const [todayStr, setTodayStr] = useState('');
     setIsUpdatingPassword(false);
   };
 
+  // Simpan tanggal gajian. Kolom belum ada (SQL 08 belum dijalankan) -> beri petunjuk, jangan diam saja.
+  const handleSavePayday = async (day: number) => {
+    if (!user) return;
+    const { error } = await supabase.from('profiles').update({ payday: day }).eq('id', user.id);
+    if (error) { showDialog('Belum Bisa Disimpan', 'Jalankan sql/08_payday.sql di Supabase SQL Editor dulu, lalu coba lagi.', 'danger'); return; }
+    setProfile((prev: any) => ({ ...prev, payday: day }));
+  };
+
   const handleCategoryClick = (categoryName: string) => {
     const details = monthlyTx.filter(t => t.merchant_name === categoryName);
     setCategoryDetails(details);
@@ -266,7 +277,12 @@ const [todayStr, setTodayStr] = useState('');
   const balance = totalIncome - totalExpense + walletInitialTotal;
   const walletCalc = computeWalletBalances(wallets, transactions, transfers);
 
-  const monthlyTx = transactions.filter(t => t.transaction_date.startsWith(currentMonthStr || '0000-00'));
+  // "Bulan ini" mengikuti siklus gajian (tanggal gajian 1 = bulan kalender biasa)
+  const payday = normalizePayday(profile?.payday);
+  const cycle = todayStr ? cycleFor(todayStr, payday) : null;
+  const monthlyTx = cycle
+    ? transactions.filter(t => t.transaction_date >= cycle.start && t.transaction_date <= cycle.end)
+    : transactions.filter(t => t.transaction_date.startsWith(currentMonthStr || '0000-00'));
   const monthlyIncome = monthlyTx.filter(t => t.type === 'income').reduce((acc, curr) => acc + Number(curr.amount), 0);
   const monthlyExpense = monthlyTx.filter(t => t.type === 'expense').reduce((acc, curr) => acc + Number(curr.amount), 0);
   
@@ -545,6 +561,11 @@ const currentMonth = calendarMonth;
         {/* PERLU PERHATIAN (hilang bila kosong) */}
         <AttentionStrip items={attentionItems} />
 
+        {/* Pertanyaan tanggal gajian: sekali saja, hanya bila kolom payday sudah ada dan belum diisi */}
+        {profile && 'payday' in profile && profile.payday == null && !paydayLater && (
+          <PaydayPrompt onPick={handleSavePayday} onLater={() => setPaydayLater(true)} />
+        )}
+
         {/* MINGGU INI */}
         <div>
           <WeeklyChart
@@ -599,7 +620,10 @@ const currentMonth = calendarMonth;
         {totalMonthly > 0 && (
           <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100">Statistik Bulan Ini</h3>
+              <div>
+                <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100">{payday > 1 ? 'Statistik Siklus Ini' : 'Statistik Bulan Ini'}</h3>
+                {payday > 1 && cycle && <p className="text-[10px] text-gray-400 dark:text-gray-500">{cycle.label}</p>}
+              </div>
               <button onClick={() => setChartTheme((prev) => (prev + 1) % chartThemes.length)} className="text-[10px] font-bold bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-full border border-gray-200 dark:border-gray-600 hover:bg-gray-100 transition-all">
                 Tema: {chartThemes[chartTheme].label}
               </button>

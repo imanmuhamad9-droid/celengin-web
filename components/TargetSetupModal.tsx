@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { X, ArrowDownCircle, ArrowUpCircle, Star } from 'lucide-react';
 import { toLocalDateStr } from '@/lib/utils';
+import { cycleFor, normalizePayday } from '@/lib/cycle';
 import DateField from '@/components/DateField';
 
 export default function TargetSetupModal({ isOpen, onClose, onSuccess, showDialog, existingTarget }: any) {
@@ -17,6 +18,18 @@ export default function TargetSetupModal({ isOpen, onClose, onSuccess, showDialo
   const [expenseRaw, setExpenseRaw] = useState(0);
   
   const [loading, setLoading] = useState(false);
+  const [payday, setPayday] = useState(1);
+
+  // Tanggal gajian dipakai untuk tombol periode "Bulan"
+  useEffect(() => {
+    if (!isOpen) return;
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
+      setPayday(normalizePayday(data?.payday));
+    })();
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -58,6 +71,12 @@ export default function TargetSetupModal({ isOpen, onClose, onSuccess, showDialo
       end = new Date(start); end.setDate(start.getDate() + 6);
     } 
     else if (type === 'month') {
+      if (payday > 1) {
+        const c = cycleFor(toLocalDateStr(today), payday);
+        setStartDate(c.start);
+        setEndDate(c.end);
+        return;
+      }
       start = new Date(today.getFullYear(), today.getMonth(), 1);
       end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
     } 

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, ChevronLeft, ChevronRight, Download, Printer, Info, X, TrendingUp, TrendingDown } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { formatRupiah, toLocalDateStr } from '@/lib/utils';
+import { normalizePayday } from '@/lib/cycle';
 import { Period, Tx, getRange, shiftAnchor, summarize, pctChange, healthScore, buildInsights } from '@/lib/insights';
 import { downloadCsv } from '@/lib/exportReport';
 import { listWallets, Wallet } from '@/lib/wallets';
@@ -24,6 +25,7 @@ export default function ReportsPage() {
   const [transactions, setTransactions] = useState<Tx[]>([]);
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [nickname, setNickname] = useState('');
+  const [payday, setPayday] = useState(1);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Period>('month');
   const [anchor, setAnchor] = useState('');
@@ -44,8 +46,9 @@ export default function ReportsPage() {
       if (!session) return router.push('/login');
       const { data: tx } = await supabase.from('transactions').select('*').order('transaction_date', { ascending: false });
       if (tx) setTransactions(tx as Tx[]);
-      const { data: prof } = await supabase.from('profiles').select('nickname,full_name').eq('id', session.user.id).single();
+      const { data: prof } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
       setNickname(prof?.nickname || prof?.full_name || '');
+      setPayday(normalizePayday(prof?.payday));
       setWallets(await listWallets(session.user.id, false));
       setLoading(false);
     };
@@ -54,8 +57,8 @@ export default function ReportsPage() {
 
   if (loading || !anchor || !today) return <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950"><SkeletonLoader /></div>;
 
-  const range = getRange(period, anchor);
-  const prevRange = getRange(period, shiftAnchor(period, anchor, -1));
+  const range = getRange(period, anchor, payday);
+  const prevRange = getRange(period, shiftAnchor(period, anchor, -1, payday), payday);
   const cur = summarize(transactions, range, period, today);
   const prev = summarize(transactions, prevRange, period, today);
   const health = healthScore(cur, prev);
@@ -116,9 +119,9 @@ export default function ReportsPage() {
         </div>
 
         <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-3 py-2">
-          <button onClick={() => setAnchor(shiftAnchor(period, anchor, -1))} className="p-1.5 bg-gray-50 dark:bg-gray-700 rounded-md text-gray-500 hover:text-teal-600"><ChevronLeft className="w-4 h-4" /></button>
+          <button onClick={() => setAnchor(shiftAnchor(period, anchor, -1, payday))} className="p-1.5 bg-gray-50 dark:bg-gray-700 rounded-md text-gray-500 hover:text-teal-600"><ChevronLeft className="w-4 h-4" /></button>
           <span className="text-sm font-bold text-gray-800 dark:text-gray-100">{range.label}</span>
-          <button disabled={!canGoNext} onClick={() => setAnchor(shiftAnchor(period, anchor, 1))} className="p-1.5 bg-gray-50 dark:bg-gray-700 rounded-md text-gray-500 hover:text-teal-600 disabled:opacity-30"><ChevronRight className="w-4 h-4" /></button>
+          <button disabled={!canGoNext} onClick={() => setAnchor(shiftAnchor(period, anchor, 1, payday))} className="p-1.5 bg-gray-50 dark:bg-gray-700 rounded-md text-gray-500 hover:text-teal-600 disabled:opacity-30"><ChevronRight className="w-4 h-4" /></button>
         </div>
 
         {/* Ringkasan */}

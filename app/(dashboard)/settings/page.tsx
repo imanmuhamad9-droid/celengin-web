@@ -10,6 +10,8 @@ import SkeletonLoader from '@/components/SkeletonLoader';
 import PasswordRequirements from '@/components/PasswordRequirements';
 import CustomDialog from '@/components/CustomDialog';
 import PushSettingsCard from '@/components/PushSettingsCard';
+import { cycleFor, normalizePayday } from '@/lib/cycle';
+import { toLocalDateStr } from '@/lib/utils';
 
 export default function SettingsPage() {
   const [profile, setProfile] = useState<any>(null);
@@ -20,6 +22,11 @@ export default function SettingsPage() {
   // State Tema & Warna
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
   const [themeColor, setThemeColor] = useState('#0f766e');
+
+  // State Tanggal Gajian (disimpan langsung saat dipilih, terpisah dari tombol Simpan)
+  const [payday, setPayday] = useState(1);
+  const [paydayReady, setPaydayReady] = useState(true);
+  const [todayStr, setTodayStr] = useState('');
 
   // State Saldo
   const [safeLimitDisplay, setSafeLimitDisplay] = useState('');
@@ -79,6 +86,9 @@ export default function SettingsPage() {
       if (data) {
         setProfile(data);
         setThemeColor(data.theme_color || '#0f766e');
+        setPayday(normalizePayday(data.payday));
+        setPaydayReady('payday' in data);
+        setTodayStr(toLocalDateStr(new Date()));
         
         const limit = data.safe_limit || 500000;
         setSafeLimitRaw(limit);
@@ -224,6 +234,20 @@ export default function SettingsPage() {
     finally { setUploading(prev => ({ ...prev, [type]: false })); }
   };
 
+  const handlePaydayChange = async (day: number) => {
+    const before = payday;
+    setPayday(day);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    const { error } = await supabase.from('profiles').update({ payday: day }).eq('id', session.user.id);
+    if (error) {
+      setPayday(before);
+      showDialog('Belum Bisa Disimpan', 'Jalankan sql/08_payday.sql di Supabase SQL Editor dulu, lalu coba lagi.', 'danger');
+    } else {
+      setMsg('Tanggal gajian disimpan.'); setTimeout(() => setMsg(''), 2500);
+    }
+  };
+
   const handleSave = async () => {
     setIsSaving(true); setMsg('');
     const { data: { session } } = await supabase.auth.getSession();
@@ -312,6 +336,23 @@ export default function SettingsPage() {
 
         {/* APLIKASI & NOTIFIKASI */}
         <PushSettingsCard showDialog={showDialog} />
+
+        {/* TANGGAL GAJIAN */}
+        <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
+          <label className="block font-bold text-gray-800 dark:text-white mb-1">Tanggal Gajian</label>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Statistik dan laporan bulanan dihitung dari tanggal ini. Pilih 1 untuk bulan kalender biasa.</p>
+          <select
+            value={payday}
+            onChange={(e) => handlePaydayChange(Number(e.target.value))}
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-bold text-base"
+          >
+            {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+              <option key={d} value={d}>{d === 1 ? 'Tanggal 1 (bulan kalender)' : `Tanggal ${d}`}</option>
+            ))}
+          </select>
+          {todayStr && <p className="text-[11px] text-teal-700 dark:text-teal-400 font-bold mt-2">Siklus saat ini: {cycleFor(todayStr, payday).label}</p>}
+          {!paydayReady && <p className="text-[11px] text-orange-600 dark:text-orange-400 mt-2">Kolom tanggal gajian belum ada. Jalankan sql/08_payday.sql di Supabase dulu.</p>}
+        </div>
 
         {/* BATAS SALDO AMAN */}
         <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
