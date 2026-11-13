@@ -162,9 +162,8 @@ export default function SplitBillPage() {
     if (error || !g) return showDialog('Gagal', error?.message || 'Grup gagal dibuat.', 'danger');
     const rows = [
       { group_id: g.id, name: myName, is_me: true, user_id: userId, status: 'accepted' },
-      ...pending.map((m) => (m.userId
-        ? { group_id: g.id, name: m.name, is_me: false, user_id: m.userId, status: 'pending' }
-        : { group_id: g.id, name: m.name, is_me: false })),
+      // Semua baris harus punya kolom yang sama, kalau tidak kolom yang hilang dikirim sebagai NULL
+      ...pending.map((m) => ({ group_id: g.id, name: m.name, is_me: false, user_id: m.userId ?? null, status: m.userId ? 'pending' : 'accepted' })),
     ];
     const { error: mErr } = await supabase.from('split_members').insert(rows);
     if (mErr) {
@@ -201,7 +200,7 @@ export default function SplitBillPage() {
   const handleAddMember = async () => {
     const n = newMember.trim();
     if (!n || !group) return;
-    const { error } = await supabase.from('split_members').insert({ group_id: group.id, name: n, is_me: false });
+    const { error } = await supabase.from('split_members').insert({ group_id: group.id, name: n, is_me: false, user_id: null, status: 'accepted' });
     if (error) return showDialog('Gagal', error.message, 'danger');
     setNewMember('');
     loadGroup(group);

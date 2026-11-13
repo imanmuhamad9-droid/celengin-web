@@ -1,11 +1,13 @@
 /* Service worker Celengin: push notification + halaman offline sederhana.
    Sengaja TIDAK menyimpan (cache) data keuangan / halaman berisi data user. */
-const CACHE = 'celengin-v1';
+const CACHE = 'celengin-v2'; // Naikkan versi cache agar update terdeteksi
 const OFFLINE_URL = '/offline.html';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE).then((c) => c.addAll([OFFLINE_URL, '/icon.png'])).then(() => self.skipWaiting())
+    caches.open(CACHE)
+      .then((c) => c.addAll([OFFLINE_URL, '/icon.png']))
+      .then(() => self.skipWaiting()) // Paksa SW baru langsung aktif
   );
 });
 
@@ -13,13 +15,16 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
       .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
-      .then(() => self.clients.claim())
+      .then(() => self.clients.claim()) // Ambil alih kendali halaman segera
   );
 });
 
+// Logika Fetch: Selalu ambil halaman terbaru dari internet
 self.addEventListener('fetch', (event) => {
   if (event.request.mode === 'navigate') {
-    event.respondWith(fetch(event.request).catch(() => caches.match(OFFLINE_URL)));
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(OFFLINE_URL))
+    );
   }
 });
 
