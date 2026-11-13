@@ -12,6 +12,7 @@ import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import NotificationBell, { LocalNotif } from '@/components/NotificationBell';
 import FeatureShortcuts from '@/components/FeatureShortcuts';
+import WeeklyChart from '@/components/WeeklyChart';
 import PasswordRequirements from '@/components/PasswordRequirements';
 import SkeletonLoader from '@/components/SkeletonLoader';
 
@@ -497,42 +498,10 @@ const currentMonth = calendarMonth;
         <FeatureShortcuts userId={user?.id ?? null} initial={profile?.shortcuts} counts={{ tagihan: dueBills.length }} />
 
         {/* GRAFIK MINGGUAN */}
-        <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100">Statistik Mingguan</h3>
-              <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
-                {last7Days.length > 0 ? `${new Date(last7Days[0]).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} - ${new Date(last7Days[6]).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}` : ''}
-              </p>
-            </div>
-            <div className="flex gap-2 text-[10px] font-bold mt-1">
-              <span className="flex items-center gap-1 text-green-500"><span className="w-2 h-2 rounded-full bg-green-500"></span> Masuk</span>
-              <span className="flex items-center gap-1 text-red-500"><span className="w-2 h-2 rounded-full bg-red-500"></span> Keluar</span>
-            </div>
-          </div>
-
-          {selectedDay && (
-            <div className="bg-gray-50 dark:bg-gray-700 border border-gray-100 dark:border-gray-600 p-2.5 rounded-xl mb-4 text-[11px] animate-in fade-in">
-              <p className="font-bold text-gray-700 dark:text-gray-200 mb-1">Detail {selectedDay.dayName} ({selectedDay.date})</p>
-              <div className="flex gap-4">
-                <span className="text-green-600 dark:text-green-400 font-bold">Masuk: {formatRupiah(selectedDay.income)}</span>
-                <span className="text-red-500 dark:text-red-400 font-bold">Keluar: {formatRupiah(selectedDay.expense)}</span>
-              </div>
-            </div>
-          )}
-
-          <div className="flex items-end justify-between gap-1 h-32">
-            {weeklyData.map(d => (
-              <div key={d.date} onClick={() => setSelectedDay(d)} className="flex flex-col items-center flex-1 h-full justify-end cursor-pointer group">
-                <div className="w-full relative flex justify-center items-end gap-[2px] h-full pb-2">
-                  <div className={`w-full max-w-[8px] rounded-t-sm transition-all ${selectedDay?.date === d.date ? 'bg-green-400 opacity-80' : 'bg-green-500'}`} style={{ height: `${Math.max((d.income / maxWeeklyValue) * 100, 4)}px` }}></div>
-                  <div className={`w-full max-w-[8px] rounded-t-sm transition-all ${selectedDay?.date === d.date ? 'bg-red-400 opacity-80' : 'bg-red-500'}`} style={{ height: `${Math.max((d.expense / maxWeeklyValue) * 100, 4)}px` }}></div>
-                </div>
-                <span className={`text-[10px] font-medium transition-colors ${selectedDay?.date === d.date ? 'text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30 px-1 rounded' : 'text-gray-400 dark:text-gray-500'}`}>{d.dayName}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <WeeklyChart
+          days={weeklyData}
+          rangeLabel={last7Days.length > 0 ? `${new Date(last7Days[0] + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} - ${new Date(last7Days[6] + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}` : ''}
+        />
 
         {/* KALENDER PENGELUARAN / PEMASUKAN */}
         <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">

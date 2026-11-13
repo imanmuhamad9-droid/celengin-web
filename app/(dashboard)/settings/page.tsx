@@ -2,8 +2,9 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { Save, ArrowLeft, Upload, Image as ImageIcon, Sun, Moon, Monitor, Palette, User, LogOut, KeyRound, X } from 'lucide-react';
-import ImageCropper from '@/components/ImageCropper';
+import { Save, ArrowLeft, Upload, Image as ImageIcon, Sun, Moon, Monitor, Palette, User, LogOut, KeyRound, X, Camera } from 'lucide-react';
+import CardBgEditor from '@/components/CardBgEditor';
+import PhotoCropper from '@/components/PhotoCropper';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import PasswordRequirements from '@/components/PasswordRequirements';
 import CustomDialog from '@/components/CustomDialog';
@@ -37,6 +38,8 @@ export default function SettingsPage() {
   // State Profil Modal
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [cropJob, setCropJob] = useState<{ file: File; kind: 'avatar' | 'cover' } | null>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isNicknameModalOpen, setIsNicknameModalOpen] = useState(false);
@@ -118,29 +121,45 @@ export default function SettingsPage() {
     }
   };
 
-  // Handle Upload Avatar
-  const handleUploadAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Pilih foto (profil / sampul) -> buka layar atur zoom dulu, baru diunggah saat Simpan
+  const handlePickPhoto = (e: React.ChangeEvent<HTMLInputElement>, kind: 'avatar' | 'cover') => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
+    if (!file.type.startsWith('image/')) { showDialog('Gagal', 'File yang dipilih bukan gambar.', 'danger'); return; }
+    setCropJob({ file, kind });
+  };
+
+  const uploadCropped = async (blob: Blob) => {
+    if (!cropJob) return;
+    const kind = cropJob.kind;
     setIsUploading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${session.user.id}-avatar-${Date.now()}.${fileExt}`;
-      const { error: uploadError } = await supabase.storage.from('widget-images').upload(fileName, file);
+      const fileName = `${session.user.id}-${kind}-${Date.now()}.jpg`;
+      const { error: uploadError } = await supabase.storage.from('widget-images').upload(fileName, blob, { contentType: 'image/jpeg' });
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from('widget-images').getPublicUrl(fileName);
-      await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', session.user.id);
-      
-      // Refresh profile
+      const col = kind === 'avatar' ? 'avatar_url' : 'cover_url';
+      const { error: upErr } = await supabase.from('profiles').update({ [col]: publicUrl }).eq('id', session.user.id);
+      if (upErr) throw new Error(kind === 'cover' ? 'Kolom sampul belum ada. Jalankan sql/06_cover.sql di Supabase.' : upErr.message);
       const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
       setProfile(data);
+      setCropJob(null);
     } catch (error: any) {
+      setCropJob(null);
       showDialog('Gagal', 'Gagal upload: ' + error.message, 'danger');
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const removeCover = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    await supabase.from('profiles').update({ cover_url: null }).eq('id', session.user.id);
+    setProfile((p: any) => ({ ...p, cover_url: null }));
   };
 
   const handleUpdateNickname = async () => {
@@ -263,7 +282,7 @@ export default function SettingsPage() {
               accept="image/*" 
               className="hidden" 
               ref={fileInputRef} 
-              onChange={handleUploadAvatar} 
+              onChange={(e) => handlePickPhoto(e, 'avatar')} 
             />
             <div className="flex-1">
               <p className="text-sm font-bold text-gray-800 dark:text-white">{profile?.nickname || 'Sobat'}</p>
@@ -310,47 +329,15 @@ export default function SettingsPage() {
         <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
           <h3 className="font-bold text-gray-800 dark:text-white mb-4">Background Kartu</h3>
           
-          {/* Gambar Aman */}
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-bold text-gray-700 dark:text-gray-300">Saat Saldo Aman</label>
-              {bgSafeUrl && <button onClick={() => fileInputSafeRef.current?.click()} className="text-xs text-teal-600 font-bold">Ganti</button>}
-            </div>
-            {!bgSafeUrl ? (
-              <button onClick={() => fileInputSafeRef.current?.click()} className="w-full h-24 bg-gray-50 dark:bg-gray-700 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl flex flex-col items-center justify-center text-gray-500 hover:border-teal-500 transition-all">
-                {uploading.safe ? 'Mengunggah...' : <><Upload className="w-5 h-5 mb-1" /> Pilih Gambar</>}
-              </button>
-            ) : (
-              <div>
-                <button onClick={() => setShowSafeCropper(!showSafeCropper)} className="w-full flex items-center justify-between bg-gray-50 dark:bg-gray-700 p-2 rounded-lg text-xs font-semibold text-gray-600 dark:text-gray-300">
-                  <span>Atur Posisi</span> {showSafeCropper ? 'Tutup' : 'Buka'}
-                </button>
-                {showSafeCropper && <ImageCropper imageUrl={bgSafeUrl} initialPos={bgSafePos} initialZoom={bgSafeZoom} onSave={(pos, zoom) => { setBgSafePos(pos); setBgSafeZoom(zoom); }} />}
-              </div>
-            )}
-            <input type="file" accept="image/*" className="hidden" ref={fileInputSafeRef} onChange={(e) => handleUploadBg(e, 'safe')} />
-          </div>
-
-          {/* Gambar Menipis */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-bold text-gray-700 dark:text-gray-300">Saat Saldo Menipis</label>
-              {bgLowUrl && <button onClick={() => fileInputLowRef.current?.click()} className="text-xs text-teal-600 font-bold">Ganti</button>}
-            </div>
-            {!bgLowUrl ? (
-              <button onClick={() => fileInputLowRef.current?.click()} className="w-full h-24 bg-gray-50 dark:bg-gray-700 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl flex flex-col items-center justify-center text-gray-500 hover:border-teal-500 transition-all">
-                {uploading.low ? 'Mengunggah...' : <><Upload className="w-5 h-5 mb-1" /> Pilih Gambar</>}
-              </button>
-            ) : (
-              <div>
-                <button onClick={() => setShowLowCropper(!showLowCropper)} className="w-full flex items-center justify-between bg-gray-50 dark:bg-gray-700 p-2 rounded-lg text-xs font-semibold text-gray-600 dark:text-gray-300">
-                  <span>Atur Posisi</span> {showLowCropper ? 'Tutup' : 'Buka'}
-                </button>
-                {showLowCropper && <ImageCropper imageUrl={bgLowUrl} initialPos={bgLowPos} initialZoom={bgLowZoom} onSave={(pos, zoom) => { setBgLowPos(pos); setBgLowZoom(zoom); }} />}
-              </div>
-            )}
-            <input type="file" accept="image/*" className="hidden" ref={fileInputLowRef} onChange={(e) => handleUploadBg(e, 'low')} />
-          </div>
+          <CardBgEditor
+            safe={{ url: bgSafeUrl, pos: bgSafePos, zoom: bgSafeZoom }}
+            low={{ url: bgLowUrl, pos: bgLowPos, zoom: bgLowZoom }}
+            uploading={uploading}
+            onChange={(side, pos, zoom) => { if (side === 'safe') { setBgSafePos(pos); setBgSafeZoom(zoom); } else { setBgLowPos(pos); setBgLowZoom(zoom); } }}
+            onPick={(side) => (side === 'safe' ? fileInputSafeRef : fileInputLowRef).current?.click()}
+          />
+          <input type="file" accept="image/*" className="hidden" ref={fileInputSafeRef} onChange={(e) => handleUploadBg(e, 'safe')} />
+          <input type="file" accept="image/*" className="hidden" ref={fileInputLowRef} onChange={(e) => handleUploadBg(e, 'low')} />
         </div>
 
         {msg && <p className="text-center text-sm font-bold text-teal-600 dark:text-teal-400">{msg}</p>}
@@ -360,11 +347,26 @@ export default function SettingsPage() {
         </button>
       </main>
 
+      <input type="file" accept="image/*" className="hidden" ref={coverInputRef} onChange={(e) => handlePickPhoto(e, 'cover')} />
+      {cropJob && (
+        <PhotoCropper
+          file={cropJob.file}
+          shape={cropJob.kind === 'avatar' ? 'circle' : 'rect'}
+          aspect={cropJob.kind === 'avatar' ? 1 : 320 / 150}
+          outWidth={cropJob.kind === 'avatar' ? 512 : 960}
+          title={cropJob.kind === 'avatar' ? 'Atur foto profil' : 'Atur foto sampul'}
+          onCancel={() => setCropJob(null)}
+          onConfirm={uploadCropped}
+        />
+      )}
+
       {/* MODAL KELOLA AKUN */}
       {isProfileModalOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-gray-50 dark:bg-gray-800 rounded-3xl w-full max-w-xs relative overflow-hidden shadow-2xl">
-            <div className="pt-6 pb-12 flex flex-col items-center relative transition-colors duration-300" style={{ backgroundColor: profile?.theme_color || '#0f766e' }}>
+            <div className="pt-6 pb-12 flex flex-col items-center relative transition-colors duration-300 bg-cover bg-center" style={{ backgroundColor: profile?.theme_color || '#0f766e', ...(profile?.cover_url ? { backgroundImage: `url(${profile.cover_url})` } : {}) }}>
+              {profile?.cover_url && <div className="absolute inset-0 bg-black/25" />}
+              <button onClick={() => coverInputRef.current?.click()} className="absolute top-4 left-4 z-10 flex items-center gap-1 text-[11px] font-bold text-white bg-black/30 hover:bg-black/50 rounded-full px-2.5 py-1"><Camera className="w-3.5 h-3.5" /> Sampul</button>
               <button onClick={() => setIsProfileModalOpen(false)} className="absolute top-4 right-4 text-white/70 hover:text-white bg-black/10 rounded-full p-1"><X className="w-5 h-5" /></button>
               <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 border-4 border-white shadow-md relative z-10 mt-2 flex items-center justify-center">
                 {profile?.avatar_url ? <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" /> : <User className="w-10 h-10 text-gray-400" />}
@@ -373,6 +375,8 @@ export default function SettingsPage() {
             <div className="px-5 pb-5 -mt-6 text-center relative z-10">
               <h2 className="text-lg font-bold text-gray-800 dark:text-white bg-white dark:bg-gray-700 rounded-xl py-2 shadow-sm mb-4 inline-block px-6 border border-gray-100 dark:border-gray-600">{profile?.nickname || 'Sobat'}</h2>
               <div className="bg-white dark:bg-gray-700 rounded-2xl border border-gray-100 dark:border-gray-600 shadow-sm overflow-hidden text-sm">
+                <button onClick={() => coverInputRef.current?.click()} className="w-full flex items-center gap-3 px-4 py-3.5 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-gray-600 transition-all border-b border-gray-50 dark:border-gray-600 text-left"><Camera className="w-4 h-4 text-gray-400" /> Ganti Foto Sampul</button>
+                {profile?.cover_url && <button onClick={removeCover} className="w-full flex items-center gap-3 px-4 py-3.5 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-gray-600 transition-all border-b border-gray-50 dark:border-gray-600 text-left"><X className="w-4 h-4 text-gray-400" /> Hapus Foto Sampul</button>}
                 <button onClick={() => { setNewNickname(profile?.nickname || ''); setIsNicknameModalOpen(true); }} className="w-full flex items-center gap-3 px-4 py-3.5 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-gray-600 transition-all border-b border-gray-50 dark:border-gray-600 text-left"><User className="w-4 h-4 text-gray-400" /> Ubah Nickname</button>
                 <button onClick={() => { setIsProfileModalOpen(false); setIsPasswordModalOpen(true); }} className="w-full flex items-center gap-3 px-4 py-3.5 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-gray-600 transition-all border-b border-gray-50 dark:border-gray-600 text-left"><KeyRound className="w-4 h-4 text-gray-400" /> Ganti Password</button>
                 <button onClick={async () => { setIsProfileModalOpen(false); await supabase.auth.signOut(); router.push('/login'); }} className="w-full flex items-center gap-3 px-4 py-3.5 text-red-500 font-semibold hover:bg-red-50 dark:hover:bg-red-900/30 transition-all text-left"><LogOut className="w-4 h-4" /> Keluar Akun</button>
