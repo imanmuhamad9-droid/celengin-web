@@ -25,6 +25,7 @@ export const viewport: Viewport = {
   themeColor: "#0f766e",
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1, // cegah Safari iPhone zoom otomatis saat mengetuk kolom input
   viewportFit: "cover",
 };
 
