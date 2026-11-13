@@ -8,7 +8,6 @@ import AuthShell, { authLabel, authInput, authBorder, authBorderOk, authBorderEr
 
 export default function UpdatePasswordPage() {
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState({ text: '', type: 'error' });
@@ -19,12 +18,10 @@ export default function UpdatePasswordPage() {
     /[A-Z]/.test(password) &&
     /[0-9]/.test(password) &&
     /[^A-Za-z0-9]/.test(password);
-  const isMatch = password === confirmPassword && password !== '';
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isPasswordValid) return setMsg({ text: 'Password belum memenuhi syarat.', type: 'error' });
-    if (!isMatch) return setMsg({ text: 'Konfirmasi password tidak cocok.', type: 'error' });
 
     setLoading(true);
     setMsg({ text: '', type: 'error' });
@@ -65,16 +62,7 @@ export default function UpdatePasswordPage() {
           {password.length > 0 && <PasswordRequirements password={password} />}
         </div>
 
-        <div>
-          <label className={authLabel}>Ulangi Password Baru</label>
-          <div className="relative">
-            <Lock className={authIcon} />
-            <input type={showPassword ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={`${authInput} pr-4 ${confirmPassword.length > 0 ? (isMatch ? authBorderOk : authBorderErr) : authBorder}`} placeholder="Ketik ulang password" autoComplete="new-password" required />
-          </div>
-          {confirmPassword.length > 0 && !isMatch && <p className="text-xs text-red-500 mt-1">Password tidak cocok.</p>}
-        </div>
-
-        <button type="submit" disabled={loading} className={`${authBtn} mt-2`}>
+        <button type="submit" disabled={loading || !isPasswordValid} className={`${authBtn} mt-2`}>
           {loading ? 'Menyimpan...' : 'Simpan Password Baru'}
         </button>
       </form>

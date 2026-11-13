@@ -97,9 +97,7 @@ export default function SettingsPage() {
 
   // Password
   const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [passwordMsg, setPasswordMsg] = useState({ text: '', type: 'error' });
 
@@ -234,7 +232,6 @@ export default function SettingsPage() {
 
   const handleUpdatePassword = async () => {
     if (!isPasswordValid) return setPasswordMsg({ text: 'Password belum memenuhi syarat.', type: 'error' });
-    if (!isPasswordMatch) return setPasswordMsg({ text: 'Konfirmasi password tidak cocok.', type: 'error' });
     setIsUpdatingPassword(true); setPasswordMsg({ text: '', type: 'error' });
 
     const { data: { session } } = await supabase.auth.getSession();
@@ -249,7 +246,7 @@ export default function SettingsPage() {
     if (error) { setPasswordMsg({ text: error.message, type: 'error' }); }
     else {
       setPasswordMsg({ text: 'Password berhasil diubah!', type: 'success' });
-      setNewPassword(''); setConfirmPassword('');
+      setNewPassword('');
       setTimeout(() => setPasswordMsg({ text: '', type: 'error' }), 3000);
     }
     setIsUpdatingPassword(false);
@@ -313,7 +310,6 @@ export default function SettingsPage() {
   const handleLogout = async () => { await supabase.auth.signOut(); router.push('/login'); };
 
   const isPasswordValid = newPassword.length >= 8 && /[A-Z]/.test(newPassword) && /[0-9]/.test(newPassword) && /[^A-Za-z0-9]/.test(newPassword);
-  const isPasswordMatch = newPassword === confirmPassword && newPassword !== '';
 
   if (loading) return <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950"><SkeletonLoader /></div>;
 
@@ -429,16 +425,7 @@ export default function SettingsPage() {
                 </div>
                 {newPassword.length > 0 && <PasswordRequirements password={newPassword} />}
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1.5">Ulangi Password Baru</label>
-                <div className="relative">
-                  <input type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={`${INPUT} pr-12 ${confirmPassword.length > 0 ? (isPasswordMatch ? 'border-green-400' : 'border-red-400') : 'border-gray-200 dark:border-gray-600'}`} placeholder="Ketik ulang password baru" autoComplete="new-password" />
-                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} aria-label="Tampilkan password" className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">{showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}</button>
-                </div>
-                {confirmPassword.length > 0 && !isPasswordMatch && <p className="text-xs text-red-500 mt-1">Password tidak cocok.</p>}
-                {confirmPassword.length > 0 && isPasswordMatch && <p className="text-xs text-green-600 dark:text-green-400 mt-1">Password cocok.</p>}
-              </div>
-              <button onClick={handleUpdatePassword} disabled={isUpdatingPassword || !isPasswordValid || !isPasswordMatch} className={BTN_MAIN}>{isUpdatingPassword ? 'Menyimpan...' : 'Simpan Password Baru'}</button>
+              <button onClick={handleUpdatePassword} disabled={isUpdatingPassword || !isPasswordValid} className={BTN_MAIN}>{isUpdatingPassword ? 'Menyimpan...' : 'Simpan Password Baru'}</button>
             </div>
           </div>
         )}

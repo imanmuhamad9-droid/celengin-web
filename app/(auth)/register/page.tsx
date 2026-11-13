@@ -10,23 +10,21 @@ import AuthShell, { authLabel, authInput, authBorder, authBorderOk, authBorderEr
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [nickname, setNickname] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [isCheckingNickname, setIsCheckingNickname] = useState(false);
   const [isNicknameAvailable, setIsNicknameAvailable] = useState<boolean | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [sent, setSent] = useState(false); // sudah daftar, menunggu verifikasi email
+  const [sent, setSent] = useState(false); // sudah daftar, menunggu verifikasi email (hanya bila verifikasi aktif di Supabase)
+  const [created, setCreated] = useState(false); // sudah daftar dan langsung aktif (verifikasi email dimatikan)
   const [cooldown, setCooldown] = useState(0);
   const [resendMsg, setResendMsg] = useState('');
   const router = useRouter();
 
   const isPasswordValid = password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password);
-  const isMatch = password === confirmPassword && password !== '';
 
   useEffect(() => {
     if (nickname.length < 3) { setIsNicknameAvailable(null); return; }
@@ -51,7 +49,6 @@ export default function RegisterPage() {
     setErrorMsg('');
     if (!isNicknameAvailable) return setErrorMsg('Nickname sudah dipakai.');
     if (!isPasswordValid) return setErrorMsg('Password belum memenuhi syarat.');
-    if (!isMatch) return setErrorMsg('Konfirmasi password tidak cocok.');
 
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
@@ -64,8 +61,10 @@ export default function RegisterPage() {
       // Supabase tidak memberi error untuk email yang sudah terdaftar; ini cirinya.
       setErrorMsg('Email ini sudah terdaftar. Silakan masuk, atau pakai Lupa Password bila lupa.');
     } else if (data?.session) {
-      // Verifikasi email dimatikan di Supabase: langsung bisa masuk.
-      router.push('/login');
+      // Verifikasi email dimatikan di Supabase: akun langsung aktif. Keluarkan sesi otomatis,
+      // lalu minta pengguna masuk sendiri supaya alurnya jelas.
+      await supabase.auth.signOut();
+      setCreated(true);
     } else {
       setSent(true);
       setCooldown(60);
@@ -80,6 +79,18 @@ export default function RegisterPage() {
     setResendMsg(error ? error.message : 'Email verifikasi dikirim ulang.');
     setCooldown(60);
   };
+
+  if (created) {
+    return (
+      <AuthShell
+        title="Akun berhasil dibuat"
+        subtitle="Akunmu sudah terdaftar. Silakan masuk untuk mulai memakai Celengin."
+        icon={<div className="w-16 h-16 mb-4 rounded-2xl bg-green-50 dark:bg-green-900/30 flex items-center justify-center"><CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" /></div>}
+      >
+        <button onClick={() => router.push('/login')} className={authBtn}>Masuk Sekarang</button>
+      </AuthShell>
+    );
+  }
 
   if (sent) {
     return (
@@ -139,20 +150,9 @@ export default function RegisterPage() {
           </div>
           {password.length > 0 && <PasswordRequirements password={password} />}
         </div>
-        <div>
-          <label className={authLabel}>Ulangi Password</label>
-          <div className="relative">
-            <Lock className={authIcon} />
-            <input type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={`${authInput} pr-12 ${confirmPassword.length > 0 ? (isMatch ? authBorderOk : authBorderErr) : authBorder}`} placeholder="Ketik ulang password" autoComplete="new-password" required />
-            <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} aria-label={showConfirmPassword ? 'Sembunyikan password' : 'Tampilkan password'} className={authEye}>{showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}</button>
-          </div>
-          {confirmPassword.length > 0 && !isMatch && <p className="text-xs text-red-500 mt-1">Password tidak cocok.</p>}
-          {confirmPassword.length > 0 && isMatch && <p className="text-xs text-green-600 dark:text-green-400 mt-1">Password cocok.</p>}
-        </div>
-        <button type="submit" disabled={loading || !isPasswordValid || !isMatch || !isNicknameAvailable} className={`${authBtn} mt-2`}>
+        <button type="submit" disabled={loading || !isPasswordValid || !isNicknameAvailable} className={`${authBtn} mt-2`}>
           {loading ? 'Memproses...' : 'Daftar Sekarang'}
         </button>
-        <p className="text-[11px] text-gray-400 dark:text-gray-500 text-center">Setelah daftar, kamu perlu verifikasi lewat email sebelum bisa masuk.</p>
       </form>
     </AuthShell>
   );
