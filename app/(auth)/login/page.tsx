@@ -96,7 +96,7 @@ export default function LoginPage() {
             <label className={authLabel}>Email atau Username</label>
             <div className="relative">
               <User className={authIcon} />
-              <input type="text" inputMode="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={email} onChange={(e) => setEmail(e.target.value)} className={`${authInput} ${authBorder} pr-4`} placeholder="username atau kamu@email.com" autoComplete="username" required />
+              <input type="text" inputMode="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={email} onChange={(e) => setEmail(e.target.value)} className={`${authInput} ${authBorder} pr-4`} placeholder="username atau email" autoComplete="username" required />
             </div>
           </div>
           <div>
