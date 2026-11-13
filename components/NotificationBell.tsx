@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Bell, X, Users2, HeartHandshake, Receipt, AlertTriangle, ShieldAlert, Award, Info, Check, BellOff } from 'lucide-react';
+import { Bell, X, Users2, ArrowLeftRight, HeartHandshake, Receipt, AlertTriangle, ShieldAlert, Award, Info, Check, BellOff } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import {
   AppNotification, NOTIF_EVENT, fetchNotifications, markNotificationRead, markAllNotificationsRead,
@@ -21,7 +21,7 @@ export type LocalNotif = {
 type Props = { userId: string | null; local: LocalNotif[] };
 
 const DISMISS_KEY = 'celengin:dismissed-local';
-const INVITE_KINDS = ['split_invite', 'couple_invite'];
+const INVITE_KINDS = ['split_invite', 'couple_invite', 'gantian_invite'];
 
 const LOCAL_TONE: Record<LocalNotif['tone'], { box: string; title: string; text: string; icon: string }> = {
   danger: { box: 'bg-red-50 dark:bg-red-900/30 border-red-500', title: 'text-red-700 dark:text-red-400', text: 'text-red-600 dark:text-red-400', icon: 'text-red-500' },
@@ -39,6 +39,7 @@ function LocalIcon({ icon, cls }: { icon: LocalNotif['icon']; cls: string }) {
 function KindIcon({ kind }: { kind: string }) {
   const cls = 'w-5 h-5 text-teal-600 dark:text-teal-400';
   if (kind === 'split_invite') return <Users2 className={cls} />;
+  if (kind === 'gantian_invite' || kind === 'gantian_reminder') return <ArrowLeftRight className={cls} />;
   if (kind === 'couple_invite') return <HeartHandshake className={cls} />;
   return <Info className={cls} />;
 }
@@ -114,7 +115,7 @@ export default function NotificationBell({ userId, local }: Props) {
     setErrorMsg('');
     let err: { message: string } | null = null;
 
-    if (n.kind === 'split_invite') {
+    if (n.kind === 'split_invite' || n.kind === 'gantian_invite') {
       const res = await supabase.rpc('split_respond_invite', { p_member_id: n.ref_id, p_accept: accept });
       err = res.error;
     } else if (n.kind === 'couple_invite') {

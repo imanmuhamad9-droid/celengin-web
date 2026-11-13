@@ -1,6 +1,10 @@
 // Tipe data dan konstanta bersama untuk fitur Split Bill.
 
-export interface SplitGroup { id: string; user_id: string; name: string; emoji: string; created_at: string }
+export interface SplitGroup {
+  id: string; user_id: string; name: string; emoji: string; created_at: string;
+  /** 'event' = Split Bill sekali selesai (bawaan), 'running' = buku Gantian yang berjalan terus. Kosong bila SQL 05 belum dijalankan. */
+  kind?: 'event' | 'running';
+}
 
 export interface SplitMember {
   id: string;
@@ -12,6 +16,7 @@ export interface SplitMember {
   bank_name: string | null;
   account_number: string | null;
   account_holder: string | null;
+  phone?: string | null;            // nomor WhatsApp (opsional, butuh sql/05_gantian.sql)
 }
 
 export interface SplitItemRow {
