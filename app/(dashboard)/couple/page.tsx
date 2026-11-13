@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { pushInviteNow } from '@/lib/notifications';
 import { useRouter } from 'next/navigation';
 import { Heart, Plus, UserPlus, X, Edit3, Check, Mail, ArrowDownCircle, Calendar, Trash2, ArrowUpCircle, Users, Info, ChevronDown, ChevronUp, Copy, CreditCard } from 'lucide-react';
 import { formatRupiah } from '@/lib/utils';
@@ -201,7 +202,7 @@ export default function SharedSpacePage() {
     if (!targetProfile) { setInviteLoading(false); return showDialog('Gagal', 'Email tidak ditemukan.', 'danger'); }
     const { error } = await supabase.from('couple_members').insert({ goal_id: selectedGoal.id, user_id: targetProfile, status: 'pending' });
     setInviteLoading(false);
-    if (!error) { setIsInviteModalOpen(false); setInviteEmail(''); showDialog('Berhasil', 'Undangan terkirim!', 'success'); } 
+    if (!error) { pushInviteNow(targetProfile as string); setIsInviteModalOpen(false); setInviteEmail(''); showDialog('Berhasil', 'Undangan terkirim!', 'success'); } 
     else { showDialog('Gagal', `Gagal mengundang: ${error.message}`, 'danger'); }
   };
 

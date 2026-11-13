@@ -17,6 +17,7 @@
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "tailwind-merge": "^3.7.0",
+    "tesseract.js": "^7.0.0",
     "web-push": "^4.0.0"
   },
   "devDependencies": {

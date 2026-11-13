@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { Trash2, User, X, Upload, LogOut, Settings, KeyRound, Eye, EyeOff, ShieldAlert, AlertTriangle, Award, CalendarDays, Flame, Info, ChevronLeft, ChevronRight, Receipt, BarChart3, Wallet as WalletIcon, Trophy } from 'lucide-react';
+import { Trash2, User, X, Upload, LogOut, KeyRound, Eye, EyeOff, CalendarDays, Flame, Info, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatRupiah, toLocalDateStr } from '@/lib/utils';
 import { diffDays } from '@/lib/recurring';
 import { listWallets, computeWalletBalances, Wallet, WalletTransfer } from '@/lib/wallets';
@@ -10,6 +10,8 @@ import { fetchBadgeContext, syncBadges } from '@/lib/badges';
 import TransactionModal from '@/components/TransactionModal';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
+import NotificationBell, { LocalNotif } from '@/components/NotificationBell';
+import FeatureShortcuts from '@/components/FeatureShortcuts';
 import PasswordRequirements from '@/components/PasswordRequirements';
 import SkeletonLoader from '@/components/SkeletonLoader';
 
@@ -40,7 +42,6 @@ const [todayStr, setTodayStr] = useState('');
   const [calendarView, setCalendarView] = useState<'expense' | 'income' | 'all'>('expense');
   const [showCalendar, setShowCalendar] = useState(true);
 
-  const [showNotif, setShowNotif] = useState(true);
   const [chartTheme, setChartTheme] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [categoryDetails, setCategoryDetails] = useState<any[]>([]);
@@ -287,7 +288,40 @@ const [todayStr, setTodayStr] = useState('');
     .map(b => ({ ...b, typeNotif: 'bill', daysLeft: diffDays(todayStr, b.due_date) }))
     .sort((a, b) => a.daysLeft - b.daysLeft);
 
-  const allNotifs = [...dueBills, ...activeWarnings, ...activePraise];
+  // Pengingat yang tampil di lonceng (bagian "Pengingat"). key dibuat per hari supaya yang sudah ditutup muncul lagi esok hari.
+  const localNotifs: LocalNotif[] = [
+    ...dueBills.map((b): LocalNotif => {
+      const urgent = b.daysLeft <= 0;
+      const when = b.daysLeft < 0 ? `telat ${-b.daysLeft} hari` : b.daysLeft === 0 ? 'jatuh tempo hari ini' : b.daysLeft === 1 ? 'jatuh tempo besok' : `jatuh tempo ${b.daysLeft} hari lagi`;
+      return {
+        key: `bill-${b.id}-${todayStr}`,
+        tone: urgent ? 'danger' : 'warning',
+        icon: 'bill',
+        title: 'Pengingat Tagihan',
+        body: <><strong>{b.name}</strong> ({formatRupiah(b.amount)}) {when}.</>,
+        href: '/bills',
+      };
+    }),
+    ...activeWarnings.map((w): LocalNotif => {
+      const crit = w.percent >= 90;
+      return {
+        key: `warn-${w.id}-${crit ? 'c' : 'w'}-${todayStr}`,
+        tone: crit ? 'danger' : 'warning',
+        icon: crit ? 'crit' : 'warn',
+        title: crit ? 'Peringatan Kritis!' : 'Peringatan Belanja',
+        body: <>Target <strong className="capitalize">{w.period_type}</strong> terpakai {Math.round(w.percent)}%.</>,
+        href: '/spending-challenge',
+      };
+    }),
+    ...activePraise.map((p): LocalNotif => ({
+      key: `praise-${p.id}-${p.end_date}`,
+      tone: 'praise',
+      icon: 'praise',
+      title: 'Target Tercapai! 🎉',
+      body: <>Pemasukan target <strong className="capitalize">{p.period_type}</strong> tercapai ({Math.round(p.percent)}%).</>,
+      href: '/spending-challenge',
+    })),
+  ];
 
     // LOGIKA JATAH HARIAN (Patokan Tetap)
   const primaryTarget = targets.find(t => t.is_primary === true);
@@ -352,55 +386,11 @@ const currentMonth = calendarMonth;
           <img src="/icon.png" alt="Logo" className="w-8 h-8 rounded-lg object-contain" />
           <span className="font-bold text-xl text-teal-800 dark:text-teal-400">Celengin.</span>
         </div>
-        <button onClick={() => router.push('/settings')} className="w-9 h-9 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-teal-600 transition-all"><Settings className="w-5 h-5" /></button>
+        <NotificationBell userId={user?.id ?? null} local={localNotifs} />
       </header>
 
       <main className="px-5 mt-4 space-y-6">
         
-        {/* NOTIFIKASI */}
-        {showNotif && allNotifs.length > 0 && (
-          <div className="space-y-2">
-            {allNotifs.map(notif => {
-              if (notif.typeNotif === 'bill') {
-                const urgent = notif.daysLeft <= 0;
-                const when = notif.daysLeft < 0 ? `telat ${-notif.daysLeft} hari` : notif.daysLeft === 0 ? 'jatuh tempo hari ini' : notif.daysLeft === 1 ? 'jatuh tempo besok' : `jatuh tempo ${notif.daysLeft} hari lagi`;
-                return (
-                  <div key={`bill-${notif.id}`} onClick={() => router.push('/bills')} className={`cursor-pointer p-3 rounded-xl shadow-sm flex items-start gap-2 animate-in slide-in-from-top-4 relative ${urgent ? 'bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500' : 'bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-500'}`}>
-                    <Receipt className={`w-5 h-5 shrink-0 mt-0.5 ${urgent ? 'text-red-500' : 'text-yellow-600'}`} />
-                    <div className="flex-1 pr-5">
-                      <p className={`text-xs font-bold mb-0.5 ${urgent ? 'text-red-700 dark:text-red-400' : 'text-yellow-700 dark:text-yellow-400'}`}>Pengingat Tagihan</p>
-                      <p className={`text-[10px] ${urgent ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'}`}><strong>{notif.name}</strong> ({formatRupiah(notif.amount)}) {when}.</p>
-                    </div>
-                    <button onClick={(e) => { e.stopPropagation(); setShowNotif(false); }} className={`p-1 absolute top-2 right-2 ${urgent ? 'text-red-400 hover:text-red-600' : 'text-yellow-500 hover:text-yellow-700'}`}><X className="w-4 h-4" /></button>
-                  </div>
-                );
-              }
-              if (notif.typeNotif === 'praise') {
-                return (
-                  <div key={notif.id} className="bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500 p-3 rounded-xl shadow-sm flex items-start gap-2 animate-in slide-in-from-top-4 relative">
-                    <Award className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-xs font-bold text-blue-700 dark:text-blue-300 mb-0.5">Target Tercapai! 🎉</p>
-                      <p className="text-[10px] text-blue-600 dark:text-blue-400">Pemasukan target <strong className="capitalize">{notif.period_type}</strong> tercapai ({Math.round(notif.percent)}%).</p>
-                    </div>
-                    <button onClick={() => setShowNotif(false)} className="p-1 absolute top-2 right-2 text-blue-400 hover:text-blue-600"><X className="w-4 h-4" /></button>
-                  </div>
-                );
-              }
-              return (
-                <div key={notif.id} className={`p-3 rounded-xl shadow-sm flex items-start gap-2 animate-in slide-in-from-top-4 relative ${notif.percent >= 90 ? 'bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500' : 'bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-500'}`}>
-                  {notif.percent >= 90 ? <ShieldAlert className="w-5 h-5 text-red-500 shrink-0 mt-0.5" /> : <AlertTriangle className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />}
-                  <div className="flex-1">
-                    <p className={`text-xs font-bold mb-0.5 ${notif.percent >= 90 ? 'text-red-700 dark:text-red-400' : 'text-yellow-700 dark:text-yellow-400'}`}>{notif.percent >= 90 ? 'Peringatan Kritis!' : 'Peringatan Belanja'}</p>
-                    <p className={`text-[10px] ${notif.percent >= 90 ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'}`}>Target <strong className="capitalize">{notif.period_type}</strong> terpakai {Math.round(notif.percent)}%.</p>
-                  </div>
-                  <button onClick={() => setShowNotif(false)} className={`p-1 absolute top-2 right-2 ${notif.percent >= 90 ? 'text-red-400 hover:text-red-600' : 'text-yellow-500 hover:text-yellow-700'}`}><X className="w-4 h-4" /></button>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
         <div className="flex justify-between items-center mb-2">
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Halo, selamat datang 👋</p>
@@ -503,25 +493,8 @@ const currentMonth = calendarMonth;
           </div>
         </div>
 
-        {/* PINTASAN FITUR */}
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
-          <div className="grid grid-cols-4 gap-2">
-            {[
-              { href: '/bills', label: 'Tagihan', Icon: Receipt, tone: 'bg-orange-50 dark:bg-orange-900/30 text-orange-500', count: dueBills.length },
-              { href: '/reports', label: 'Laporan', Icon: BarChart3, tone: 'bg-blue-50 dark:bg-blue-900/30 text-blue-500', count: 0 },
-              { href: '/wallets', label: 'Dompet', Icon: WalletIcon, tone: 'bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400', count: 0 },
-              { href: '/badges', label: 'Badge', Icon: Trophy, tone: 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400', count: 0 },
-            ].map(({ href, label, Icon, tone, count }) => (
-              <button key={href} onClick={() => router.push(href)} className="flex flex-col items-center gap-1.5 active:scale-95 transition-transform">
-                <div className={`relative w-12 h-12 rounded-2xl flex items-center justify-center ${tone}`}>
-                  <Icon className="w-5 h-5" />
-                  {count > 0 && <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{count}</span>}
-                </div>
-                <span className="text-[10px] font-bold text-gray-600 dark:text-gray-300">{label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* PINTASAN FITUR (4 favorit + Semua, bisa diatur) */}
+        <FeatureShortcuts userId={user?.id ?? null} initial={profile?.shortcuts} counts={{ tagihan: dueBills.length }} />
 
         {/* GRAFIK MINGGUAN */}
         <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">

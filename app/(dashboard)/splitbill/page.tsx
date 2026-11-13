@@ -5,6 +5,7 @@ import { ArrowLeft, Plus, X, Trash2, UserPlus, ArrowRight, Receipt, Copy, Credit
 import { supabase } from '@/lib/supabaseClient';
 import { formatRupiah, formatDateID } from '@/lib/utils';
 import { computeNet, simplifyDebts } from '@/lib/splitbill';
+import { pushInviteNow } from '@/lib/notifications';
 import { BANKS, SplitGroup, SplitMember, SplitExpense, SplitSettlement } from '@/lib/splitTypes';
 import SplitExpenseModal from '@/components/SplitExpenseModal';
 import CustomDialog from '@/components/CustomDialog';
@@ -170,6 +171,8 @@ export default function SplitBillPage() {
       await supabase.from('split_groups').delete().eq('id', g.id);
       return showDialog('Gagal', mErr.message, 'danger');
     }
+    // Beri tahu orang yang diundang lewat push (lonceng mereka sudah terisi otomatis oleh database)
+    pending.filter((m) => m.userId).forEach((m) => { pushInviteNow(m.userId as string); });
     setIsGroupOpen(false);
     await loadList();
     setTab('ringkasan');
@@ -220,6 +223,7 @@ export default function SplitBillPage() {
     const { error } = await supabase.from('split_members').insert({ group_id: group.id, name, is_me: false, user_id: targetId, status: 'pending' });
     setInviteBusy(false);
     if (error) return showDialog('Gagal', error.message, 'danger');
+    pushInviteNow(targetId as string);
     setIsInviteOpen(false); setInviteEmail('');
     loadGroup(group);
     showDialog('Undangan Terkirim', `${name} akan melihat grup ini di menu Split Bill miliknya. Setelah menerima, dia bisa ikut mencatat pengeluaran dan melihat siapa harus bayar siapa.`, 'success');
@@ -504,9 +508,7 @@ export default function SplitBillPage() {
                     <input value={newMember} onChange={(e) => setNewMember(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddMember(); } }} placeholder="Nama teman (tanpa akun)" className={inputCls} />
                     <button onClick={handleAddMember} className="bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 w-11 h-11 rounded-xl shrink-0 flex items-center justify-center" aria-label="Tambah"><Plus className="w-5 h-5" /></button>
                   </div>
-                  {isOwner && (
-                    <button onClick={() => setIsInviteOpen(true)} className="w-full h-11 rounded-xl border-2 border-dashed border-teal-300 dark:border-teal-700 text-teal-600 dark:text-teal-400 text-xs font-bold flex items-center justify-center gap-1.5"><UserPlus className="w-4 h-4" /> Undang pengguna Celengin (lewat email)</button>
-                  )}
+                  <button onClick={() => setIsInviteOpen(true)} className="w-full h-11 rounded-xl border-2 border-dashed border-teal-300 dark:border-teal-700 text-teal-600 dark:text-teal-400 text-xs font-bold flex items-center justify-center gap-1.5"><UserPlus className="w-4 h-4" /> Undang pengguna Celengin (lewat email)</button>
                 </div>
               </div>
             )}

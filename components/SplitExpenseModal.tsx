@@ -7,6 +7,8 @@ import { splitEqual } from '@/lib/splitbill';
 import { AdjMode, ReceiptItem, computeReceipt } from '@/lib/splitReceipt';
 import type { SplitMember } from '@/lib/splitTypes';
 import DateField from '@/components/DateField';
+import ReceiptScanner from '@/components/ReceiptScanner';
+import type { ParsedAdj, ParsedReceipt } from '@/lib/receiptParser';
 
 interface Props {
   isOpen: boolean;
@@ -81,6 +83,8 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
   const [qSelected, setQSelected] = useState<Record<string, boolean>>({});
   const [qCustom, setQCustom] = useState<Record<string, number>>({});
   const [saving, setSaving] = useState(false);
+  // Ringkasan hasil scan terakhir (untuk banner pencocokan total)
+  const [scanInfo, setScanInfo] = useState<{ receiptTotal: number | null; count: number; warnings: string[]; dateFilled: boolean } | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -91,7 +95,7 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
     setItems([newItem()]);
     setDiscount(emptyAdj('percent')); setService(emptyAdj('percent')); setTax(emptyAdj('percent'));
     setQTotalDisplay(''); setQTotal(0); setQSplit('equal'); setQSelected(sel); setQCustom({});
-    setSaving(false);
+    setSaving(false); setScanInfo(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
@@ -113,6 +117,36 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
   const toggleMember = (key: string, id: string) => setItems((p) => p.map((it) => it.key === key ? { ...it, memberIds: it.memberIds.includes(id) ? it.memberIds.filter((x) => x !== id) : [...it.memberIds, id] } : it));
   const toggleAll = (key: string) => setItems((p) => p.map((it) => it.key === key ? { ...it, memberIds: it.memberIds.length === memberIds.length ? [] : [...memberIds] } : it));
   const assignAllItems = () => setItems((p) => p.map((it) => ({ ...it, memberIds: [...memberIds] })));
+
+  // ---------- Hasil scan struk ----------
+  const toAdjDraft = (a: ParsedAdj | null): AdjDraft => {
+    if (!a) return emptyAdj('percent');
+    if (a.amount > 0) { const p = parseRupiahInput(String(a.amount)); return { mode: 'nominal', display: p.display, raw: p.raw }; }
+    if (a.percent) return { mode: 'percent', display: String(a.percent), raw: a.percent };
+    return emptyAdj('percent');
+  };
+  const applyScan = (r: ParsedReceipt) => {
+    const drafts: ItemDraft[] = r.items.map((it) => {
+      const p = parseRupiahInput(String(it.unitPrice));
+      return { key: `i${++keySeq}`, name: it.name, priceDisplay: p.display, priceRaw: p.raw, qtyText: String(it.qty), memberIds: [] };
+    });
+    setItems(drafts.length > 0 ? drafts : [newItem()]);
+    setDiscount(toAdjDraft(r.discount));
+    setService(toAdjDraft(r.service));
+    setTax(toAdjDraft(r.tax));
+    if (!title.trim() && r.merchant) setTitle(r.merchant);
+    if (r.date) setDate(r.date);
+    setScanInfo({ receiptTotal: r.total, count: r.items.length, warnings: r.warnings, dateFilled: !!r.date });
+  };
+  const handleScanResult = (r: ParsedReceipt) => {
+    if (r.items.length === 0) {
+      setScanInfo({ receiptTotal: r.total, count: 0, warnings: r.warnings, dateFilled: false });
+      return showDialog('Struk Belum Terbaca', r.warnings[0] || 'Tidak ada item yang terbaca. Isi manual saja, atau foto ulang.', 'info');
+    }
+    const hasFilled = items.some((it) => it.name.trim() || it.priceRaw > 0);
+    if (hasFilled) showDialog('Ganti Isi Struk?', 'Item, diskon, service, dan pajak yang sudah kamu isi akan diganti dengan hasil scan.', 'info', () => applyScan(r));
+    else applyScan(r);
+  };
 
   // ---------- Simpan ----------
   const save = async (e: React.FormEvent) => {
@@ -220,7 +254,26 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
             <>
               {/* 2. Pesanan */}
               <section>
-                <StepTitle n={2} title="Isi struk" hint="Tulis tiap makanan/minuman, lalu pilih siapa saja yang memakainya. Kalau dipakai bersama, harganya dibagi rata ke yang dipilih." />
+                <StepTitle n={2} title="Isi struk" hint="Scan struknya, atau tulis tiap makanan/minuman sendiri. Lalu pilih siapa saja yang memakainya. Kalau dipakai bersama, harganya dibagi rata ke yang dipilih." />
+                <div className="mb-3 space-y-2">
+                  <ReceiptScanner onResult={handleScanResult} showDialog={showDialog} />
+                  {scanInfo && scanInfo.count > 0 && (() => {
+                    const diff = scanInfo.receiptTotal !== null ? result.total - scanInfo.receiptTotal : null;
+                    const match = diff !== null && Math.abs(diff) <= 100;
+                    return (
+                      <div className={`rounded-xl px-3 py-2.5 text-[11px] leading-snug border ${diff === null || match ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-300' : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700 text-yellow-800 dark:text-yellow-300'}`}>
+                        <p className="font-bold">{scanInfo.count} item terbaca{scanInfo.dateFilled ? ', tanggal ikut terisi' : ''}. Periksa lagi, lalu pilih siapa memakai apa.</p>
+                        {scanInfo.receiptTotal !== null && (
+                          <p className="mt-0.5">
+                            Total di struk {formatRupiah(scanInfo.receiptTotal)} · hitungan di sini {formatRupiah(result.total)}
+                            {match ? (diff === 0 ? ' · cocok ✓' : ` · selisih ${formatRupiah(Math.abs(diff as number))} (biasanya pembulatan)`) : ` · selisih ${formatRupiah(Math.abs(diff as number))}. Ada item, harga, atau pajak yang kemungkinan salah baca.`}
+                          </p>
+                        )}
+                        {scanInfo.warnings.map((w, i) => <p key={i} className="mt-0.5">{w}</p>)}
+                      </div>
+                    );
+                  })()}
+                </div>
                 <div className="space-y-3">
                   {items.map((it, idx) => {
                     const qty = Math.max(1, parseInt(it.qtyText, 10) || 1);
