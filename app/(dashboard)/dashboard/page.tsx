@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { Trash2, User, X, Upload, LogOut, KeyRound, Eye, EyeOff, CalendarDays, Flame, Info, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Trash2, User, X, Upload, Camera, LogOut, KeyRound, Eye, EyeOff, CalendarDays, Flame, Info, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatRupiah, toLocalDateStr } from '@/lib/utils';
 import { diffDays } from '@/lib/recurring';
 import { listWallets, computeWalletBalances, Wallet, WalletTransfer } from '@/lib/wallets';
@@ -13,6 +13,7 @@ import BottomNav from '@/components/BottomNav';
 import NotificationBell, { LocalNotif } from '@/components/NotificationBell';
 import FeatureShortcuts from '@/components/FeatureShortcuts';
 import WeeklyChart from '@/components/WeeklyChart';
+import PhotoCropper from '@/components/PhotoCropper';
 import PasswordRequirements from '@/components/PasswordRequirements';
 import SkeletonLoader from '@/components/SkeletonLoader';
 
@@ -59,6 +60,8 @@ const [todayStr, setTodayStr] = useState('');
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const [cropJob, setCropJob] = useState<{ file: File; kind: 'avatar' | 'cover' } | null>(null);
   const [isNicknameModalOpen, setIsNicknameModalOpen] = useState(false);
   const [newNickname, setNewNickname] = useState('');
   const [isCheckingNickname, setIsCheckingNickname] = useState(false);
@@ -170,23 +173,39 @@ const [todayStr, setTodayStr] = useState('');
     return () => clearTimeout(timer);
   }, [newNickname, profile?.nickname]);
 
-  const handleUploadAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Pilih foto (profil / sampul) -> layar atur zoom dulu, baru diunggah saat Simpan
+  const handlePickPhoto = (e: React.ChangeEvent<HTMLInputElement>, kind: 'avatar' | 'cover') => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
+    if (!file.type.startsWith('image/')) { showDialog('Gagal', 'File yang dipilih bukan gambar.', 'danger'); return; }
+    setCropJob({ file, kind });
+  };
+
+  const uploadCropped = async (blob: Blob) => {
+    if (!cropJob) return;
+    const kind = cropJob.kind;
     setIsUploading(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-avatar-${Date.now()}.${fileExt}`;
-      const { error: uploadError } = await supabase.storage.from('widget-images').upload(fileName, file);
+      const fileName = `${user.id}-${kind}-${Date.now()}.jpg`;
+      const { error: uploadError } = await supabase.storage.from('widget-images').upload(fileName, blob, { contentType: 'image/jpeg' });
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from('widget-images').getPublicUrl(fileName);
-      await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id);
+      const { error: upErr } = await supabase.from('profiles').update({ [kind === 'avatar' ? 'avatar_url' : 'cover_url']: publicUrl }).eq('id', user.id);
+      if (upErr) throw new Error(kind === 'cover' ? 'Kolom sampul belum ada. Jalankan sql/06_cover.sql di Supabase.' : upErr.message);
+      setCropJob(null);
       fetchData();
     } catch (error: any) {
+      setCropJob(null);
       showDialog('Gagal', 'Gagal upload: ' + error.message, 'danger');
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const handleDeleteCover = async () => {
+    await supabase.from('profiles').update({ cover_url: null }).eq('id', user.id);
+    fetchData();
   };
 
   const handleDeleteAvatar = async () => {
@@ -693,11 +712,25 @@ const currentMonth = calendarMonth;
 
       </main>
 
+      {cropJob && (
+        <PhotoCropper
+          file={cropJob.file}
+          shape={cropJob.kind === 'avatar' ? 'circle' : 'rect'}
+          aspect={cropJob.kind === 'avatar' ? 1 : 320 / 150}
+          outWidth={cropJob.kind === 'avatar' ? 512 : 960}
+          title={cropJob.kind === 'avatar' ? 'Atur foto profil' : 'Atur foto sampul'}
+          onCancel={() => setCropJob(null)}
+          onConfirm={uploadCropped}
+        />
+      )}
+
       {/* MODAL PROFIL (VERSI RINGKAS) */}
       {isProfileModalOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-gray-50 dark:bg-gray-800 rounded-3xl w-full max-w-xs relative overflow-hidden shadow-2xl">
-            <div className="pt-6 pb-12 flex flex-col items-center relative transition-colors duration-300" style={{ backgroundColor: profile?.theme_color || '#0f766e' }}>
+            <div className="pt-6 pb-12 flex flex-col items-center relative transition-colors duration-300 bg-cover bg-center" style={{ backgroundColor: profile?.theme_color || '#0f766e', ...(profile?.cover_url ? { backgroundImage: `url(${profile.cover_url})` } : {}) }}>
+              {profile?.cover_url && <div className="absolute inset-0 bg-black/25" />}
+              <button onClick={() => coverInputRef.current?.click()} className="absolute top-4 left-4 z-10 flex items-center gap-1 text-[11px] font-bold text-white bg-black/30 hover:bg-black/50 rounded-full px-2.5 py-1"><Camera className="w-3.5 h-3.5" /> Sampul</button>
               <button onClick={() => setIsProfileModalOpen(false)} className="absolute top-4 right-4 text-white/70 hover:text-white bg-black/10 rounded-full p-1"><X className="w-5 h-5" /></button>
               <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 border-4 border-white shadow-md relative z-10 mt-2 flex items-center justify-center">
                 {profile?.avatar_url ? <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" /> : <User className="w-10 h-10 text-gray-400" />}
@@ -705,11 +738,14 @@ const currentMonth = calendarMonth;
             </div>
             <div className="px-5 pb-5 -mt-6 text-center relative z-10">
               <h2 className="text-lg font-bold text-gray-800 dark:text-white bg-white dark:bg-gray-700 rounded-xl py-2 shadow-sm mb-4 inline-block px-6 border border-gray-100 dark:border-gray-600">{profile?.nickname || profile?.full_name || user?.email?.split('@')[0]}</h2>
-              <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleUploadAvatar} />
+              <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={(e) => handlePickPhoto(e, 'avatar')} />
+              <input type="file" accept="image/*" className="hidden" ref={coverInputRef} onChange={(e) => handlePickPhoto(e, 'cover')} />
               <button onClick={() => fileInputRef.current?.click()} className="w-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-bold py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-all flex items-center justify-center gap-2 mb-4 shadow-sm">
                 {isUploading ? 'Mengunggah...' : <><Upload className="w-4 h-4" /> Ganti Foto Profil</>}
               </button>
               <div className="bg-white dark:bg-gray-700 rounded-2xl border border-gray-100 dark:border-gray-600 shadow-sm overflow-hidden text-sm">
+                <button onClick={() => coverInputRef.current?.click()} className="w-full flex items-center gap-3 px-4 py-3.5 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-gray-600 transition-all border-b border-gray-50 dark:border-gray-600 text-left"><Camera className="w-4 h-4 text-gray-400" /> Ganti Foto Sampul</button>
+                {profile?.cover_url && <button onClick={handleDeleteCover} className="w-full flex items-center gap-3 px-4 py-3.5 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-gray-600 transition-all border-b border-gray-50 dark:border-gray-600 text-left"><X className="w-4 h-4 text-gray-400" /> Hapus Foto Sampul</button>}
                 {profile?.avatar_url && <button onClick={handleDeleteAvatar} className="w-full flex items-center gap-3 px-4 py-3.5 text-red-500 font-semibold hover:bg-red-50 dark:hover:bg-red-900/30 transition-all border-b border-gray-50 dark:border-gray-600 text-left"><Trash2 className="w-4 h-4" /> Hapus Foto</button>}
                 <button onClick={() => { setNewNickname(profile?.nickname || ''); setIsNicknameModalOpen(true); }} className="w-full flex items-center gap-3 px-4 py-3.5 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-gray-600 transition-all border-b border-gray-50 dark:border-gray-600 text-left"><User className="w-4 h-4 text-gray-400" /> Ubah Nickname</button>
                 <button onClick={() => { setIsProfileModalOpen(false); setIsPasswordModalOpen(true); }} className="w-full flex items-center gap-3 px-4 py-3.5 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-gray-600 transition-all border-b border-gray-50 dark:border-gray-600 text-left"><KeyRound className="w-4 h-4 text-gray-400" /> Ganti Password</button>
