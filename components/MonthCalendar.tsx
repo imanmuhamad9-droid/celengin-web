@@ -107,7 +107,6 @@ export default function MonthCalendar({ transactions, bills, todayStr, onOpenHis
     <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
       <div className="flex justify-between items-center mb-3 gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <CalendarDays className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
           <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100">Kalender</h3>
         </div>
         <div className="flex items-center gap-1">

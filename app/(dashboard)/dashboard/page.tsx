@@ -15,6 +15,7 @@ import NotificationBell, { LocalNotif } from '@/components/NotificationBell';
 import FeatureShortcuts from '@/components/FeatureShortcuts';
 import AttentionStrip, { AttentionItem } from '@/components/AttentionStrip';
 import PaydayPrompt from '@/components/PaydayPrompt';
+import SectionToggle from '@/components/SectionToggle';
 import { cycleFor, normalizePayday } from '@/lib/cycle';
 import WeeklyChart from '@/components/WeeklyChart';
 import MonthCalendar from '@/components/MonthCalendar';
@@ -457,7 +458,7 @@ const currentMonth = calendarMonth;
     <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-40 transition-colors">
       <AppHeader topRight={<NotificationBell userId={user?.id ?? null} local={localNotifs} />} />
 
-      <main className="px-5 mt-4 space-y-6">
+      <main className="px-5 mt-4 space-y-4">
 
         {/* SAPAAN + STREAK + PROFIL */}
         <div className="flex justify-between items-center">
@@ -569,11 +570,8 @@ const currentMonth = calendarMonth;
 
         {/* TERAKHIR */}
         <div className="bg-white dark:bg-gray-800 p-4 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
-          <button onClick={() => setShowRecent(v => !v)} className="w-full flex justify-between items-center">
-            <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100">Riwayat Terakhir</h3>
-            <span className="flex items-center gap-1 text-[10px] font-bold text-gray-500 dark:text-gray-400">{showRecent ? 'Sembunyikan' : 'Tampilkan'} <ChevronDown className={`w-4 h-4 transition-transform ${showRecent ? 'rotate-180' : ''}`} /></span>
-          </button>
-          {showRecent && (<div className="mt-2">
+          <SectionToggle title="Riwayat Terakhir" open={showRecent} onToggle={() => setShowRecent(v => !v)} />
+          {showRecent && (<div className="mt-3">
           {recentTx.length === 0 ? (
             <p className="text-xs text-gray-400 dark:text-gray-500 py-3 text-center">Belum ada transaksi. Ketuk Catat untuk mulai.</p>
           ) : (
@@ -591,21 +589,20 @@ const currentMonth = calendarMonth;
               ))}
             </div>
           )}
-          <button onClick={() => router.push('/transactions')} className="mt-3 w-full rounded-2xl bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 py-3 text-center active:scale-[0.99] transition-transform">
-            <span className="block text-xs font-bold">Buka Riwayat</span>
-            <span className="block text-[10px] opacity-80 mt-0.5">Hanya 5 terakhir yang tampil di sini. Transaksi lainnya ada di Riwayat.</span>
+          <button onClick={() => router.push('/transactions')} className="mt-4 w-full h-11 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold shadow-sm active:scale-[0.98] transition-all flex items-center justify-center gap-1.5">
+            Buka Riwayat <ChevronRight className="w-4 h-4" />
           </button>
+          <p className="text-[10px] text-gray-400 dark:text-gray-500 text-center mt-2">Hanya 5 transaksi terakhir yang tampil di sini. Untuk melihat yang lainnya, buka Riwayat.</p>
           </div>)}
         </div>
 
         {/* LIPATAN: KALENDER + STATISTIK BULAN INI */}
-        <button onClick={() => setShowMonth(v => !v)} className="w-full bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm rounded-2xl px-4 py-3 flex items-center justify-between text-sm font-bold text-gray-700 dark:text-gray-200 transition-colors">
-          <span className="flex items-center gap-2"><CalendarDays className="w-4 h-4 text-teal-600 dark:text-teal-400" /> Statistik dan kalender bulan ini</span>
-          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showMonth ? 'rotate-180' : ''}`} />
-        </button>
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
+          <SectionToggle title="Statistik dan Kalender Bulan Ini" open={showMonth} onToggle={() => setShowMonth(v => !v)} />
+        </div>
 
         {showMonth && (
-          <div className="space-y-6">
+          <div className="space-y-4">
         {/* STATISTIK BULAN/SIKLUS INI */}
         {totalMonthly > 0 && (() => {
           const spentPct = monthlyIncome > 0 ? Math.round((monthlyExpense / monthlyIncome) * 100) : null;
