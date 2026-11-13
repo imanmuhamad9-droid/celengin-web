@@ -57,7 +57,7 @@ export default function BadgesPage() {
 
   return (
     <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-24 transition-colors">
-      <AppHeader title="Pencapaian" back />
+      <AppHeader title="Pencapaian" />
 
       <main className="px-5 mt-4 space-y-5">
         {!tableOk && <div className="bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 text-xs p-3 rounded-xl border border-red-100 dark:border-red-800">Tabel user_badges belum ada. Jalankan 01_fitur_baru.sql di Supabase.</div>}

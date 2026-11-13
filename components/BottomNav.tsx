@@ -21,9 +21,21 @@ const ITEMS: Item[] = [
   { key: 'bareng', label: 'Bareng', href: '/couple', img: '/icon-couple.png' },
 ];
 
+// Posisi sorotan terakhir. Setiap halaman memasang BottomNav sendiri, jadi posisi ini disimpan di level modul
+// supaya sorotan bisa meluncur dari menu lama ke menu baru setelah halaman berganti.
+let lastIdx: number | null = null;
+
 export default function BottomNav() {
   const router = useRouter();
   const pathname = usePathname();
+
+  const curIdx = ITEMS.findIndex((it) => 'href' in it && (pathname === it.href || pathname.startsWith(it.href + '/')));
+  const [pos, setPos] = useState<number>(lastIdx !== null && lastIdx >= 0 ? lastIdx : Math.max(curIdx, 0));
+  useEffect(() => {
+    if (curIdx < 0) return;
+    const t = setTimeout(() => { setPos(curIdx); lastIdx = curIdx; }, 30);
+    return () => clearTimeout(t);
+  }, [curIdx]);
 
   const [open, setOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -110,7 +122,12 @@ export default function BottomNav() {
   const handleSelect = (item: Item) => {
     setOpen(false);
     if ('action' in item) { setIsModalOpen(true); return; }
-    if (pathname !== item.href) router.push(item.href);
+    if (pathname !== item.href) {
+      // Sorotan langsung meluncur ke menu tujuan selagi halaman dimuat
+      const idx = ITEMS.indexOf(item);
+      if (idx >= 0 && curIdx >= 0) { setPos(idx); lastIdx = idx; }
+      router.push(item.href);
+    }
   };
 
   const isMain = ITEMS.some((it) => 'href' in it && (pathname === it.href || pathname.startsWith(it.href + '/')));
@@ -142,10 +159,10 @@ export default function BottomNav() {
         onClick={() => handleSelect(item)}
         aria-label={item.label}
         aria-current={active ? 'page' : undefined}
-        className={`relative flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-full transition-all active:scale-95 ${active ? 'bg-teal-500/20 dark:bg-teal-400/20 ring-1 ring-teal-500/50' : 'bg-transparent'}`}
+        className="relative z-10 flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-full active:scale-95 transition-transform"
       >
-        <img src={item.img} alt="" className={`w-6 h-6 object-contain transition-all ${active ? '' : 'grayscale opacity-60'}`} />
-        <span className={`text-[10px] font-bold ${active ? 'text-teal-700 dark:text-teal-300' : 'text-gray-500 dark:text-gray-400'}`}>{item.label}</span>
+        <img src={item.img} alt="" className={`w-6 h-6 object-contain transition-all duration-300 ${active ? '' : 'grayscale opacity-60'}`} />
+        <span className={`text-[10px] font-bold transition-colors duration-300 ${active ? 'text-teal-700 dark:text-teal-300' : 'text-gray-500 dark:text-gray-400'}`}>{item.label}</span>
         {showDot && (
           <span className="absolute top-0.5 right-2 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center border-2 border-white dark:border-gray-900">
             {unread > 9 ? '9+' : unread}
@@ -157,15 +174,31 @@ export default function BottomNav() {
 
   const glass = 'bg-white/65 dark:bg-gray-900/65 backdrop-blur-xl border border-white/60 dark:border-white/10 shadow-lg shadow-black/10';
 
+  const renderBar = (extra: string) => (
+    <div className={`relative rounded-full px-2 py-1.5 ${glass} ${extra}`}>
+      <div className="relative flex items-center">
+        {curIdx >= 0 && (
+          <span
+            aria-hidden="true"
+            className="absolute inset-y-0 left-0 transition-transform duration-300 ease-[cubic-bezier(0.34,1.3,0.64,1)]"
+            style={{ width: `${100 / ITEMS.length}%`, transform: `translateX(${pos * 100}%)` }}
+          >
+            <span className="block h-full mx-0.5 rounded-full bg-teal-500/20 dark:bg-teal-400/20 ring-1 ring-teal-500/50" />
+          </span>
+        )}
+        {ITEMS.map((item) => renderItem(item))}
+      </div>
+    </div>
+  );
+
+
   return (
     <>
       {isMain ? (
         // Menu utama: bar melayang selalu terlihat
         !isModalOpen && (
           <nav aria-label="Menu utama" style={bottomStyle} className="fixed left-1/2 -translate-x-1/2 z-[56] w-[calc(100%-32px)] max-w-[380px]">
-            <div className={`flex items-center gap-1 rounded-full px-2 py-1.5 ${glass}`}>
-              {ITEMS.map((item) => renderItem(item))}
-            </div>
+            {renderBar('')}
           </nav>
         )
       ) : (
@@ -178,9 +211,7 @@ export default function BottomNav() {
                 aria-hidden={!open}
                 className={`min-w-0 flex-1 origin-right transition-all duration-300 ease-out ${open ? 'opacity-100 scale-x-100 pointer-events-auto' : 'opacity-0 scale-x-50 pointer-events-none'}`}
               >
-                <div className={`flex items-center gap-1 rounded-full px-2 py-1.5 w-[300px] max-w-full ${glass}`}>
-                  {ITEMS.map((item) => renderItem(item))}
-                </div>
+                {renderBar('w-[300px] max-w-full')}
               </div>
               <button
                 onClick={() => setOpen((v) => !v)}

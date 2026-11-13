@@ -105,7 +105,7 @@ export default function ReportsPage() {
 
   return (
     <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-24 transition-colors">
-      <AppHeader title="Laporan" back />
+      <AppHeader title="Laporan" />
 
       <main className="px-5 mt-4 space-y-5">
         {/* Pilih periode */}

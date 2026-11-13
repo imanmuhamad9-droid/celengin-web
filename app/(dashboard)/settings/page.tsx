@@ -249,7 +249,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-24 transition-colors">
-      <AppHeader title="Pengaturan" back />
+      <AppHeader title="Pengaturan" />
 
       <main className="max-w-md mx-auto p-5 mt-2 space-y-5">
         

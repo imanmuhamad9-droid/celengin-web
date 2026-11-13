@@ -463,8 +463,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
       <AppHeader
         z="z-40"
         title={group ? `${group.emoji} ${group.name}` : L.title}
-        back
-        onBack={goBack}
+        onBack={group ? goBack : undefined}
         action={<>
           {!group && isRunning && introHidden && <button onClick={showIntro} className="text-gray-400 hover:text-teal-600" aria-label="Menu ini untuk apa?"><Info className="w-5 h-5" /></button>}
           {group && isOwner && isRunning && expenses.length + settlements.length > 0 && <button onClick={handleResetBook} className="text-gray-400 hover:text-teal-600" aria-label="Reset buku"><RotateCcw className="w-5 h-5" /></button>}

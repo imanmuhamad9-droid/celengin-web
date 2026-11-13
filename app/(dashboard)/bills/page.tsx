@@ -199,7 +199,7 @@ export default function BillsPage() {
 
   return (
     <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-24 transition-colors">
-      <AppHeader title="Tagihan" back action={<button onClick={openAdd} className="bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 p-2.5 rounded-xl hover:bg-teal-200 dark:hover:bg-teal-900/50 transition-all font-bold text-xs flex items-center gap-1"><Plus className="w-4 h-4" /> Tambah</button>} />
+      <AppHeader title="Tagihan" action={<button onClick={openAdd} className="bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 p-2.5 rounded-xl hover:bg-teal-200 dark:hover:bg-teal-900/50 transition-all font-bold text-xs flex items-center gap-1"><Plus className="w-4 h-4" /> Tambah</button>} />
 
       <main className="px-5 mt-4 space-y-5">
         {missingTable && <div className="bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 text-xs p-3 rounded-xl border border-red-100 dark:border-red-800">Tabel bills belum ada. Jalankan 01_fitur_baru.sql di Supabase.</div>}

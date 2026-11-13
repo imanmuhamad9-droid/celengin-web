@@ -115,7 +115,7 @@ function TransactionsContent() {
 
   return (
     <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-24 transition-colors">
-      <AppHeader title="Riwayat" back action={
+      <AppHeader title="Riwayat" action={
         <button onClick={() => setIsRoutineModalOpen(true)} className="text-xs font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30 px-3 py-1.5 rounded-lg border border-teal-100 dark:border-teal-800 transition-colors">
           Transaksi Rutin
         </button>
