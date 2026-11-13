@@ -2,7 +2,7 @@
 // Aman dari penyalahgunaan: server hanya mengirim notifikasi yang sudah ada di tabel notifications,
 // dibuat oleh pemanggil sendiri (actor_id), belum pernah di-push, dan baru (<= 10 menit).
 import { NextResponse } from 'next/server';
-import webpush from 'web-push';
+import * as webpush from 'web-push';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
 export async function POST(request: Request) {
