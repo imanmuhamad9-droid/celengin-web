@@ -1,6 +1,6 @@
 // Tombol "Kirim Tes Notifikasi" di Pengaturan memanggil ini dengan access token user.
 import { NextResponse } from 'next/server';
-import webpush from 'web-push';
+import * as webpush from 'web-push';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
 export async function POST(request: Request) {

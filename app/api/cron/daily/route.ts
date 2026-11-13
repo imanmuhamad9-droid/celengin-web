@@ -1,7 +1,7 @@
 // Cron harian (Vercel Cron memanggil GET ini sesuai vercel.json).
 // 1) Membuat transaksi rutin yang jatuh tempo.  2) Mengirim push: tagihan, belum mencatat, ringkasan mingguan.
 import { NextResponse } from 'next/server';
-import webpush from 'web-push';
+import * as webpush from 'web-push';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { addDays, dayOfWeek, diffDays, nextOccurrence, todayInJakarta, Frequency } from '@/lib/recurring';
 
@@ -85,8 +85,10 @@ export async function GET(request: Request) {
     report.errors.push('subs: ' + subsErr.message);
     return NextResponse.json(report);
   }
-  const subsByUser: Record<string, typeof subs> = {};
-  (subs || []).forEach((s) => { (subsByUser[s.user_id] = subsByUser[s.user_id] || []).push(s); });
+  
+  const subsByUser: Record<string, any[]> = {};
+  (subs || []).forEach((s: any) => { (subsByUser[s.user_id] = subsByUser[s.user_id] || []).push(s); });
+  
   const userIds = Object.keys(subsByUser);
   if (userIds.length === 0) return NextResponse.json(report);
 
@@ -113,15 +115,16 @@ export async function GET(request: Request) {
 
     // a. Tagihan
     const dueBills = (bills || [])
-      .filter((b) => b.user_id === uid && diffDays(today, b.due_date) <= (b.remind_days_before ?? 3))
-      .sort((a, b) => a.due_date.localeCompare(b.due_date));
+      .filter((b: any) => b.user_id === uid && diffDays(today, b.due_date) <= (b.remind_days_before ?? 3))
+      .sort((a: any, b: any) => a.due_date.localeCompare(b.due_date));
+    
     if (dueBills.length === 1) {
       const b = dueBills[0];
       const d = diffDays(today, b.due_date);
       const when = d < 0 ? `telat ${-d} hari` : d === 0 ? 'jatuh tempo HARI INI' : d === 1 ? 'jatuh tempo besok' : `jatuh tempo ${d} hari lagi`;
       msgs.push({ title: '🧾 Pengingat Tagihan', body: `${b.name} (${rp(b.amount)}) ${when}.`, url: '/bills', tag: 'bills' });
     } else if (dueBills.length > 1) {
-      const total = dueBills.reduce((s, b) => s + Number(b.amount), 0);
+      const total = dueBills.reduce((s: number, b: any) => s + Number(b.amount), 0);
       msgs.push({ title: '🧾 Pengingat Tagihan', body: `${dueBills.length} tagihan segera jatuh tempo, total ${rp(total)}.`, url: '/bills', tag: 'bills' });
     }
 
@@ -130,21 +133,20 @@ export async function GET(request: Request) {
       msgs.push({ title: '🤖 Transaksi Rutin', body: `${createdByUser[uid]} transaksi rutin tercatat otomatis hari ini.`, url: '/transactions', tag: 'routine' });
     }
 
-    const mine = (recentTx || []).filter((t) => t.user_id === uid);
+    const mine = (recentTx || []).filter((t: any) => t.user_id === uid);
 
     // c. Belum mencatat hari ini (hanya untuk user yang aktif 7 hari terakhir)
-    // transaksi hari ini yang BUKAN hasil otomatis dari aturan rutin
-    const loggedToday = mine.filter((t) => t.transaction_date === today).length > (createdByUser[uid] || 0);
-    const wasActive = mine.some((t) => t.transaction_date < today);
+    const loggedToday = mine.filter((t: any) => t.transaction_date === today).length > (createdByUser[uid] || 0);
+    const wasActive = mine.some((t: any) => t.transaction_date < today);
     if (!loggedToday && wasActive) {
       msgs.push({ title: '📝 Sudah catat hari ini?', body: 'Belum ada pengeluaran yang kamu catat hari ini. Yuk catat sebelum lupa!', url: '/dashboard', tag: 'daily' });
     }
 
     // d. Ringkasan mingguan (Senin)
     if (isMonday) {
-      const week = mine.filter((t) => t.transaction_date >= addDays(today, -7) && t.transaction_date < today);
-      const inc = week.filter((t) => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0);
-      const exp = week.filter((t) => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
+      const week = mine.filter((t: any) => t.transaction_date >= addDays(today, -7) && t.transaction_date < today);
+      const inc = week.filter((t: any) => t.type === 'income').reduce((s: number, t: any) => s + Number(t.amount), 0);
+      const exp = week.filter((t: any) => t.type === 'expense').reduce((s: number, t: any) => s + Number(t.amount), 0);
       if (week.length > 0) {
         msgs.push({ title: '📊 Ringkasan Minggu Lalu', body: `Masuk ${rp(inc)}, keluar ${rp(exp)}. Lihat detailnya di Laporan.`, url: '/reports', tag: 'weekly' });
       }
