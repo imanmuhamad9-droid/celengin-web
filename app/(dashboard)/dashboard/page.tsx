@@ -2,8 +2,11 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { Trash2, User, X, Upload, LogOut, Settings, KeyRound, Eye, EyeOff, ShieldAlert, AlertTriangle, Award, CalendarDays, Flame, Info, ChevronLeft, ChevronRight } from 'lucide-react';
-import { formatRupiah } from '@/lib/utils';
+import { Trash2, User, X, Upload, LogOut, Settings, KeyRound, Eye, EyeOff, ShieldAlert, AlertTriangle, Award, CalendarDays, Flame, Info, ChevronLeft, ChevronRight, Receipt, BarChart3, Wallet as WalletIcon, Trophy } from 'lucide-react';
+import { formatRupiah, toLocalDateStr } from '@/lib/utils';
+import { diffDays } from '@/lib/recurring';
+import { listWallets, computeWalletBalances, Wallet, WalletTransfer } from '@/lib/wallets';
+import { fetchBadgeContext, syncBadges } from '@/lib/badges';
 import TransactionModal from '@/components/TransactionModal';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
@@ -15,6 +18,10 @@ export default function DashboardPage() {
   const [profile, setProfile] = useState<any>(null); 
   const [transactions, setTransactions] = useState<any[]>([]);
   const [targets, setTargets] = useState<any[]>([]);
+  const [bills, setBills] = useState<any[]>([]);
+  const [wallets, setWallets] = useState<Wallet[]>([]);
+  const [transfers, setTransfers] = useState<WalletTransfer[]>([]);
+  const badgeSynced = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
   
   const [currentMonthStr, setCurrentMonthStr] = useState('');
@@ -82,16 +89,47 @@ const [todayStr, setTodayStr] = useState('');
 
     const { data: targetData } = await supabase.from('targets').select('*').eq('user_id', session.user.id);
     if (targetData) setTargets(targetData);
+
+    // Tagihan aktif (kosong kalau tabel belum ada)
+    const { data: billData } = await supabase.from('bills').select('*').eq('user_id', session.user.id).eq('is_active', true);
+    setBills(billData || []);
+
+    // Dompet + transfer (kosong kalau fitur Dompet belum diaktifkan)
+    const walletList = await listWallets(session.user.id, true);
+    setWallets(walletList);
+    if (walletList.length > 0) {
+      const { data: trData } = await supabase.from('wallet_transfers').select('*');
+      setTransfers((trData || []) as WalletTransfer[]);
+    }
+
+    // Cek pencapaian (badge) sekali per kunjungan
+    if (!badgeSynced.current && txData) {
+      badgeSynced.current = true;
+      runBadgeSync(session.user.id, txData, targetData || []);
+    }
     
     setIsLoading(false);
+  };
+
+  const runBadgeSync = async (uid: string, tx: any[], tg: any[]) => {
+    try {
+      const ctx = await fetchBadgeContext(uid, tx, tg);
+      const res = await syncBadges(uid, ctx);
+      if (res.fresh.length > 0) {
+        const names = res.fresh.slice(0, 3).map(b => `${b.emoji} ${b.title}`).join('  ·  ');
+        const more = res.fresh.length > 3 ? `  ·  +${res.fresh.length - 3} lainnya` : '';
+        showDialog('Badge Baru! 🏅', names + more, 'success');
+      }
+    } catch (_) { /* badge bersifat tambahan, abaikan error */ }
   };
 
      useEffect(() => { 
     // 1. Set Tanggal Hari Ini
     const now = new Date();
-    setCurrentMonthStr(now.toISOString().substring(0, 7));
-    setTodayStr(now.toISOString().split('T')[0]);
-    setMaxDateStr(now.toISOString().split('T')[0]);
+    const localToday = toLocalDateStr(now);
+    setCurrentMonthStr(localToday.substring(0, 7));
+    setTodayStr(localToday);
+    setMaxDateStr(localToday);
 
     // 2. Set Bulan & Tahun untuk Kalender
     setCalendarMonth(now.getMonth());
@@ -101,7 +139,7 @@ const [todayStr, setTodayStr] = useState('');
     const days = [...Array(7)].map((_, i) => {
       const d = new Date();
       d.setDate(d.getDate() - (6 - i));
-      return d.toISOString().split('T')[0];
+      return toLocalDateStr(d);
     });
     setLast7Days(days);
 
@@ -135,7 +173,7 @@ const [todayStr, setTodayStr] = useState('');
       await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id);
       fetchData();
     } catch (error: any) {
-      alert('Gagal upload: ' + error.message);
+      showDialog('Gagal', 'Gagal upload: ' + error.message, 'danger');
     } finally {
       setIsUploading(false);
     }
@@ -187,7 +225,9 @@ const [todayStr, setTodayStr] = useState('');
 
   const totalIncome = transactions.filter(t => t.type === 'income').reduce((acc, curr) => acc + Number(curr.amount), 0);
   const totalExpense = transactions.filter(t => t.type === 'expense').reduce((acc, curr) => acc + Number(curr.amount), 0);
-  const balance = totalIncome - totalExpense;
+  const walletInitialTotal = wallets.reduce((s, w) => s + (Number(w.initial_balance) || 0), 0);
+  const balance = totalIncome - totalExpense + walletInitialTotal;
+  const walletCalc = computeWalletBalances(wallets, transactions, transfers);
 
   const monthlyTx = transactions.filter(t => t.transaction_date.startsWith(currentMonthStr || '0000-00'));
   const monthlyIncome = monthlyTx.filter(t => t.type === 'income').reduce((acc, curr) => acc + Number(curr.amount), 0);
@@ -233,7 +273,13 @@ const [todayStr, setTodayStr] = useState('');
     return { ...target, totalInc, percent: (totalInc / target.target_income) * 100, typeNotif: 'praise' };
   });
 
-  const allNotifs = [...activeWarnings, ...activePraise];
+  // Pengingat tagihan (H- sesuai pengaturan tiap tagihan)
+  const dueBills = bills
+    .filter(b => todayStr && diffDays(todayStr, b.due_date) <= (b.remind_days_before ?? 3))
+    .map(b => ({ ...b, typeNotif: 'bill', daysLeft: diffDays(todayStr, b.due_date) }))
+    .sort((a, b) => a.daysLeft - b.daysLeft);
+
+  const allNotifs = [...dueBills, ...activeWarnings, ...activePraise];
 
     // LOGIKA JATAH HARIAN (Patokan Tetap)
   const primaryTarget = targets.find(t => t.is_primary === true);
@@ -264,7 +310,7 @@ const [todayStr, setTodayStr] = useState('');
     for (let i = 0; i < 30; i++) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      const dStr = d.toISOString().split('T')[0];
+      const dStr = toLocalDateStr(d);
       const dailyExp = transactions.filter(t => t.transaction_date === dStr && t.type === 'expense').reduce((a, b) => a + Number(b.amount), 0);
       if (dailyExp <= dailyAllowance) streak++;
       else break;
@@ -307,6 +353,20 @@ const currentMonth = calendarMonth;
         {showNotif && allNotifs.length > 0 && (
           <div className="space-y-2">
             {allNotifs.map(notif => {
+              if (notif.typeNotif === 'bill') {
+                const urgent = notif.daysLeft <= 0;
+                const when = notif.daysLeft < 0 ? `telat ${-notif.daysLeft} hari` : notif.daysLeft === 0 ? 'jatuh tempo hari ini' : notif.daysLeft === 1 ? 'jatuh tempo besok' : `jatuh tempo ${notif.daysLeft} hari lagi`;
+                return (
+                  <div key={`bill-${notif.id}`} onClick={() => router.push('/bills')} className={`cursor-pointer p-3 rounded-xl shadow-sm flex items-start gap-2 animate-in slide-in-from-top-4 relative ${urgent ? 'bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500' : 'bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-500'}`}>
+                    <Receipt className={`w-5 h-5 shrink-0 mt-0.5 ${urgent ? 'text-red-500' : 'text-yellow-600'}`} />
+                    <div className="flex-1 pr-5">
+                      <p className={`text-xs font-bold mb-0.5 ${urgent ? 'text-red-700 dark:text-red-400' : 'text-yellow-700 dark:text-yellow-400'}`}>Pengingat Tagihan</p>
+                      <p className={`text-[10px] ${urgent ? 'text-red-600 dark:text-red-400' : 'text-yellow-600 dark:text-yellow-400'}`}><strong>{notif.name}</strong> ({formatRupiah(notif.amount)}) {when}.</p>
+                    </div>
+                    <button onClick={(e) => { e.stopPropagation(); setShowNotif(false); }} className={`p-1 absolute top-2 right-2 ${urgent ? 'text-red-400 hover:text-red-600' : 'text-yellow-500 hover:text-yellow-700'}`}><X className="w-4 h-4" /></button>
+                  </div>
+                );
+              }
               if (notif.typeNotif === 'praise') {
                 return (
                   <div key={notif.id} className="bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500 p-3 rounded-xl shadow-sm flex items-start gap-2 animate-in slide-in-from-top-4 relative">
@@ -387,6 +447,25 @@ const currentMonth = calendarMonth;
           </div>
         </div>
 
+        {/* DOMPET (muncul bila punya 2 dompet atau lebih) */}
+        {wallets.length > 1 && (
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Dompet</p>
+              <button onClick={() => router.push('/wallets')} className="text-[10px] font-bold text-teal-600 dark:text-teal-400">Kelola</button>
+            </div>
+            <div className="flex gap-3 overflow-x-auto pb-1 hide-scrollbar">
+              {wallets.map(w => (
+                <button key={w.id} onClick={() => router.push('/wallets')} className="shrink-0 min-w-[130px] bg-white dark:bg-gray-800 p-3 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm text-left transition-colors">
+                  <p className="text-lg leading-none mb-1">{w.emoji}</p>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">{w.name}</p>
+                  <p className="font-bold text-sm text-gray-800 dark:text-gray-100">{isBalanceHidden ? 'Rp ******' : formatRupiah(walletCalc.balances[w.id] || 0)}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
                 {/* JATAH HARIAN & STREAK */}
         <div className="flex gap-3 relative">
           {/* Kotak Jatah Harian */}
@@ -413,6 +492,26 @@ const currentMonth = calendarMonth;
             <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-1">Streak Hemat</p>
             <p className="font-bold text-orange-500 text-sm flex items-center gap-1"><Flame className="w-3.5 h-3.5" /> {dailyAllowance > 0 ? `${streak} Hari` : 'Belum ada'}</p>
             <p className="text-[9px] text-gray-400 mt-0.5">{dailyAllowance > 0 ? 'di bawah jatah harian' : 'Aktifkan Target Utama'}</p>
+          </div>
+        </div>
+
+        {/* PINTASAN FITUR */}
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
+          <div className="grid grid-cols-4 gap-2">
+            {[
+              { href: '/bills', label: 'Tagihan', Icon: Receipt, tone: 'bg-orange-50 dark:bg-orange-900/30 text-orange-500', count: dueBills.length },
+              { href: '/reports', label: 'Laporan', Icon: BarChart3, tone: 'bg-blue-50 dark:bg-blue-900/30 text-blue-500', count: 0 },
+              { href: '/wallets', label: 'Dompet', Icon: WalletIcon, tone: 'bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400', count: 0 },
+              { href: '/badges', label: 'Badge', Icon: Trophy, tone: 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400', count: 0 },
+            ].map(({ href, label, Icon, tone, count }) => (
+              <button key={href} onClick={() => router.push(href)} className="flex flex-col items-center gap-1.5 active:scale-95 transition-transform">
+                <div className={`relative w-12 h-12 rounded-2xl flex items-center justify-center ${tone}`}>
+                  <Icon className="w-5 h-5" />
+                  {count > 0 && <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">{count}</span>}
+                </div>
+                <span className="text-[10px] font-bold text-gray-600 dark:text-gray-300">{label}</span>
+              </button>
+            ))}
           </div>
         </div>
 

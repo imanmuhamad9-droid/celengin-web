@@ -1,7 +1,13 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { X, ArrowDownCircle, ArrowUpCircle, Check } from 'lucide-react';
+import { X, ArrowDownCircle, ArrowUpCircle, Check, Repeat } from 'lucide-react';
+import { formatDateID } from '@/lib/utils';
+import { Frequency, describeFrequency } from '@/lib/recurring';
+import { createRecurringRule } from '@/lib/recurringClient';
+import { listWallets, Wallet } from '@/lib/wallets';
+import FrequencyPicker from '@/components/FrequencyPicker';
+import WalletChips from '@/components/WalletChips';
 
 export default function EditTransactionModal({ isOpen, onClose, onSuccess, showDialog, txData }: { isOpen: boolean, onClose: () => void, onSuccess: () => void, showDialog: (title: string, msg: string, type: 'info'|'success'|'danger', onConfirm?: () => void) => void, txData: any }) {
   const [type, setType] = useState<'income' | 'expense'>('expense');
@@ -11,6 +17,10 @@ export default function EditTransactionModal({ isOpen, onClose, onSuccess, showD
   const [date, setDate] = useState('');
   const [isRoutine, setIsRoutine] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [frequency, setFrequency] = useState<Frequency>('monthly');
+  const [rule, setRule] = useState<any>(null);
+  const [wallets, setWallets] = useState<Wallet[]>([]);
+  const [walletId, setWalletId] = useState('');
 
   // State untuk Presets
   const [presets, setPresets] = useState<any[]>([]);
@@ -28,7 +38,20 @@ export default function EditTransactionModal({ isOpen, onClose, onSuccess, showD
       setPreset(txData.merchant_name);
       setDate(txData.transaction_date);
       setIsRoutine(txData.is_routine);
+      setFrequency('monthly');
+      setRule(null);
       fetchPresets();
+      (async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const list = await listWallets(session.user.id, false);
+        setWallets(list);
+        setWalletId(txData.wallet_id || list.find(w => w.is_default)?.id || list[0]?.id || '');
+        if (txData.recurring_rule_id) {
+          const { data } = await supabase.from('recurring_rules').select('*').eq('id', txData.recurring_rule_id).maybeSingle();
+          if (data) setRule(data);
+        }
+      })();
     }
   }, [isOpen, txData]);
 
@@ -48,15 +71,41 @@ export default function EditTransactionModal({ isOpen, onClose, onSuccess, showD
 
     setLoading(true);
     try {
+      // Sinkronkan aturan rutin otomatis
+      let ruleId: string | null = null;
+      if (isRoutine) {
+        if (rule) {
+          await supabase.from('recurring_rules').update({
+            amount: amountRaw, merchant_name: preset, type: type,
+            ...(walletId ? { wallet_id: walletId } : {})
+          }).eq('id', rule.id);
+        } else {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            ruleId = await createRecurringRule({
+              userId: session.user.id, merchantName: preset, amount: amountRaw, type: type,
+              frequency: frequency, startDate: date, walletId: walletId || null
+            });
+          }
+        }
+      } else if (rule) {
+        await supabase.from('recurring_rules').update({ is_active: false }).eq('id', rule.id);
+      }
+
       const { error } = await supabase.from('transactions').update({
         type: type,
         amount: amountRaw,
         merchant_name: preset,
         transaction_date: date,
-        is_routine: isRoutine
+        is_routine: isRoutine,
+        ...(ruleId ? { recurring_rule_id: ruleId } : {}),
+        ...(walletId ? { wallet_id: walletId } : {})
       }).eq('id', txData.id);
 
-      if (error) throw error;
+      if (error) {
+        if (ruleId) await supabase.from('recurring_rules').delete().eq('id', ruleId);
+        throw error;
+      }
       
       showDialog('Berhasil', 'Transaksi berhasil diperbarui!', 'success');
       onSuccess();
@@ -109,6 +158,8 @@ export default function EditTransactionModal({ isOpen, onClose, onSuccess, showD
             </div>
           </div>
 
+          <WalletChips wallets={wallets} value={walletId} onChange={setWalletId} />
+
           {/* Tanggal & Rutin */}
           <div className="flex gap-2 items-center justify-between mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
             <div className="w-[55%]">
@@ -123,6 +174,22 @@ export default function EditTransactionModal({ isOpen, onClose, onSuccess, showD
               </button>
             </div>
           </div>
+
+          {isRoutine && rule && (
+            <div className="p-3 bg-teal-50 dark:bg-teal-900/20 border border-teal-100 dark:border-teal-800 rounded-xl flex items-start gap-2">
+              <Repeat className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[11px] font-bold text-teal-700 dark:text-teal-400">{describeFrequency(rule)}</p>
+                <p className="text-[10px] text-teal-700/70 dark:text-teal-400/70">{rule.is_active ? `Tercatat otomatis, berikutnya ${formatDateID(rule.next_run_date)}` : 'Aturan sedang dijeda. Aktifkan di Riwayat → Transaksi Rutin.'}</p>
+              </div>
+            </div>
+          )}
+          {isRoutine && !rule && (
+            <div className="p-3 bg-teal-50 dark:bg-teal-900/20 border border-teal-100 dark:border-teal-800 rounded-xl">
+              <p className="text-[10px] font-bold text-teal-700 dark:text-teal-400 mb-2">Tercatat otomatis, ulangi:</p>
+              <FrequencyPicker value={frequency} onChange={setFrequency} />
+            </div>
+          )}
 
           <button type="submit" disabled={loading} className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-xl transition-all mt-4 disabled:opacity-50">
             {loading ? 'Menyimpan...' : 'Simpan Perubahan'}

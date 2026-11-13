@@ -7,6 +7,7 @@ import ImageCropper from '@/components/ImageCropper';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import PasswordRequirements from '@/components/PasswordRequirements';
 import CustomDialog from '@/components/CustomDialog';
+import PushSettingsCard from '@/components/PushSettingsCard';
 
 export default function SettingsPage() {
   const [profile, setProfile] = useState<any>(null);
@@ -92,6 +93,20 @@ export default function SettingsPage() {
     fetchProfile();
   }, [router]);
 
+  // Cek ketersediaan nickname (real-time, sama seperti di Dashboard)
+  useEffect(() => {
+    if (newNickname.length < 3) { setIsNicknameAvailable(null); return; }
+    if (newNickname === profile?.nickname) { setIsNicknameAvailable(true); return; }
+    const checkNickname = async () => {
+      setIsCheckingNickname(true);
+      const { data } = await supabase.from('profiles').select('nickname').eq('nickname', newNickname).single();
+      setIsNicknameAvailable(!data);
+      setIsCheckingNickname(false);
+    };
+    const timer = setTimeout(checkNickname, 500);
+    return () => clearTimeout(timer);
+  }, [newNickname, profile?.nickname]);
+
   // Handle Tema
   const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
     setTheme(newTheme);
@@ -122,7 +137,7 @@ export default function SettingsPage() {
       const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
       setProfile(data);
     } catch (error: any) {
-      alert('Gagal upload: ' + error.message);
+      showDialog('Gagal', 'Gagal upload: ' + error.message, 'danger');
     } finally {
       setIsUploading(false);
     }
@@ -185,7 +200,7 @@ export default function SettingsPage() {
       const { data: { publicUrl } } = await supabase.storage.from('widget-images').getPublicUrl(fileName);
       if (type === 'safe') { setBgSafeUrl(publicUrl); setBgSafePos('center'); setBgSafeZoom(1); setShowSafeCropper(true); }
       else { setBgLowUrl(publicUrl); setBgLowPos('center'); setBgLowZoom(1); setShowLowCropper(true); }
-    } catch (error: any) { alert('Gagal upload: ' + error.message); }
+    } catch (error: any) { showDialog('Gagal', 'Gagal upload: ' + error.message, 'danger'); }
     finally { setUploading(prev => ({ ...prev, [type]: false })); }
   };
 
@@ -277,6 +292,9 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
+
+        {/* APLIKASI & NOTIFIKASI */}
+        <PushSettingsCard showDialog={showDialog} />
 
         {/* BATAS SALDO AMAN */}
         <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">

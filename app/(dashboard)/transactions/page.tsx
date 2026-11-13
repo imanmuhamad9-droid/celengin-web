@@ -8,6 +8,8 @@ import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import EditTransactionModal from '@/components/EditTransactionModal';
+import RecurringRulesModal from '@/components/RecurringRulesModal';
+import { listWallets, Wallet } from '@/lib/wallets';
 
 function TransactionsContent() {
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -28,6 +30,7 @@ function TransactionsContent() {
   const [isRoutineModalOpen, setIsRoutineModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTx, setSelectedTx] = useState<any>(null);
+  const [wallets, setWallets] = useState<Wallet[]>([]);
 
   const [dialog, setDialog] = useState({ isOpen: false, title: '', msg: '', type: 'info' as 'info'|'success'|'danger', onConfirm: undefined as (()=>void)|undefined });
   const showDialog = (title: string, msg: string, type: 'info'|'success'|'danger', onConfirm?: () => void) => setDialog({ isOpen: true, title, msg, type, onConfirm });
@@ -39,11 +42,13 @@ function TransactionsContent() {
   // Ambil parameter tanggal dari URL
   const urlDate = searchParams.get('date');
 
-  const fetchTx = async () => {
-    setIsLoading(true);
+  const fetchTx = async (silent = false) => {
+    if (!silent) setIsLoading(true);
     try {
       const { data, error } = await supabase.from('transactions').select('*').order('transaction_date', { ascending: false }).order('created_at', { ascending: false });
       if (error) throw error;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) setWallets(await listWallets(session.user.id, false));
       if (data) {
         setTransactions(data);
         const uniqueCats = Array.from(new Set(data.map((t: any) => t.merchant_name)));
@@ -77,11 +82,6 @@ function TransactionsContent() {
     });
   };
 
-  const toggleRoutine = async (id: string, currentStatus: boolean) => {
-    await supabase.from('transactions').update({ is_routine: !currentStatus }).eq('id', id);
-    fetchTx();
-  };
-
   const filteredTx = transactions.filter(tx => {
     const matchSearch = tx.merchant_name?.toLowerCase().includes(search.toLowerCase());
     const matchType = filterType === 'all' ? true : tx.type === filterType;
@@ -97,7 +97,9 @@ function TransactionsContent() {
 
   const totalPages = Math.ceil(filteredTx.length / itemsPerPage);
   const paginatedTx = filteredTx.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-  const routineTx = transactions.filter(t => t.is_routine);
+  // Transaksi lama yang bertanda rutin tapi belum punya aturan otomatis
+  const routineTx = transactions.filter(t => t.is_routine && !t.recurring_rule_id);
+  const walletLabel = (id?: string | null) => { const w = wallets.find(x => x.id === id); return w ? `${w.emoji} ${w.name}` : ''; };
 
   if (isLoading) return <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950"><SkeletonLoader /></div>;
 
@@ -155,6 +157,9 @@ function TransactionsContent() {
                       {tx.is_routine && <span className="text-[9px] bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 px-1.5 py-0.5 rounded font-bold">Rutin</span>}
                     </p>
                     <p className="text-[10px] text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5"><Calendar className="w-3 h-3" /> {tx.transaction_date}</p>
+                    {((wallets.length > 1 && tx.wallet_id) || tx.notes) && (
+                      <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate mt-0.5">{[wallets.length > 1 ? walletLabel(tx.wallet_id) : '', tx.notes].filter(Boolean).join(' · ')}</p>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-3 shrink-0 pl-2">
@@ -176,32 +181,10 @@ function TransactionsContent() {
         )}
       </main>
 
-      {/* MODAL KELOLA TRANSAKSI RUTIN */}
-      {isRoutineModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative max-h-[80vh] flex flex-col transition-colors">
-            <button onClick={() => setIsRoutineModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><XCircle className="w-5 h-5" /></button>
-            <h2 className="text-lg font-bold text-center mb-1 text-gray-800 dark:text-white">Transaksi Rutin</h2>
-            <div className="overflow-y-auto space-y-3 flex-1 pr-1">
-              {routineTx.length === 0 ? <p className="text-center text-xs text-gray-400 py-4">Belum ada transaksi rutin.</p> : 
-                routineTx.map(tx => (
-                  <div key={tx.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-100 dark:border-gray-600">
-                    <div>
-                      <p className="font-bold text-gray-800 dark:text-gray-100 text-sm">{tx.merchant_name}</p>
-                      <p className={`text-xs font-bold mt-0.5 ${tx.type === 'income' ? 'text-green-600' : 'text-red-500'}`}>{tx.type === 'income' ? '+' : '-'}{formatRupiah(tx.amount)}</p>
-                    </div>
-                    <button onClick={() => toggleRoutine(tx.id, tx.is_routine)} className={`w-12 h-6 rounded-full transition-colors relative ${tx.is_routine ? 'bg-teal-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
-                      <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${tx.is_routine ? 'left-7' : 'left-1'}`}></div>
-                    </button>
-                  </div>
-                ))
-              }
-            </div>
-          </div>
-        </div>
-      )}
+      {/* MODAL KELOLA TRANSAKSI RUTIN (otomatis) */}
+      <RecurringRulesModal isOpen={isRoutineModalOpen} onClose={() => setIsRoutineModalOpen(false)} showDialog={showDialog} legacyTx={routineTx} onChanged={() => fetchTx(true)} />
 
-      <EditTransactionModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} onSuccess={fetchTx} showDialog={showDialog} txData={selectedTx} />
+      <EditTransactionModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} onSuccess={() => fetchTx()} showDialog={showDialog} txData={selectedTx} />
       <CustomDialog isOpen={dialog.isOpen} onClose={closeDialog} title={dialog.title} message={dialog.msg} type={dialog.type} onConfirm={dialog.onConfirm} />
       <BottomNav />
     </div>

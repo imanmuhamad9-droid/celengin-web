@@ -2,11 +2,12 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { Heart, Plus, UserPlus, X, Edit3, Check, Mail, ArrowDownCircle, Calendar, Trash2, ArrowUpCircle, Users, Info, ChevronDown, ChevronUp, Copy, CreditCard } from 'lucide-react';
+import { Heart, Plus, UserPlus, X, Edit3, Check, Mail, ArrowDownCircle, Calendar, Trash2, ArrowUpCircle, Users, Info, ChevronDown, ChevronUp, Copy, CreditCard, Receipt } from 'lucide-react';
 import { formatRupiah } from '@/lib/utils';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import SkeletonLoader from '@/components/SkeletonLoader';
+import SplitBillModal from '@/components/SplitBillModal';
 
 const BANKS = [
   "BCA", "Mandiri", "BRI", "BNI", "BSI", "BTN", "CIMB Niaga", "Permata", 
@@ -46,6 +47,9 @@ export default function SharedSpacePage() {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteLoading, setInviteLoading] = useState(false);
+
+  // State Split Bill
+  const [splitGoalId, setSplitGoalId] = useState<string | null>(null);
 
   // State Riwayat
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -179,7 +183,7 @@ export default function SharedSpacePage() {
   const handleDeleteGoal = (id: string) => {
     showDialog('Hapus Target?', 'Target ini akan dihapus permanen beserta riwayatnya.', 'danger', async () => {
       await supabase.from('couple_goals').delete().eq('id', id);
-      showDialog('Berhasil', 'Target telah dihapus.', 'success');
+      setTimeout(() => showDialog('Berhasil', 'Target telah dihapus.', 'success'), 80);
       fetchSharedData();
     });
   };
@@ -259,7 +263,7 @@ export default function SharedSpacePage() {
           {showInfo && (
             <div className="px-4 pb-4 pt-0">
               <p className="text-[11px] text-teal-700/80 dark:text-teal-400/80 leading-relaxed pl-7">
-                Buat target tabungan bersama pasangan (Couple) atau teman-temanmu (Grup). Kalian bisa nabung bareng, memantau siapa yang menabung, dan melihat riwayat transaksi secara transparan.
+                Buat target tabungan bersama pasangan (Couple) atau teman-temanmu (Grup). Kalian bisa nabung bareng, memantau siapa yang menabung, dan melihat riwayat transaksi secara transparan. Ada juga Split Bill untuk patungan: catat siapa yang bayar, otomatis dihitung siapa utang ke siapa.
               </p>
             </div>
           )}
@@ -374,6 +378,10 @@ export default function SharedSpacePage() {
                       <div className="bg-transparent"></div>
                     )}
                   </div>
+
+                  <button onClick={() => setSplitGoalId(goal.id)} className={`mt-2 w-full text-xs font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 border-2 transition-all ${isCouple ? 'border-pink-100 dark:border-pink-900/40 text-pink-600 dark:text-pink-400 hover:bg-pink-50 dark:hover:bg-pink-900/20' : 'border-blue-100 dark:border-blue-900/40 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'}`}>
+                    <Receipt className="w-4 h-4" /> Split Bill
+                  </button>
                 </div>
               </div>
             );
@@ -488,6 +496,14 @@ export default function SharedSpacePage() {
         </div>
       )}
 
+      <SplitBillModal
+        isOpen={!!splitGoalId}
+        onClose={() => setSplitGoalId(null)}
+        goal={goals.find(g => g.id === splitGoalId) || null}
+        members={((goals.find(g => g.id === splitGoalId)?.couple_members) || []).map((m: any) => ({ user_id: m.user_id, name: m.profiles?.nickname || m.profiles?.full_name || 'User' }))}
+        currentUserId={user?.id || ''}
+        showDialog={showDialog}
+      />
       <CustomDialog isOpen={dialog.isOpen} onClose={closeDialog} title={dialog.title} message={dialog.msg} type={dialog.type} onConfirm={dialog.onConfirm} />
       <BottomNav />
     </div>

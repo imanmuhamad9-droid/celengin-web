@@ -2,12 +2,20 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { X, ArrowDownCircle, ArrowUpCircle, Plus, Trash2, Settings2, Edit3 } from 'lucide-react';
+import { toLocalDateStr } from '@/lib/utils';
+import { Frequency } from '@/lib/recurring';
+import { createRecurringRule } from '@/lib/recurringClient';
+import { listWallets, Wallet } from '@/lib/wallets';
+import FrequencyPicker from '@/components/FrequencyPicker';
+import WalletChips from '@/components/WalletChips';
 
 export default function TransactionModal({ isOpen, onClose, onSuccess, showDialog, initialType }: { isOpen: boolean, onClose: () => void, onSuccess: () => void, showDialog: (title: string, msg: string, type: 'info'|'success'|'danger', onConfirm?: () => void) => void, initialType?: 'income' | 'expense' }) {
   
   const [txList, setTxList] = useState<any[]>([]);
   const [presets, setPresets] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [wallets, setWallets] = useState<Wallet[]>([]);
+  const [defaultWalletId, setDefaultWalletId] = useState('');
 
   // State Modal Kelola Kategori
   const [isPresetModalOpen, setIsPresetModalOpen] = useState(false);
@@ -21,8 +29,10 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
     amountDisplay: '',
     amountRaw: 0,
     selectedPreset: '',
-    date: new Date().toISOString().split('T')[0],
-    isRoutine: false
+    date: toLocalDateStr(new Date()),
+    isRoutine: false,
+    frequency: 'monthly' as Frequency,
+    walletId: defaultWalletId
   });
 
   const fetchPresets = async () => {
@@ -50,6 +60,16 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
     if (isOpen) {
       fetchPresets();
       setTxList([createEmptyRow()]);
+      // Dompet (kosong kalau fitur Dompet belum diaktifkan)
+      (async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const list = await listWallets(session.user.id, true);
+        setWallets(list);
+        const def = list.find(w => w.is_default)?.id || list[0]?.id || '';
+        setDefaultWalletId(def);
+        setTxList(prev => prev.map(r => r.walletId ? r : { ...r, walletId: def }));
+      })();
     }
   }, [isOpen, initialType]);
 
@@ -78,20 +98,44 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const payloads = txList.map(tx => ({
-        user_id: session.user.id,
-        merchant_name: tx.selectedPreset,
-        amount: tx.amountRaw,
-        type: tx.type,
-        transaction_date: tx.date,
-        is_routine: tx.isRoutine,
-        is_ai_scanned: false
-      }));
+      // Transaksi berstatus "Rutin" otomatis dibuatkan aturan berulang (dicatat sendiri oleh sistem)
+      const createdRuleIds: string[] = [];
+      const payloads = [];
+      for (const tx of txList) {
+        let ruleId: string | null = null;
+        if (tx.isRoutine) {
+          ruleId = await createRecurringRule({
+            userId: session.user.id,
+            merchantName: tx.selectedPreset,
+            amount: tx.amountRaw,
+            type: tx.type,
+            frequency: tx.frequency,
+            startDate: tx.date,
+            walletId: tx.walletId || null
+          });
+          if (ruleId) createdRuleIds.push(ruleId);
+        }
+        payloads.push({
+          user_id: session.user.id,
+          merchant_name: tx.selectedPreset,
+          amount: tx.amountRaw,
+          type: tx.type,
+          transaction_date: tx.date,
+          is_routine: tx.isRoutine,
+          is_ai_scanned: false,
+          ...(ruleId ? { recurring_rule_id: ruleId } : {}),
+          ...(tx.walletId ? { wallet_id: tx.walletId } : {})
+        });
+      }
 
       const { error } = await supabase.from('transactions').insert(payloads);
-      if (error) throw error;
+      if (error) {
+        if (createdRuleIds.length > 0) await supabase.from('recurring_rules').delete().in('id', createdRuleIds);
+        throw error;
+      }
       
-      showDialog('Berhasil', `${txList.length} transaksi berhasil disimpan!`, 'success');
+      const routineCount = createdRuleIds.length;
+      showDialog('Berhasil', routineCount > 0 ? `${txList.length} transaksi tersimpan. ${routineCount} transaksi rutin akan tercatat otomatis sesuai jadwal.` : `${txList.length} transaksi berhasil disimpan!`, 'success');
       onSuccess(); onClose();   
     } catch (error: any) {
       showDialog('Gagal', error.message, 'danger');
@@ -190,6 +234,8 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
                   </div>
                 </div>
 
+                <WalletChips wallets={wallets} value={tx.walletId} onChange={(id) => updateRow(tx.id, 'walletId', id)} />
+
                 <div className="flex gap-2 items-center justify-between mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
                   {/* POIN 3: Input tanggal diubah jadi hitam (text-gray-900) */}
                   <input 
@@ -207,6 +253,14 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
                     </button>
                   </div>
                 </div>
+
+                {tx.isRoutine && (
+                  <div className="mt-3 p-3 bg-teal-50 dark:bg-teal-900/20 border border-teal-100 dark:border-teal-800 rounded-xl">
+                    <p className="text-[10px] font-bold text-teal-700 dark:text-teal-400 mb-2">Tercatat otomatis, ulangi:</p>
+                    <FrequencyPicker value={tx.frequency} onChange={(v) => updateRow(tx.id, 'frequency', v)} />
+                    <p className="text-[9px] text-teal-700/70 dark:text-teal-400/70 mt-2">Kamu tidak perlu mencatat lagi. Kelola di Riwayat → Transaksi Rutin.</p>
+                  </div>
+                )}
               </div>
             ))}
 
