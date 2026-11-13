@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Plus, X, Trash2, UserPlus, ArrowRight, Receipt, Copy, CreditCard, Pencil, Mail, Check, ChevronDown, ChevronUp, UserCheck, MessageCircle, Info } from 'lucide-react';
+import { ArrowLeft, Plus, X, Trash2, UserPlus, ArrowRight, Receipt, Copy, CreditCard, Pencil, Mail, Check, ChevronDown, ChevronUp, UserCheck, MessageCircle, Info, RotateCcw } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { formatRupiah, formatDateID, parseRupiahInput, toLocalDateStr } from '@/lib/utils';
 import { computeNet, simplifyDebts } from '@/lib/splitbill';
@@ -284,6 +284,24 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
     });
   };
 
+  // Gantian: kosongkan catatan dan pembayaran, tapi buku dan anggotanya tetap ada. Hanya pembuat buku.
+  const handleResetBook = () => {
+    if (!group || !isRunning || !isOwner) return;
+    const owing = debts.length > 0;
+    const msg = owing
+      ? `Saldo belum impas (${debts.map((d) => `${nameOf(d.from)} ke ${nameOf(d.to)} ${formatRupiah(d.amount)}`).join(', ')}). Reset akan menghapus SEMUA catatan dan pembayaran di buku "${group.name}", sehingga saldo kembali Rp0 dan utang di atas ikut hilang. Anggota tetap ada. Tidak bisa dibatalkan. Kirim rekap ke WhatsApp dulu kalau masih perlu.`
+      : `Semua catatan dan pembayaran di buku "${group.name}" akan dihapus supaya mulai dari nol. Anggota tetap ada, tidak perlu buat buku baru. Tidak bisa dibatalkan. Kirim rekap ke WhatsApp dulu kalau masih perlu.`;
+    showDialog(owing ? 'Reset buku yang belum lunas?' : 'Reset buku?', msg, 'danger', async () => {
+      const e1 = await supabase.from('split_settlements').delete().eq('group_id', group.id);
+      if (e1.error) return showLater('Gagal', e1.error.message, 'danger');
+      const e2 = await supabase.from('split_expenses').delete().eq('group_id', group.id);
+      if (e2.error) return showLater('Gagal', e2.error.message, 'danger');
+      loadGroup(group);
+      loadList();
+      showLater('Berhasil', 'Buku sudah direset. Saldo kembali Rp0 dan siap dipakai lagi.', 'success');
+    });
+  };
+
   const respondInvite = async (inv: Invite, accept: boolean) => {
     const { error } = await supabase.rpc('split_respond_invite', { p_member_id: inv.memberId, p_accept: accept });
     if (error) return showDialog('Gagal', error.message, 'danger');
@@ -445,6 +463,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
         <button onClick={goBack} className="text-gray-500 dark:text-gray-400 hover:text-teal-600"><ArrowLeft className="w-6 h-6" /></button>
         <span className="font-bold text-xl text-gray-800 dark:text-white truncate flex-1">{group ? `${group.emoji} ${group.name}` : L.title}</span>
         {!group && isRunning && introHidden && <button onClick={showIntro} className="text-gray-400 hover:text-teal-600" aria-label="Menu ini untuk apa?"><Info className="w-5 h-5" /></button>}
+        {group && isOwner && isRunning && expenses.length + settlements.length > 0 && <button onClick={handleResetBook} className="text-gray-400 hover:text-teal-600" aria-label="Reset buku"><RotateCcw className="w-5 h-5" /></button>}
         {group && isOwner && <button onClick={handleDeleteGroup} className="text-gray-400 hover:text-red-500" aria-label="Hapus grup"><Trash2 className="w-5 h-5" /></button>}
       </header>
 
@@ -541,6 +560,9 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                 <div className="flex gap-2 mt-3">
                   {debts.length > 0 && (myDebts.length > 0 ? myDebts : debts.slice(0, 1)).length === 1 && (
                     <button onClick={() => handleSettle(myDebts.length > 0 ? myDebts[0] : debts[0])} className="flex-1 h-10 rounded-xl bg-white text-teal-700 text-xs font-bold active:scale-95 transition-transform">Catat pembayaran</button>
+                  )}
+                  {isOwner && debts.length === 0 && expenses.length > 0 && (
+                    <button onClick={handleResetBook} className="flex-1 h-10 rounded-xl bg-white text-teal-700 text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"><RotateCcw className="w-4 h-4" /> Reset buku</button>
                   )}
                   {expenses.length > 0 && (
                     <button onClick={openSummaryWa} className="flex-1 h-10 rounded-xl border border-teal-400 text-white text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"><MessageCircle className="w-4 h-4" /> Kirim ke WA</button>

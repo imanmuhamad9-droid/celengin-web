@@ -13,6 +13,7 @@ import BottomNav from '@/components/BottomNav';
 import NotificationBell, { LocalNotif } from '@/components/NotificationBell';
 import FeatureShortcuts from '@/components/FeatureShortcuts';
 import WeeklyChart from '@/components/WeeklyChart';
+import MonthCalendar from '@/components/MonthCalendar';
 import PhotoCropper from '@/components/PhotoCropper';
 import PasswordRequirements from '@/components/PasswordRequirements';
 import SkeletonLoader from '@/components/SkeletonLoader';
@@ -57,6 +58,7 @@ const [todayStr, setTodayStr] = useState('');
 
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
   const [txType, setTxType] = useState<'income' | 'expense'>('expense');
+  const [txDate, setTxDate] = useState<string | undefined>(undefined);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -522,106 +524,14 @@ const currentMonth = calendarMonth;
           rangeLabel={last7Days.length > 0 ? `${new Date(last7Days[0] + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} - ${new Date(last7Days[6] + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}` : ''}
         />
 
-        {/* KALENDER PENGELUARAN / PEMASUKAN */}
-        <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
-          
-                    {/* Header Kalender */}
-          <div className="flex justify-between items-center mb-3">
-            <div className="flex items-center gap-2">
-              <CalendarDays className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-              <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100">Kalender</h3>
-            </div>
-            
-            {/* POIN 4: Tombol Navigasi Bulan */}
-            <div className="flex items-center gap-1">
-              <button onClick={() => {
-                if (calendarMonth === 0) { setCalendarMonth(11); setCalendarYear(calendarYear - 1); } 
-                else setCalendarMonth(calendarMonth - 1);
-              }} className="p-1 bg-gray-50 dark:bg-gray-700 rounded-md text-gray-500 hover:text-teal-600">
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <span className="text-[10px] font-bold text-gray-600 dark:text-gray-300 w-16 text-center">
-                {new Date(calendarYear, calendarMonth).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}
-              </span>
-              <button onClick={() => {
-                if (calendarMonth === 11) { setCalendarMonth(0); setCalendarYear(calendarYear + 1); } 
-                else setCalendarMonth(calendarMonth + 1);
-              }} className="p-1 bg-gray-50 dark:bg-gray-700 rounded-md text-gray-500 hover:text-teal-600">
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="flex gap-2">
-              <button 
-                onClick={() => setShowCalendar(!showCalendar)} 
-                className="text-[10px] font-bold text-gray-500 dark:text-gray-400 hover:text-teal-600 bg-gray-50 dark:bg-gray-700 px-2 py-1 rounded-lg transition-colors"
-              >
-                {showCalendar ? 'Sembunyikan' : 'Tampilkan'}
-              </button>
-            </div>
-          </div>
-
-          {/* Isi Kalender */}
-          {showCalendar && (
-            <div className="animate-in fade-in">
-              
-              {/* Tombol Filter (Hanya Masuk / Keluar) */}
-              <div className="flex gap-2 mb-4">
-                <button onClick={() => setCalendarView('expense')} className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg border transition-all ${calendarView === 'expense' ? 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500'}`}>Keluar</button>
-                <button onClick={() => setCalendarView('income')} className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg border transition-all ${calendarView === 'income' ? 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800 text-green-600 dark:text-green-400' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500'}`}>Masuk</button>
-              </div>
-
-              {/* Grid Tanggal */}
-              <div className="grid grid-cols-7 gap-1 text-center mb-2">
-                {['M','S','S','R','K','J','S'].map((d, i) => <span key={i} className="text-[10px] font-bold text-gray-400">{d}</span>)}
-              </div>
-              <div className="grid grid-cols-7 gap-1">
-                {Array.from({ length: firstDay }).map((_, i) => <div key={`empty-${i}`} />)}
-                {daysArray.map(d => {
-                  const inc = transactions.filter(t => t.transaction_date === d.dateStr && t.type === 'income').reduce((a, b) => a + Number(b.amount), 0);
-                  const exp = transactions.filter(t => t.transaction_date === d.dateStr && t.type === 'expense').reduce((a, b) => a + Number(b.amount), 0);
-                  
-                  let val = 0;
-                  let colorBase = '239, 68, 68'; // Merah (default)
-                  if (calendarView === 'income') { val = inc; colorBase = '16, 185, 129'; } // Hijau
-                  else if (calendarView === 'expense') { val = exp; colorBase = '239, 68, 68'; } // Merah
-
-                  const maxVal = calendarView === 'income' ? maxDailyIncome : maxDailyExpense;
-                  const intensity = val / maxVal;
-                  const isToday = d.dateStr === todayStr;
-
-                  return (
-                    <button 
-                      key={d.dateStr} 
-                      onClick={() => router.push(`/transactions?date=${d.dateStr}`)}
-                      className={`aspect-square flex items-center justify-center rounded-lg text-[10px] font-bold transition-all hover:scale-110 ${val > 0 ? 'text-white' : 'text-gray-600 dark:text-gray-400'} ${isToday ? 'ring-2 ring-teal-500 ring-offset-1 dark:ring-offset-gray-800' : ''}`}
-                      style={{ backgroundColor: val > 0 ? `rgba(${colorBase}, ${Math.max(0.2, intensity)})` : 'rgba(156, 163, 175, 0.1)' }}
-                      title={formatRupiah(val)}
-                    >
-                      {d.day}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Keterangan */}
-              {calendarView === 'expense' && mostExpensiveDay && mostExpensiveDay.expense > 0 && (
-                <div className="mt-3 text-center">
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400">
-                    Paling boros: <span className="font-bold text-red-500">{new Date(mostExpensiveDay.dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span> ({formatRupiah(mostExpensiveDay.expense)})
-                  </p>
-                </div>
-              )}
-              {calendarView === 'income' && (
-                <div className="mt-3 text-center">
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400">
-                    Menampilkan data pemasukan.
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        {/* KALENDER */}
+        <MonthCalendar
+          transactions={transactions}
+          bills={bills}
+          todayStr={todayStr}
+          onOpenHistory={(d) => router.push(`/transactions?date=${d}`)}
+          onAddOnDate={(d) => { setTxType('expense'); setTxDate(d); setIsTxModalOpen(true); }}
+        />
 
         {/* DONUT CHART BULAN INI */}
         {totalMonthly > 0 && (
@@ -875,7 +785,7 @@ const currentMonth = calendarMonth;
           </div>
         </div>
       )}
-      <TransactionModal isOpen={isTxModalOpen} onClose={() => setIsTxModalOpen(false)} onSuccess={() => fetchData()} showDialog={showDialog} initialType={txType} />
+      <TransactionModal isOpen={isTxModalOpen} onClose={() => { setIsTxModalOpen(false); setTxDate(undefined); }} onSuccess={() => fetchData()} showDialog={showDialog} initialType={txType} initialDate={txDate} />
       <CustomDialog isOpen={dialog.isOpen} onClose={closeDialog} title={dialog.title} message={dialog.msg} type={dialog.type} onConfirm={dialog.onConfirm} />
       <BottomNav />
     </div>

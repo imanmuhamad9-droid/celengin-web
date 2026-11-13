@@ -11,7 +11,7 @@ import WalletChips from '@/components/WalletChips';
 import { triggerMoneyRain } from '@/components/MoneyRain';
 import DateField from '@/components/DateField';
 
-export default function TransactionModal({ isOpen, onClose, onSuccess, showDialog, initialType }: { isOpen: boolean, onClose: () => void, onSuccess: () => void, showDialog: (title: string, msg: string, type: 'info'|'success'|'danger', onConfirm?: () => void) => void, initialType?: 'income' | 'expense' }) {
+export default function TransactionModal({ isOpen, onClose, onSuccess, showDialog, initialType, initialDate }: { isOpen: boolean, onClose: () => void, onSuccess: () => void, showDialog: (title: string, msg: string, type: 'info'|'success'|'danger', onConfirm?: () => void) => void, initialType?: 'income' | 'expense', initialDate?: string }) {
   
   const [txList, setTxList] = useState<any[]>([]);
   const [presets, setPresets] = useState<any[]>([]);
@@ -31,7 +31,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
     amountDisplay: '',
     amountRaw: 0,
     selectedPreset: '',
-    date: toLocalDateStr(new Date()),
+    date: initialDate || toLocalDateStr(new Date()),
     isRoutine: false,
     frequency: 'monthly' as Frequency,
     walletId: defaultWalletId
@@ -73,7 +73,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
         setTxList(prev => prev.map(r => r.walletId ? r : { ...r, walletId: def }));
       })();
     }
-  }, [isOpen, initialType]);
+  }, [isOpen, initialType, initialDate]);
 
   if (!isOpen) return null;
 
