@@ -224,7 +224,7 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
     <div className="fixed inset-0 bg-black/50 z-[70] flex items-end sm:items-center justify-center">
       <div className="bg-white dark:bg-gray-800 rounded-t-3xl sm:rounded-3xl w-full max-w-md max-h-[94vh] flex flex-col transition-colors">
         <div className="flex items-center justify-between px-5 pt-5 pb-3 shrink-0">
-          <h2 className="text-lg font-bold text-gray-800 dark:text-white">{isG ? 'Catat Gantian' : 'Tambah Pengeluaran'}</h2>
+          <h2 className="text-lg font-bold text-gray-800 dark:text-white">{isG ? 'Catat Bayarin' : 'Tambah Pengeluaran'}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
         </div>
 

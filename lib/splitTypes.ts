@@ -54,6 +54,7 @@ export interface SplitSettlement {
   to_member: string;
   amount: number | string;
   created_at: string;
+  created_by?: string | null;
 }
 
 export const BANKS = [

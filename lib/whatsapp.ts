@@ -183,7 +183,7 @@ export function buildDebtSummaryMessage(groupName: string, emoji: string, member
   return L.join('\n');
 }
 
-/** Rekap Gantian: saldo sekarang + catatan pada periode yang dipilih (ym = "2026-11" atau null = semua). */
+/** Rekap Bayarin: saldo sekarang + catatan pada periode yang dipilih (ym = "2026-11" atau null = semua). */
 export function buildLedgerMessage(
   bookName: string,
   emoji: string,
@@ -193,7 +193,7 @@ export function buildLedgerMessage(
   ym: string | null,
 ): string {
   const L: string[] = [];
-  L.push(`${emoji} *Gantian · ${bookName}*`);
+  L.push(`${emoji} *Bayarin · ${bookName}*`);
   L.push('');
   if (debts.length === 0) L.push('*Saldo:* impas, tidak ada yang perlu dibayar 🎉');
   else {

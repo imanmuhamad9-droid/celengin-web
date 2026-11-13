@@ -21,7 +21,7 @@ export const SHORTCUTS: ShortcutDef[] = [
   { key: 'tagihan', label: 'Tagihan', desc: 'Tagihan & langganan', href: '/bills', Icon: Receipt, img: '/menu-icons/tagihan.png' },
   { key: 'laporan', label: 'Laporan', desc: 'Grafik, insight, PDF', href: '/reports', Icon: BarChart3, img: '/menu-icons/laporan.png' },
   { key: 'split', label: 'Split Bill', desc: 'Patungan makan & jalan', href: '/splitbill', Icon: Users2, img: '/menu-icons/split.png' },
-  { key: 'gantian', label: 'Gantian', desc: 'Beli gantian, saldo bergulir', href: '/gantian', Icon: ArrowLeftRight, img: '/menu-icons/gantian.png' },
+  { key: 'gantian', label: 'Bayarin', desc: 'Saling bayarin, catat dan lunasi', href: '/gantian', Icon: ArrowLeftRight, img: '/menu-icons/gantian.png' },
   { key: 'dompet', label: 'Dompet', desc: 'Saldo tiap dompet', href: '/wallets', Icon: Wallet, img: '/menu-icons/dompet.png' },
   { key: 'badge', label: 'Badge', desc: 'Pencapaian kamu', href: '/badges', Icon: Trophy, img: '/menu-icons/badge.png' },
   { key: 'setelan', label: 'Setelan', desc: 'Profil, tema, notifikasi', href: '/settings', Icon: Settings, img: '/menu-icons/setelan.png' },

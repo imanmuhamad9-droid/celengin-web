@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Plus, X, Trash2, UserPlus, ArrowRight, Receipt, Copy, CreditCard, Pencil, Mail, Check, ChevronDown, ChevronUp, UserCheck, MessageCircle, Info, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Plus, X, Trash2, UserPlus, ArrowRight, Receipt, Copy, CreditCard, Pencil, Mail, Check, ChevronDown, ChevronUp, UserCheck, MessageCircle, Info } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { formatRupiah, formatDateID, parseRupiahInput, toLocalDateStr } from '@/lib/utils';
 import { computeNet, simplifyDebts } from '@/lib/splitbill';
@@ -24,22 +24,22 @@ const INTRO_KEY = 'celengin:gantian-intro-hidden';
 
 function labelsFor(running: boolean) {
   return running ? {
-    title: 'Gantian',
-    menu: 'Gantian',
-    create: 'Buat Buku Gantian',
-    modalTitle: 'Buku Gantian Baru',
-    nameLabel: 'Nama buku',
-    namePh: 'Aku & Adik',
+    title: 'Bayarin',
+    menu: 'Bayarin',
+    create: 'Buat Bayarin Baru',
+    modalTitle: 'Bayarin Baru',
+    nameLabel: 'Nama',
+    namePh: 'Rina & Dito',
     friends: 'Siapa saja yang ikut',
-    empty: 'Belum ada buku. Buat satu, misalnya "Aku & Adik".',
-    inviteLabel: 'Kamu diundang ke buku Gantian',
-    entity: 'buku',
-    addExp: 'Catat Gantian',
+    empty: 'Belum ada. Buat satu, misalnya "Rina & Dito".',
+    inviteLabel: 'Undangan Bayarin',
+    entity: 'daftar',
+    addExp: 'Catat Bayarin',
     tabs: { ringkasan: 'Saldo', pengeluaran: 'Catatan', anggota: 'Anggota' },
-    nameEmpty: 'Isi nama buku, misalnya "Aku & Adik".',
-    created: 'Buku Dibuat',
-    deleteTitle: 'Hapus Buku?',
-    deleteMsg: (n: string) => `Buku "${n}" beserta semua catatan dan pembayarannya akan dihapus permanen untuk semua anggota.`,
+    nameEmpty: 'Isi namanya dulu, misalnya "Rina & Dito".',
+    created: 'Berhasil Dibuat',
+    deleteTitle: 'Hapus Bayarin?',
+    deleteMsg: (n: string) => `"${n}" beserta semua catatan dan pembayarannya akan dihapus permanen untuk semua anggota.`,
     noExp: 'Belum ada catatan.',
     delExpTitle: 'Hapus Catatan?',
     delExp: 'Hapus catatan',
@@ -285,24 +285,6 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
     });
   };
 
-  // Gantian: kosongkan catatan dan pembayaran, tapi buku dan anggotanya tetap ada. Hanya pembuat buku.
-  const handleResetBook = () => {
-    if (!group || !isRunning || !isOwner) return;
-    const owing = debts.length > 0;
-    const msg = owing
-      ? `Saldo belum impas (${debts.map((d) => `${nameOf(d.from)} ke ${nameOf(d.to)} ${formatRupiah(d.amount)}`).join(', ')}). Reset akan menghapus SEMUA catatan dan pembayaran di buku "${group.name}", sehingga saldo kembali Rp0 dan utang di atas ikut hilang. Anggota tetap ada. Tidak bisa dibatalkan. Kirim rekap ke WhatsApp dulu kalau masih perlu.`
-      : `Semua catatan dan pembayaran di buku "${group.name}" akan dihapus supaya mulai dari nol. Anggota tetap ada, tidak perlu buat buku baru. Tidak bisa dibatalkan. Kirim rekap ke WhatsApp dulu kalau masih perlu.`;
-    showDialog(owing ? 'Reset buku yang belum lunas?' : 'Reset buku?', msg, 'danger', async () => {
-      const e1 = await supabase.from('split_settlements').delete().eq('group_id', group.id);
-      if (e1.error) return showLater('Gagal', e1.error.message, 'danger');
-      const e2 = await supabase.from('split_expenses').delete().eq('group_id', group.id);
-      if (e2.error) return showLater('Gagal', e2.error.message, 'danger');
-      loadGroup(group);
-      loadList();
-      showLater('Berhasil', 'Buku sudah direset. Saldo kembali Rp0 dan siap dipakai lagi.', 'success');
-    });
-  };
-
   const respondInvite = async (inv: Invite, accept: boolean) => {
     const { error } = await supabase.rpc('split_respond_invite', { p_member_id: inv.memberId, p_accept: accept });
     if (error) return showDialog('Gagal', error.message, 'danger');
@@ -374,18 +356,22 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
     });
   };
 
+  // Lunas penuh: tanya dulu, lalu dicatat dengan waktu saat itu. Tagihan pasangan ini kembali Rp0.
   const handleSettle = (line: { from: string; to: string; amount: number }) => {
     if (!group) return;
-    if (isRunning) { // Gantian: boleh dibayar sebagian, jadi nominalnya bisa diubah
-      setSettleLine(line); setSettleRaw(line.amount); setSettleDisplay(new Intl.NumberFormat('id-ID').format(line.amount));
-      return;
-    }
-    showDialog('Tandai Lunas?', `${nameOf(line.from)} sudah membayar ${formatRupiah(line.amount)} ke ${nameOf(line.to)}.`, 'info', async () => {
+    showDialog('Sudah Bayar?', `Yakin ${nameOf(line.from)} sudah bayar ke ${nameOf(line.to)} sebesar ${formatRupiah(line.amount)}? Pembayaran dicatat di riwayat dengan tanggal hari ini, dan tagihan ini kembali Rp0.`, 'info', async () => {
       const { error } = await supabase.from('split_settlements').insert({ group_id: group.id, from_member: line.from, to_member: line.to, amount: line.amount, created_by: userId });
       if (error) return showLater('Gagal', error.message, 'danger');
       loadGroup(group);
-      showLater('Berhasil', 'Pelunasan tercatat.', 'success');
+      loadList();
+      showLater('Lunas 🎉', `${nameOf(line.from)} sudah bayar ke ${nameOf(line.to)} sebesar ${formatRupiah(line.amount)}. Tercatat di riwayat.`, 'success');
     });
+  };
+
+  // Bayar sebagian: nominal bisa diubah, sisanya tetap tercatat.
+  const handlePartial = (line: { from: string; to: string; amount: number }) => {
+    if (!group) return;
+    setSettleLine(line); setSettleRaw(line.amount); setSettleDisplay(new Intl.NumberFormat('id-ID').format(line.amount));
   };
 
   const submitSettle = async (e: React.FormEvent) => {
@@ -400,7 +386,35 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
     const left = settleLine.amount - settleRaw;
     setSettleLine(null);
     loadGroup(group);
-    showDialog('Pembayaran Tercatat', left > 0 ? `Sisa ${formatRupiah(left)} tetap tercatat dan terbawa ke hitungan berikutnya.` : 'Lunas. Saldo sekarang impas 🎉', 'success');
+    showDialog('Pembayaran Tercatat', left > 0 ? `Sisa ${formatRupiah(left)} masih tercatat dan terbawa ke hitungan berikutnya.` : 'Lunas. Saldo sekarang impas 🎉', 'success');
+  };
+
+  const fmtWhen = (iso: string) => new Date(iso).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+  // Salah catat? Pembayaran bisa dibatalkan oleh yang mencatat atau pembuatnya.
+  const handleUndoSettlement = (st: SplitSettlement) => {
+    if (!group) return;
+    showDialog('Batalkan Pembayaran?', `Pembayaran ${nameOf(st.from_member)} ke ${nameOf(st.to_member)} sebesar ${formatRupiah(Number(st.amount))} (${fmtWhen(st.created_at as string)}) dihapus dari riwayat dan saldo dihitung ulang.`, 'danger', async () => {
+      const { error } = await supabase.from('split_settlements').delete().eq('id', st.id);
+      if (error) return showLater('Gagal', error.message, 'danger');
+      loadGroup(group);
+      loadList();
+    });
+  };
+
+  // Hanya pembuat yang bisa mengeluarkan anggota (atau membatalkan undangan yang belum diterima).
+  const handleDeleteMember = (m: SplitMember) => {
+    if (!group || !isOwner) return;
+    const hasHistory = expenses.some((e) => e.paid_by === m.id || (e.split_shares || []).some((x) => x.member_id === m.id))
+      || settlements.some((x) => x.from_member === m.id || x.to_member === m.id);
+    if (hasHistory) return showDialog('Belum Bisa Dikeluarkan', `${m.name} masih tercatat di catatan atau pembayaran. Hapus dulu catatan yang melibatkan ${m.name}, baru bisa dikeluarkan.`, 'info');
+    const pending = m.status === 'pending';
+    showDialog(pending ? 'Batalkan Undangan?' : `Keluarkan ${m.name}?`, pending ? `Undangan untuk ${m.name} dibatalkan.` : `${m.name} dihapus dari ${L.entity} ini.`, 'danger', async () => {
+      const { error } = await supabase.from('split_members').delete().eq('id', m.id);
+      if (error) return showLater('Gagal', error.message, 'danger');
+      loadGroup(group);
+      loadList();
+    });
   };
 
   // ---------- Kirim ke WhatsApp ----------
@@ -462,11 +476,10 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
     <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-40 transition-colors">
       <AppHeader
         z="z-40"
-        title={group ? `${group.emoji} ${group.name}` : L.title}
+        title={group ? (isRunning ? group.name : `${group.emoji} ${group.name}`) : L.title}
         onBack={group ? goBack : undefined}
         action={<>
           {!group && isRunning && introHidden && <button onClick={showIntro} className="text-gray-400 hover:text-teal-600" aria-label="Menu ini untuk apa?"><Info className="w-5 h-5" /></button>}
-          {group && isOwner && isRunning && expenses.length + settlements.length > 0 && <button onClick={handleResetBook} className="text-gray-400 hover:text-teal-600" aria-label="Reset buku"><RotateCcw className="w-5 h-5" /></button>}
           {group && isOwner && <button onClick={handleDeleteGroup} className="text-gray-400 hover:text-red-500" aria-label="Hapus grup"><Trash2 className="w-5 h-5" /></button>}
         </>}
       />
@@ -487,7 +500,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                 {invites.map((inv) => (
                   <div key={inv.memberId} className="bg-white dark:bg-gray-800 border border-teal-200 dark:border-teal-800 p-4 rounded-2xl">
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center text-xl shrink-0">{inv.group.emoji}</div>
+                      <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center text-xl shrink-0">{isRunning ? <img src="/menu-icons/gantian.png" alt="" className="w-9 h-9 object-contain" /> : inv.group.emoji}</div>
                       <div className="min-w-0"><p className="text-[11px] text-gray-500 dark:text-gray-400">{L.inviteLabel}</p><p className="font-bold text-sm text-gray-800 dark:text-white truncate">{inv.group.name}</p></div>
                     </div>
                     <div className="flex gap-2">
@@ -503,12 +516,12 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
               !introHidden && (
                 <div className="relative bg-teal-50 dark:bg-teal-900/20 border border-teal-100 dark:border-teal-800 rounded-2xl p-4">
                   <button onClick={hideIntro} aria-label="Sembunyikan" className="absolute top-3 right-3 text-teal-600/60 hover:text-teal-700 dark:text-teal-300/60"><X className="w-4 h-4" /></button>
-                  <p className="text-xs font-bold text-teal-800 dark:text-teal-300 mb-1 pr-6">Gantian: untuk apa menu ini?</p>
-                  <p className="text-[11px] text-teal-700/80 dark:text-teal-400/80 leading-relaxed mb-2">Untuk kamu dan adik, teman, atau pasangan yang sering beli barang gantian dan baru hitung-hitungan belakangan. Catat siapa yang bayar dan untuk siapa. Saldonya otomatis saling mengurangi, jadi tinggal satu angka: siapa bayar ke siapa.</p>
+                  <p className="text-xs font-bold text-teal-800 dark:text-teal-300 mb-1 pr-6">Bayarin: untuk apa menu ini?</p>
+                  <p className="text-[11px] text-teal-700/80 dark:text-teal-400/80 leading-relaxed mb-2">Untuk adik, teman, atau pasangan yang sering saling membayarkan dan baru hitung-hitungan belakangan. Catat siapa yang bayar dan untuk siapa. Saldonya otomatis saling mengurangi, jadi tinggal satu angka: siapa bayar ke siapa.</p>
                   <ul className="text-[11px] text-teal-700/80 dark:text-teal-400/80 leading-relaxed space-y-1 list-disc pl-4">
                     <li>Catat satu barang, atau banyak barang dari satu struk (bisa scan struk).</li>
-                    <li>Bayarnya akhir bulan? Catat pembayarannya, sisanya otomatis terbawa.</li>
-                    <li>Berdiri sendiri: tidak mengubah transaksi atau saldo dompetmu.</li>
+                    <li>Sudah bayar? Tekan Lunas, atau Bayar sebagian. Semuanya tercatat di riwayat lengkap dengan tanggalnya.</li>
+                    <li>Berdiri sendiri: tidak mengubah transaksi atau saldo dompet.</li>
                   </ul>
                   <button onClick={hideIntro} className="mt-3 text-[11px] font-bold text-teal-700 dark:text-teal-300 underline underline-offset-2">Mengerti, sembunyikan</button>
                   <p className="text-[10px] text-teal-700/60 dark:text-teal-400/60 mt-1">Bisa dibuka lagi lewat ikon ⓘ di pojok atas.</p>
@@ -530,7 +543,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
               </div>
             ) : cards.map((c) => (
               <button key={c.id} onClick={() => { setTab('ringkasan'); loadGroup(c); }} className="w-full text-left bg-white dark:bg-gray-800 p-4 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center gap-3 transition-colors active:scale-[0.99]">
-                <div className="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center text-2xl shrink-0">{c.emoji}</div>
+                <div className="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center text-2xl shrink-0">{isRunning ? <img src="/menu-icons/gantian.png" alt="" className="w-11 h-11 object-contain" /> : c.emoji}</div>
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-gray-800 dark:text-gray-100 truncate">{c.name}</p>
                   <p className="text-[11px] text-gray-500 dark:text-gray-400">{c.memberCount} orang · total {formatRupiah(c.total)}</p>
@@ -554,22 +567,22 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                   (myDebts.length > 0 ? myDebts : debts.slice(0, 1)).map((d, i) => (
                     <div key={i} className={i > 0 ? 'mt-3' : ''}>
                       <p className="text-[11px] text-teal-100">
-                        {myMember && d.to === myMember.id ? `${nameOf(d.from)} harus bayar ke kamu` : myMember && d.from === myMember.id ? `Kamu harus bayar ke ${nameOf(d.to)}` : `${nameOf(d.from)} harus bayar ke ${nameOf(d.to)}`}
+                        {`${nameOf(d.from)} harus bayar ke ${nameOf(d.to)}`}
                       </p>
                       <p className="text-3xl font-bold">{formatRupiah(d.amount)}</p>
                     </div>
                   ))
                 )}
                 <p className="text-[11px] text-teal-100 mt-3">{members.length} orang · {expenses.length} catatan · bulan ini {formatRupiah(monthTotal)}</p>
-                <div className="flex gap-2 mt-3">
+                <div className="mt-3 space-y-2">
                   {debts.length > 0 && (myDebts.length > 0 ? myDebts : debts.slice(0, 1)).length === 1 && (
-                    <button onClick={() => handleSettle(myDebts.length > 0 ? myDebts[0] : debts[0])} className="flex-1 h-10 rounded-xl bg-white text-teal-700 text-xs font-bold active:scale-95 transition-transform">Catat pembayaran</button>
-                  )}
-                  {isOwner && debts.length === 0 && expenses.length > 0 && (
-                    <button onClick={handleResetBook} className="flex-1 h-10 rounded-xl bg-white text-teal-700 text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"><RotateCcw className="w-4 h-4" /> Reset buku</button>
+                    <div className="flex gap-2">
+                      <button onClick={() => handleSettle(myDebts.length > 0 ? myDebts[0] : debts[0])} className="flex-1 h-10 rounded-xl bg-white text-teal-700 text-xs font-bold active:scale-95 transition-transform">Lunas</button>
+                      <button onClick={() => handlePartial(myDebts.length > 0 ? myDebts[0] : debts[0])} className="flex-1 h-10 rounded-xl border border-teal-400 text-white text-xs font-bold active:scale-95 transition-transform">Bayar sebagian</button>
+                    </div>
                   )}
                   {expenses.length > 0 && (
-                    <button onClick={openSummaryWa} className="flex-1 h-10 rounded-xl border border-teal-400 text-white text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"><MessageCircle className="w-4 h-4" /> Kirim ke WA</button>
+                    <button onClick={openSummaryWa} className="w-full h-10 rounded-xl border border-teal-400 text-white text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"><MessageCircle className="w-4 h-4" /> Kirim ke WA</button>
                   )}
                 </div>
               </div>
@@ -611,7 +624,10 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                                 <span className="font-bold">{nameOf(d.from)}</span> <ArrowRight className="w-3 h-3 inline mx-0.5" /> <span className="font-bold">{nameOf(d.to)}</span>
                                 <p className="font-bold text-red-500 dark:text-red-400 text-base">{formatRupiah(d.amount)}</p>
                               </div>
-                              <button onClick={() => handleSettle(d)} className="bg-teal-600 hover:bg-teal-700 text-white text-[10px] font-bold px-3 py-2 rounded-lg shrink-0">{isRunning ? 'Catat bayar' : 'Tandai Lunas'}</button>
+                              <div className="flex flex-col gap-1.5 shrink-0">
+                                <button onClick={() => handleSettle(d)} className="bg-teal-600 hover:bg-teal-700 text-white text-[11px] font-bold px-3 py-2 rounded-lg">Lunas</button>
+                                {isRunning && <button onClick={() => handlePartial(d)} className="bg-white dark:bg-gray-700 border border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-300 text-[10px] font-bold px-3 py-1.5 rounded-lg">Bayar sebagian</button>}
+                              </div>
                             </div>
                             {receiver && <BankLine m={receiver} />}
                           </div>
@@ -628,7 +644,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                       const v = Math.round(net[m.id] || 0);
                       return (
                         <div key={m.id} className="flex justify-between items-center gap-2 text-xs">
-                          <span className="text-gray-700 dark:text-gray-200 font-medium truncate">{m.name}{isMine(m) ? ' (kamu)' : ''}</span>
+                          <span className="text-gray-700 dark:text-gray-200 font-medium truncate">{m.name}{!isRunning && isMine(m) ? ' (kamu)' : ''}</span>
                           <span className={`font-bold shrink-0 ${v > 0 ? 'text-green-600 dark:text-green-400' : v < 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-400'}`}>
                             {v > 0 ? `menerima ${formatRupiah(v)}` : v < 0 ? `berutang ${formatRupiah(-v)}` : 'lunas'}
                           </span>
@@ -640,13 +656,16 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
 
                 {settlements.length > 0 && (
                   <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100 mb-3">Riwayat pelunasan</h3>
-                    <div className="space-y-2">
-                      {settlements.map((s) => (
-                        <p key={s.id} className="text-[11px] text-gray-600 dark:text-gray-300 flex justify-between gap-2">
-                          <span className="min-w-0 truncate"><strong>{nameOf(s.from_member)}</strong> → <strong>{nameOf(s.to_member)}</strong></span>
-                          <span className="font-bold shrink-0">{formatRupiah(Number(s.amount))}</span>
-                        </p>
+                    <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100 mb-3">Riwayat pembayaran</h3>
+                    <div className="space-y-3">
+                      {settlements.map((st) => (
+                        <div key={st.id} className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-xs text-gray-700 dark:text-gray-200 truncate"><strong>{nameOf(st.from_member)}</strong> bayar ke <strong>{nameOf(st.to_member)}</strong></p>
+                            <p className="text-[10px] text-gray-400 mt-0.5">{st.created_at ? fmtWhen(st.created_at as string) : ''}{(st.created_by === userId || isOwner) && <button onClick={() => handleUndoSettlement(st)} className="ml-2 font-bold text-red-400 hover:text-red-500">Batalkan</button>}</p>
+                          </div>
+                          <span className="font-bold text-sm text-green-600 dark:text-green-400 shrink-0">{formatRupiah(Number(st.amount))}</span>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -725,7 +744,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                   <div key={m.id} className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
                     <div className="flex items-center gap-2">
                       <div className="min-w-0 flex-1">
-                        <p className="font-bold text-sm text-gray-800 dark:text-gray-100 truncate">{m.name}{isMine(m) ? ' (kamu)' : ''}</p>
+                        <p className="font-bold text-sm text-gray-800 dark:text-gray-100 truncate">{m.name}{!isRunning && isMine(m) ? ' (kamu)' : ''}</p>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {m.user_id === group.user_id && <span className="text-[9px] font-bold bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 px-1.5 py-0.5 rounded">Pembuat</span>}
                           {m.user_id && m.status === 'accepted' && m.user_id !== group.user_id && <span className="text-[9px] font-bold bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 px-1.5 py-0.5 rounded flex items-center gap-0.5"><UserCheck className="w-3 h-3" /> Pengguna Celengin</span>}
@@ -735,10 +754,13 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                         {m.phone && <p className="text-[10px] text-gray-400 mt-1">WhatsApp: {m.phone}</p>}
                       </div>
                       {(isOwner || isMine(m)) && <button onClick={() => openBank(m)} className="shrink-0 p-2 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-500 hover:text-teal-600" aria-label="Ubah info rekening"><Pencil className="w-3.5 h-3.5" /></button>}
+                      {isOwner && m.user_id !== group.user_id && <button onClick={() => handleDeleteMember(m)} className="shrink-0 p-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-400 hover:text-red-500" aria-label={m.status === 'pending' ? 'Batalkan undangan' : 'Keluarkan anggota'}><Trash2 className="w-3.5 h-3.5" /></button>}
                     </div>
                     <BankLine m={m} />
                   </div>
                 ))}
+
+                {!isOwner && <p className="text-[11px] text-gray-400 text-center px-2">Hanya pembuat {L.entity} ini yang bisa mengeluarkan anggota.</p>}
 
                 <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-3">
                   <p className="text-xs font-bold text-gray-800 dark:text-gray-100">Tambah teman</p>
@@ -765,18 +787,18 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">{L.nameLabel}</label>
                 <input value={gName} onChange={(e) => setGName(e.target.value)} placeholder={L.namePh} className={inputCls} />
               </div>
-              <div>
+              {!isRunning && <div>
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Ikon</label>
                 <div className="flex flex-wrap gap-2">
                   {(isRunning ? EMOJIS_RUNNING : EMOJIS).map((em) => (
                     <button type="button" key={em} onClick={() => setGEmoji(em)} className={`w-10 h-10 rounded-xl text-xl border-2 ${gEmoji === em ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30' : 'border-gray-100 dark:border-gray-700'}`}>{em}</button>
                   ))}
                 </div>
-              </div>
+              </div>}
               <div>
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">{L.friends}</label>
                 <div className="flex flex-wrap gap-1.5 mb-2">
-                  <span className="text-[11px] bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 px-2.5 py-1 rounded-lg font-bold max-w-full truncate">{myName} (kamu)</span>
+                  <span className="text-[11px] bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 px-2.5 py-1 rounded-lg font-bold max-w-full truncate">{myName}{isRunning ? '' : ' (kamu)'}</span>
                   {gMembers.map((m, i) => (
                     <span key={i} className={`text-[11px] border px-2.5 py-1 rounded-lg flex items-center gap-1 max-w-full ${m.userId ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300' : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200'}`}>
                       <span className="truncate">{m.userId ? '✉ ' : ''}{m.name}</span><button type="button" onClick={() => setGMembers((p) => p.filter((_, j) => j !== i))} className="text-gray-400 hover:text-red-500 shrink-0"><X className="w-3 h-3" /></button>
@@ -793,7 +815,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                 </div>
                 <p className="text-[10px] text-gray-400 mt-1.5">{gInviteMode ? `Pengguna yang diundang melihat ${L.entity} ini dari akunnya setelah menerima.` : 'Teman tidak perlu punya akun, cukup ditulis namanya.'} Bisa ditambah lagi nanti di tab Anggota.</p>
               </div>
-              <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-xl transition-all">{isRunning ? 'Buat Buku' : 'Buat Grup'}</button>
+              <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-xl transition-all">{isRunning ? 'Buat Bayarin' : 'Buat Grup'}</button>
             </form>
           </div>
         </div>
