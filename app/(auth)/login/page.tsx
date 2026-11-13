@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, EyeOff, X, Mail, Lock } from 'lucide-react';
+import { Eye, EyeOff, X, Mail, Lock, User } from 'lucide-react';
 import AuthShell, { authLabel, authInput, authBorder, authBtn, authBtnSoft, authIcon, authEye } from '@/components/AuthShell';
 
 export default function LoginPage() {
@@ -27,9 +27,24 @@ export default function LoginPage() {
     setNeedVerify(false);
     setResendMsg('');
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const ident = email.trim();
+    let error: { message: string } | null = null;
+    if (ident.includes('@')) {
+      ({ error } = await supabase.auth.signInWithPassword({ email: ident, password }));
+    } else {
+      // Login dengan username: server yang mencari email dan login, lalu kita pasang sesinya.
+      try {
+        const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ identifier: ident, password }) });
+        const json = await res.json().catch(() => ({}));
+        if (res.ok && json.access_token) {
+          const r = await supabase.auth.setSession({ access_token: json.access_token, refresh_token: json.refresh_token });
+          error = r.error ? { message: r.error.message } : null;
+        } else if (json.error === 'email_not_confirmed') error = { message: 'Email not confirmed' };
+        else error = { message: json.error === 'Email/username atau password salah.' ? 'Invalid login credentials' : (json.error || 'Gagal masuk.') };
+      } catch { error = { message: 'Tidak bisa terhubung ke server.' }; }
+    }
     if (error) {
-      if (error.message.includes('Invalid login credentials')) setErrorMsg('Email atau Password salah.');
+      if (error.message.includes('Invalid login credentials')) setErrorMsg('Email/username atau password salah.');
       else if (error.message.toLowerCase().includes('email not confirmed')) {
         setErrorMsg('Email kamu belum diverifikasi. Cek inbox (atau folder spam), lalu klik link verifikasi dari Celengin.');
         setNeedVerify(true);
@@ -40,8 +55,14 @@ export default function LoginPage() {
 
   const handleResendVerify = async () => {
     setResendMsg('');
-    const { error } = await supabase.auth.resend({ type: 'signup', email });
-    setResendMsg(error ? error.message : 'Email verifikasi dikirim ulang. Cek inbox kamu.');
+    const ident = email.trim();
+    if (ident.includes('@')) {
+      const { error } = await supabase.auth.resend({ type: 'signup', email: ident });
+      setResendMsg(error ? error.message : 'Email verifikasi dikirim ulang. Cek inbox kamu.');
+    } else {
+      await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ identifier: ident, action: 'resend' }) }).catch(() => null);
+      setResendMsg('Email verifikasi dikirim ulang. Cek inbox kamu.');
+    }
   };
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -72,10 +93,10 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className={authLabel}>Email</label>
+            <label className={authLabel}>Email atau Username</label>
             <div className="relative">
-              <Mail className={authIcon} />
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={`${authInput} ${authBorder} pr-4`} placeholder="kamu@email.com" autoComplete="email" required />
+              <User className={authIcon} />
+              <input type="text" inputMode="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={email} onChange={(e) => setEmail(e.target.value)} className={`${authInput} ${authBorder} pr-4`} placeholder="username atau kamu@email.com" autoComplete="username" required />
             </div>
           </div>
           <div>
