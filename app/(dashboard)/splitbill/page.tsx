@@ -39,8 +39,10 @@ export default function SplitBillPage() {
   const [isGroupOpen, setIsGroupOpen] = useState(false);
   const [gName, setGName] = useState('');
   const [gEmoji, setGEmoji] = useState('🍽️');
-  const [gMembers, setGMembers] = useState<string[]>([]);
+  const [gMembers, setGMembers] = useState<{ name: string; userId?: string }[]>([]);
   const [gMemberInput, setGMemberInput] = useState('');
+  const [gInviteMode, setGInviteMode] = useState(false); // false = nama saja, true = undang lewat email
+  const [gAdding, setGAdding] = useState(false);
 
   // Pengeluaran, rekening, undangan
   const [isExpOpen, setIsExpOpen] = useState(false);
@@ -126,21 +128,44 @@ export default function SplitBillPage() {
   const totalSpent = expenses.reduce((s, e) => s + Number(e.total_amount), 0);
 
   // ---------- Grup ----------
-  const openNewGroup = () => { setGName(''); setGEmoji('🍽️'); setGMembers([]); setGMemberInput(''); setIsGroupOpen(true); };
-  const addGroupMemberChip = () => {
-    const n = gMemberInput.trim();
-    if (!n) return;
-    setGMembers((p) => [...p, n]);
+  const openNewGroup = () => { setGName(''); setGEmoji('🍽️'); setGMembers([]); setGMemberInput(''); setGInviteMode(false); setIsGroupOpen(true); };
+
+  // Menambah teman ke daftar sebelum grup dibuat. Mode email: cek dulu apakah akunnya ada.
+  const addGroupMemberChip = async (): Promise<boolean> => {
+    const text = gMemberInput.trim();
+    if (!text) return true;
+    if (!gInviteMode) {
+      setGMembers((p) => [...p, { name: text }]);
+      setGMemberInput('');
+      return true;
+    }
+    setGAdding(true);
+    const { data: targetId } = await supabase.rpc('get_user_id_by_email', { email_input: text });
+    if (!targetId) { setGAdding(false); showDialog('Tidak Ditemukan', 'Email itu belum terdaftar di Celengin. Pilih "Nama saja" untuk menambahkannya tanpa akun.', 'danger'); return false; }
+    if (targetId === userId) { setGAdding(false); showDialog('Itu Kamu', 'Kamu otomatis sudah ada di grup.', 'info'); return false; }
+    if (gMembers.some((m) => m.userId === targetId)) { setGAdding(false); showDialog('Sudah Ada', 'Pengguna ini sudah ditambahkan.', 'info'); return false; }
+    const { data: prof } = await supabase.from('profiles').select('nickname, full_name').eq('id', targetId).maybeSingle();
+    setGAdding(false);
+    setGMembers((p) => [...p, { name: prof?.nickname || prof?.full_name || text.split('@')[0], userId: targetId as string }]);
     setGMemberInput('');
+    return true;
   };
   const handleCreateGroup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!gName.trim()) return showDialog('Data Belum Lengkap', 'Isi nama grup, misalnya "Makan Malam Sabtu".', 'danger');
-    const pending = gMemberInput.trim() ? [...gMembers, gMemberInput.trim()] : gMembers;
+    // Teks yang masih tertulis di kolom teman ikut ditambahkan
+    if (gAdding) return;
+    if (gMemberInput.trim()) { const ok = await addGroupMemberChip(); if (!ok) return; }
+    const pending = gMembers;
 
     const { data: g, error } = await supabase.from('split_groups').insert({ user_id: userId, name: gName.trim(), emoji: gEmoji }).select().single();
     if (error || !g) return showDialog('Gagal', error?.message || 'Grup gagal dibuat.', 'danger');
-    const rows = [{ group_id: g.id, name: myName, is_me: true, user_id: userId, status: 'accepted' }, ...pending.map((n) => ({ group_id: g.id, name: n, is_me: false }))];
+    const rows = [
+      { group_id: g.id, name: myName, is_me: true, user_id: userId, status: 'accepted' },
+      ...pending.map((m) => (m.userId
+        ? { group_id: g.id, name: m.name, is_me: false, user_id: m.userId, status: 'pending' }
+        : { group_id: g.id, name: m.name, is_me: false })),
+    ];
     const { error: mErr } = await supabase.from('split_members').insert(rows);
     if (mErr) {
       await supabase.from('split_groups').delete().eq('id', g.id);
@@ -150,6 +175,8 @@ export default function SplitBillPage() {
     await loadList();
     setTab('ringkasan');
     await loadGroup(g as SplitGroup);
+    const invited = pending.filter((m) => m.userId).length;
+    if (invited > 0) showDialog('Grup Dibuat', `${invited} undangan terkirim. Mereka akan melihat grup ini di menu Split Bill-nya setelah menerima.`, 'success');
   };
 
   const handleDeleteGroup = () => {
@@ -511,17 +538,21 @@ export default function SplitBillPage() {
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Teman yang ikut</label>
                 <div className="flex flex-wrap gap-1.5 mb-2">
                   <span className="text-[11px] bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 px-2.5 py-1 rounded-lg font-bold max-w-full truncate">{myName} (kamu)</span>
-                  {gMembers.map((n, i) => (
-                    <span key={i} className="text-[11px] bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 px-2.5 py-1 rounded-lg flex items-center gap-1 max-w-full">
-                      <span className="truncate">{n}</span><button type="button" onClick={() => setGMembers((p) => p.filter((_, j) => j !== i))} className="text-gray-400 hover:text-red-500 shrink-0"><X className="w-3 h-3" /></button>
+                  {gMembers.map((m, i) => (
+                    <span key={i} className={`text-[11px] border px-2.5 py-1 rounded-lg flex items-center gap-1 max-w-full ${m.userId ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300' : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200'}`}>
+                      <span className="truncate">{m.userId ? '✉ ' : ''}{m.name}</span><button type="button" onClick={() => setGMembers((p) => p.filter((_, j) => j !== i))} className="text-gray-400 hover:text-red-500 shrink-0"><X className="w-3 h-3" /></button>
                     </span>
                   ))}
                 </div>
-                <div className="flex gap-2">
-                  <input value={gMemberInput} onChange={(e) => setGMemberInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addGroupMemberChip(); } }} placeholder="Nama teman" className={inputCls} />
-                  <button type="button" onClick={addGroupMemberChip} className="bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 w-11 h-11 rounded-xl shrink-0 flex items-center justify-center"><Plus className="w-5 h-5" /></button>
+                <div className="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-xl mb-2">
+                  <button type="button" onClick={() => { setGInviteMode(false); setGMemberInput(''); }} className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold ${!gInviteMode ? 'bg-white dark:bg-gray-600 text-teal-700 dark:text-teal-300 shadow-sm' : 'text-gray-500 dark:text-gray-300'}`}>Nama saja</button>
+                  <button type="button" onClick={() => { setGInviteMode(true); setGMemberInput(''); }} className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold ${gInviteMode ? 'bg-white dark:bg-gray-600 text-teal-700 dark:text-teal-300 shadow-sm' : 'text-gray-500 dark:text-gray-300'}`}>Undang pengguna (email)</button>
                 </div>
-                <p className="text-[10px] text-gray-400 mt-1.5">Bisa ditambah lagi nanti. Untuk mengundang pengguna Celengin lewat email, buka tab Anggota di dalam grup.</p>
+                <div className="flex gap-2">
+                  <input type={gInviteMode ? 'email' : 'text'} value={gMemberInput} onChange={(e) => setGMemberInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addGroupMemberChip(); } }} placeholder={gInviteMode ? 'email@contoh.com' : 'Nama teman'} className={inputCls} />
+                  <button type="button" onClick={() => addGroupMemberChip()} disabled={gAdding} className="bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 w-11 h-11 rounded-xl shrink-0 flex items-center justify-center disabled:opacity-50"><Plus className="w-5 h-5" /></button>
+                </div>
+                <p className="text-[10px] text-gray-400 mt-1.5">{gInviteMode ? 'Pengguna yang diundang melihat grup ini dari akunnya setelah menerima.' : 'Teman tidak perlu punya akun, cukup ditulis namanya.'} Bisa ditambah lagi nanti di tab Anggota.</p>
               </div>
               <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-xl transition-all">Buat Grup</button>
             </form>
