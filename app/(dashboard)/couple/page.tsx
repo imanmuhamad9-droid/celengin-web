@@ -236,17 +236,9 @@ export default function SharedSpacePage() {
 
   return (
     <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-24 transition-colors">
-      <AppHeader title="Bareng" />
+      <AppHeader title="Bareng" action={<button onClick={handleOpenAdd} className="bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 p-2.5 rounded-xl hover:bg-teal-200 dark:hover:bg-teal-900/50 transition-all font-bold text-xs flex items-center gap-1"><Plus className="w-4 h-4" /> Buat</button>} />
 
       <main className="px-5 mt-4 space-y-5">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Bareng</h1>
-            <Users className="w-6 h-6 text-teal-600 dark:text-teal-400" />
-          </div>
-          <button onClick={handleOpenAdd} className="bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 p-2.5 rounded-xl hover:bg-teal-200 dark:hover:bg-teal-900/50 transition-all font-bold text-xs flex items-center gap-1"><Plus className="w-4 h-4" /> Buat</button>
-        </div>
-
         <div className="bg-teal-50 dark:bg-teal-900/20 border border-teal-100 dark:border-teal-800 rounded-2xl overflow-hidden transition-all duration-300">
           <button onClick={() => setShowInfo(!showInfo)} className="w-full flex items-center justify-between p-4 hover:bg-teal-100/50 dark:hover:bg-teal-900/40 transition-colors">
             <div className="flex items-center gap-2 text-teal-800 dark:text-teal-300 font-bold text-sm">
