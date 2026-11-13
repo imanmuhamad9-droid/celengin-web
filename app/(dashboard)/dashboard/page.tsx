@@ -50,6 +50,7 @@ const [todayStr, setTodayStr] = useState('');
   const [showCalendar, setShowCalendar] = useState(true);
   const [greeting, setGreeting] = useState('Halo');
   const [paydayLater, setPaydayLater] = useState(false);
+  const [showRecent, setShowRecent] = useState(true);
   const [showMonth, setShowMonth] = useState(false); // lipatan Kalender + Statistik bulan ini
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -431,7 +432,7 @@ const [todayStr, setTodayStr] = useState('');
     })),
   ];
 
-  const recentTx = transactions.slice(0, 3);
+  const recentTx = transactions.slice(0, 5);
 
   const currentYear = calendarYear;
 const currentMonth = calendarMonth;
@@ -461,8 +462,9 @@ const currentMonth = calendarMonth;
         {/* SAPAAN + STREAK + PROFIL */}
         <div className="flex justify-between items-center">
           <div className="min-w-0">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">{greeting} 👋</p>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white truncate">{profile?.nickname || profile?.full_name || user?.email?.split('@')[0]}</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Selamat Datang 👋</p>
+            <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white truncate leading-tight">{profile?.nickname || profile?.full_name || user?.email?.split('@')[0]}</h2>
+            {todayStr && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{new Date(todayStr + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>}
           </div>
           <div className="flex items-center gap-3 shrink-0">
             {dailyAllowance > 0 && (
@@ -567,10 +569,11 @@ const currentMonth = calendarMonth;
 
         {/* TERAKHIR */}
         <div className="bg-white dark:bg-gray-800 p-4 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100">Terakhir</h3>
-            <button onClick={() => router.push('/transactions')} className="text-[10px] font-bold text-teal-600 dark:text-teal-400">Lihat riwayat</button>
-          </div>
+          <button onClick={() => setShowRecent(v => !v)} className="w-full flex justify-between items-center">
+            <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100">Riwayat Terakhir</h3>
+            <span className="flex items-center gap-1 text-[10px] font-bold text-gray-500 dark:text-gray-400">{showRecent ? 'Sembunyikan' : 'Tampilkan'} <ChevronDown className={`w-4 h-4 transition-transform ${showRecent ? 'rotate-180' : ''}`} /></span>
+          </button>
+          {showRecent && (<div className="mt-2">
           {recentTx.length === 0 ? (
             <p className="text-xs text-gray-400 dark:text-gray-500 py-3 text-center">Belum ada transaksi. Ketuk Catat untuk mulai.</p>
           ) : (
@@ -588,24 +591,21 @@ const currentMonth = calendarMonth;
               ))}
             </div>
           )}
+          <button onClick={() => router.push('/transactions')} className="mt-3 w-full rounded-2xl bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 py-3 text-center active:scale-[0.99] transition-transform">
+            <span className="block text-xs font-bold">Buka Riwayat</span>
+            <span className="block text-[10px] opacity-80 mt-0.5">Hanya 5 terakhir yang tampil di sini. Transaksi lainnya ada di Riwayat.</span>
+          </button>
+          </div>)}
         </div>
 
         {/* LIPATAN: KALENDER + STATISTIK BULAN INI */}
         <button onClick={() => setShowMonth(v => !v)} className="w-full bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm rounded-2xl px-4 py-3 flex items-center justify-between text-sm font-bold text-gray-700 dark:text-gray-200 transition-colors">
-          <span className="flex items-center gap-2"><CalendarDays className="w-4 h-4 text-teal-600 dark:text-teal-400" /> Kalender dan statistik bulan ini</span>
+          <span className="flex items-center gap-2"><CalendarDays className="w-4 h-4 text-teal-600 dark:text-teal-400" /> Statistik dan kalender bulan ini</span>
           <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showMonth ? 'rotate-180' : ''}`} />
         </button>
 
         {showMonth && (
           <div className="space-y-6">
-            <MonthCalendar
-              transactions={transactions}
-              bills={bills}
-              todayStr={todayStr}
-              onOpenHistory={(d) => router.push(`/transactions?date=${d}`)}
-              onAddOnDate={(d) => { setTxType('expense'); setTxDate(d); setIsTxModalOpen(true); }}
-            />
-
         {/* STATISTIK BULAN/SIKLUS INI */}
         {totalMonthly > 0 && (() => {
           const spentPct = monthlyIncome > 0 ? Math.round((monthlyExpense / monthlyIncome) * 100) : null;
@@ -688,6 +688,14 @@ const currentMonth = calendarMonth;
             </div>
           );
         })()}
+
+            <MonthCalendar
+              transactions={transactions}
+              bills={bills}
+              todayStr={todayStr}
+              onOpenHistory={(d) => router.push(`/transactions?date=${d}`)}
+              onAddOnDate={(d) => { setTxType('expense'); setTxDate(d); setIsTxModalOpen(true); }}
+            />
           </div>
         )}
 
