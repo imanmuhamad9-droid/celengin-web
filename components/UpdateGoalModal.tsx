@@ -1,93 +1,82 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { X, ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { X, ArrowDownCircle, ArrowUpCircle, Loader2 } from 'lucide-react';
+import { formatRupiah, parseRupiahInput } from '@/lib/utils';
 
-export default function UpdateGoalModal({ isOpen, onClose, onSave, goal }: { isOpen: boolean, onClose: () => void, onSave: (amount: number, action: 'add' | 'subtract') => void, goal: any }) {
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (amount: number, action: 'add' | 'subtract') => void | Promise<void>;
+  goal: any;
+}
+
+export default function UpdateGoalModal({ isOpen, onClose, onSave, goal }: Props) {
   const [action, setAction] = useState<'add' | 'subtract'>('add');
-  const [amountDisplay, setAmountDisplay] = useState('');
-  const [amountRaw, setAmountRaw] = useState(0);
+  const [raw, setRaw] = useState(0);
+  const [display, setDisplay] = useState('');
+  const [saving, setSaving] = useState(false);
 
+  // Bersihkan isian setiap kali dibuka
   useEffect(() => {
-    if (isOpen) {
-      setAction('add');
-      setAmountDisplay('');
-      setAmountRaw(0);
-    }
+    if (isOpen) { setAction('add'); setRaw(0); setDisplay(''); setSaving(false); }
   }, [isOpen]);
 
   if (!isOpen || !goal) return null;
 
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value.replace(/\D/g, '');
-    if (!rawValue) {
-      setAmountDisplay('');
-      setAmountRaw(0);
-      return;
-    }
-    setAmountRaw(Number(rawValue));
-    setAmountDisplay(new Intl.NumberFormat('id-ID').format(Number(rawValue)));
-  };
-
-  const handleSave = () => {
-    if (amountRaw <= 0) return;
-    onSave(amountRaw, action);
-    onClose();
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (raw <= 0 || saving) return;
+    setSaving(true);
+    try { await onSave(raw, action); onClose(); } finally { setSaving(false); }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl w-full max-w-sm p-6 relative">
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800">
-          <X className="w-5 h-5" />
-        </button>
-        
-        <h2 className="text-xl font-bold text-gray-800 mb-2 text-center">Update Tabungan</h2>
-        <p className="text-xs text-center text-gray-500 mb-5">Untuk target: <span className="font-bold text-teal-600">{goal.title}</span></p>
+    <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
+      <form onSubmit={submit} className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative shadow-2xl">
+        <button type="button" onClick={onClose} aria-label="Tutup" className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><X className="w-5 h-5" /></button>
 
-        {/* Toggle Tambah / Kurang */}
-        <div className="flex gap-2 mb-5">
-          <button 
-            type="button"
-            onClick={() => setAction('add')} 
-            className={`flex-1 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 border-2 transition-all ${action === 'add' ? 'border-green-500 bg-green-50 text-green-600' : 'border-gray-100 text-gray-400'}`}
-          >
+        <h3 className="text-xl font-extrabold text-center text-gray-900 dark:text-white">Update Tabungan</h3>
+        <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-1 mb-5">
+          Untuk target: <span className="font-bold text-teal-700 dark:text-teal-400">{goal.title}</span>
+        </p>
+
+        <div className="grid grid-cols-2 gap-3 mb-5">
+          <button type="button" onClick={() => setAction('add')} className={`flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold border-2 transition-all ${action === 'add' ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' : 'border-gray-200 dark:border-gray-600 text-gray-400 dark:text-gray-500'}`}>
             <ArrowDownCircle className="w-4 h-4" /> Nabung
           </button>
-          <button 
-            type="button"
-            onClick={() => setAction('subtract')} 
-            className={`flex-1 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 border-2 transition-all ${action === 'subtract' ? 'border-red-500 bg-red-50 text-red-600' : 'border-gray-100 text-gray-400'}`}
-          >
+          <button type="button" onClick={() => setAction('subtract')} className={`flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold border-2 transition-all ${action === 'subtract' ? 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400' : 'border-gray-200 dark:border-gray-600 text-gray-400 dark:text-gray-500'}`}>
             <ArrowUpCircle className="w-4 h-4" /> Kepake
           </button>
         </div>
 
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            {action === 'add' ? 'Nominal Uang Masuk (Rp)' : 'Nominal Uang Keluar (Rp)'}
-          </label>
-          <div className="relative">
-            <span className="absolute left-4 top-3.5 text-gray-500 font-bold">Rp</span>
-            <input 
-              type="text" 
-              value={amountDisplay} 
-              onChange={handleAmountChange} 
-              className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 font-bold text-lg" 
-              placeholder="0"
-            />
-          </div>
-          <p className="text-[10px] text-gray-400 mt-2 text-right">
-            Dana saat ini: {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(goal.current_amount)}
-          </p>
+        <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">
+          {action === 'add' ? 'Nominal Uang Masuk (Rp)' : 'Nominal Uang Terpakai (Rp)'}
+        </label>
+        <div className="relative">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-900 dark:text-white">Rp</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            enterKeyHint="done"
+            autoComplete="off"
+            autoFocus
+            value={display}
+            onChange={(e) => { const p = parseRupiahInput(e.target.value); setRaw(p.raw); setDisplay(p.display); }}
+            placeholder="500.000"
+            className="w-full pl-11 pr-4 py-3.5 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 text-lg font-bold focus:outline-none focus:border-teal-500 transition-colors"
+          />
         </div>
+        <p className="text-[10px] text-right text-gray-400 dark:text-gray-500 mt-2 mb-5">Dana saat ini: {formatRupiah(Number(goal.current_amount) || 0)}</p>
 
-        <button 
-          onClick={handleSave}
-          className={`w-full text-white font-bold py-3.5 rounded-xl flex items-center justify-center transition-all ${action === 'add' ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'}`}
+        <button
+          type="submit"
+          disabled={raw <= 0 || saving}
+          className={`w-full py-3.5 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 ${action === 'add' ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'}`}
         >
-          Simpan Perubahan
+          {saving && <Loader2 className="w-4 h-4 animate-spin" />} Simpan Perubahan
         </button>
-      </div>
+      </form>
     </div>
   );
 }
