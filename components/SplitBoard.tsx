@@ -12,6 +12,7 @@ import WaShareSheet, { WaOption } from '@/components/WaShareSheet';
 import { buildExpenseMessage, buildPersonMessage, buildDebtSummaryMessage, buildLedgerMessage, fmtMonth, WaExpense, WaMember } from '@/lib/whatsapp';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
+import AppHeader from '@/components/AppHeader';
 import SkeletonLoader from '@/components/SkeletonLoader';
 
 interface GroupCard extends SplitGroup { memberCount: number; total: number }
@@ -459,13 +460,17 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
 
   return (
     <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-32 transition-colors">
-      <header className="sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md px-5 py-4 flex items-center gap-4 border-b border-gray-100 dark:border-gray-800 transition-colors">
-        <button onClick={goBack} className="text-gray-500 dark:text-gray-400 hover:text-teal-600"><ArrowLeft className="w-6 h-6" /></button>
-        <span className="font-bold text-xl text-gray-800 dark:text-white truncate flex-1">{group ? `${group.emoji} ${group.name}` : L.title}</span>
-        {!group && isRunning && introHidden && <button onClick={showIntro} className="text-gray-400 hover:text-teal-600" aria-label="Menu ini untuk apa?"><Info className="w-5 h-5" /></button>}
-        {group && isOwner && isRunning && expenses.length + settlements.length > 0 && <button onClick={handleResetBook} className="text-gray-400 hover:text-teal-600" aria-label="Reset buku"><RotateCcw className="w-5 h-5" /></button>}
-        {group && isOwner && <button onClick={handleDeleteGroup} className="text-gray-400 hover:text-red-500" aria-label="Hapus grup"><Trash2 className="w-5 h-5" /></button>}
-      </header>
+      <AppHeader
+        z="z-40"
+        title={group ? `${group.emoji} ${group.name}` : L.title}
+        back
+        onBack={goBack}
+        action={<>
+          {!group && isRunning && introHidden && <button onClick={showIntro} className="text-gray-400 hover:text-teal-600" aria-label="Menu ini untuk apa?"><Info className="w-5 h-5" /></button>}
+          {group && isOwner && isRunning && expenses.length + settlements.length > 0 && <button onClick={handleResetBook} className="text-gray-400 hover:text-teal-600" aria-label="Reset buku"><RotateCcw className="w-5 h-5" /></button>}
+          {group && isOwner && <button onClick={handleDeleteGroup} className="text-gray-400 hover:text-red-500" aria-label="Hapus grup"><Trash2 className="w-5 h-5" /></button>}
+        </>}
+      />
 
       <main className="px-5 mt-4 space-y-4">
         {missingTable && (

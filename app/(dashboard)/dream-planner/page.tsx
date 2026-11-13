@@ -7,6 +7,7 @@ import { formatRupiah } from '@/lib/utils';
 import UpdateGoalModal from '@/components/UpdateGoalModal';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
+import AppHeader from '@/components/AppHeader';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import DateField from '@/components/DateField';
 
@@ -88,12 +89,7 @@ export default function DreamPlannerPage() {
 
   return (
     <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-24 transition-colors">
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md px-5 py-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 transition-colors">
-        <div className="flex items-center gap-2">
-          <img src="/icon.png" alt="Logo" className="w-8 h-8 rounded-lg object-contain" />
-          <span className="font-bold text-xl text-teal-800 dark:text-teal-400">Celengin.</span>
-        </div>
-      </header>
+      <AppHeader title="Impian" />
 
       <main className="max-w-md mx-auto px-5 mt-4 space-y-6">
         <div className="bg-gradient-to-r from-teal-500 to-teal-400 p-4 rounded-2xl text-white shadow-md">

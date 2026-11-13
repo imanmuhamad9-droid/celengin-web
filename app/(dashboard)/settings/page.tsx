@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import AppHeader from '@/components/AppHeader';
 import { useRouter } from 'next/navigation';
 import { Save, ArrowLeft, Upload, Image as ImageIcon, Sun, Moon, Monitor, Palette, User, LogOut, KeyRound, X, Camera } from 'lucide-react';
 import CardBgEditor from '@/components/CardBgEditor';
@@ -248,10 +249,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-24 transition-colors">
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md px-5 py-4 flex items-center gap-4 border-b border-gray-100 dark:border-gray-800 transition-colors">
-        <button onClick={() => router.push('/dashboard')} className="text-gray-500 dark:text-gray-400 hover:text-teal-600"><ArrowLeft className="w-6 h-6" /></button>
-        <span className="font-bold text-xl text-gray-800 dark:text-white">Pengaturan</span>
-      </header>
+      <AppHeader title="Pengaturan" back />
 
       <main className="max-w-md mx-auto p-5 mt-2 space-y-5">
         

@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Plus } from 'lucide-react';
+import { Plus, Menu, X } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { NOTIF_EVENT, emitNotifChanged, fetchUnreadCount } from '@/lib/notifications';
 import TransactionModal from './TransactionModal';
@@ -11,8 +11,8 @@ type Item =
   | { key: string; label: string; href: string; img: string }
   | { key: 'catat'; label: string; action: 'catat' };
 
-// Menu burger hanya 5 menu utama. Fitur lain (Riwayat, Tagihan, Laporan, Split Bill, Dompet, Badge, Setelan)
-// ada di kartu pintasan Home -> tombol "Semua".
+// Bar melayang berisi 5 menu utama. Di sub menu (Tagihan, Dompet, Laporan, dst.) bar mengecil jadi tombol burger
+// di pojok kanan bawah; kalau diketuk, 5 menu utama yang sama melebar ke kiri. Sub menu dibuka dari Home -> "Semua".
 const ITEMS: Item[] = [
   { key: 'home', label: 'Home', href: '/dashboard', img: '/icon-home.png' },
   { key: 'target', label: 'Target', href: '/spending-challenge', img: '/icon-target.png' },
@@ -20,14 +20,6 @@ const ITEMS: Item[] = [
   { key: 'impian', label: 'Impian', href: '/dream-planner', img: '/icon-dream.png' },
   { key: 'bareng', label: 'Bareng', href: '/couple', img: '/icon-couple.png' },
 ];
-
-/** Posisi (x,y) item pada setengah lingkaran di atas tombol. Sudut 165° (kiri) sampai 15° (kanan). */
-function place(index: number, count: number, radius: number) {
-  const from = 165, to = 15;
-  const deg = count === 1 ? 90 : from - ((from - to) / (count - 1)) * index;
-  const rad = (deg * Math.PI) / 180;
-  return { x: Math.round(radius * Math.cos(rad)), y: -Math.round(radius * Math.sin(rad)) };
-}
 
 export default function BottomNav() {
   const router = useRouter();
@@ -121,78 +113,91 @@ export default function BottomNav() {
     if (pathname !== item.href) router.push(item.href);
   };
 
-  const renderItem = (item: Item, pos: { x: number; y: number }, order: number) => {
-    const isCatat = 'action' in item;
-    const active = !isCatat && pathname === item.href;
-    const style: React.CSSProperties = open
-      ? { transform: `translate(${pos.x}px, ${pos.y}px) rotate(0deg) scale(1)`, opacity: 1, transitionDelay: `${order * 40}ms` }
-      : { transform: 'translate(0px, 0px) rotate(-300deg) scale(0.2)', opacity: 0, transitionDelay: '0ms' };
+  const isMain = ITEMS.some((it) => 'href' in it && (pathname === it.href || pathname.startsWith(it.href + '/')));
+  const bottomStyle: React.CSSProperties = { bottom: 'calc(env(safe-area-inset-bottom, 0px) + 14px)' };
+
+  const renderItem = (item: Item) => {
+    if ('action' in item) {
+      return (
+        <button
+          key={item.key}
+          onClick={() => handleSelect(item)}
+          aria-label="Catat transaksi"
+          className="flex-1 min-w-0 flex flex-col items-center"
+        >
+          <span className="-mt-6 w-12 h-12 rounded-full bg-teal-600 text-white flex items-center justify-center shadow-lg shadow-teal-900/30 border-4 border-white/80 dark:border-gray-900/80 active:scale-95 transition-transform">
+            <Plus className="w-6 h-6" />
+          </span>
+          <span className="text-[10px] font-bold text-gray-600 dark:text-gray-300 mt-0.5">{item.label}</span>
+        </button>
+      );
+    }
+
+    const active = pathname === item.href || pathname.startsWith(item.href + '/');
+    const showDot = item.key === 'home' && unread > 0;
 
     return (
       <button
         key={item.key}
         onClick={() => handleSelect(item)}
-        tabIndex={open ? 0 : -1}
         aria-label={item.label}
-        style={style}
-        className={`absolute left-0 top-0 -ml-[24px] -mt-[24px] w-12 flex flex-col items-center transition-all duration-500 ease-[cubic-bezier(0.34,1.4,0.64,1)] ${open ? 'pointer-events-auto' : 'pointer-events-none'}`}
+        aria-current={active ? 'page' : undefined}
+        className={`relative flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-full transition-all active:scale-95 ${active ? 'bg-teal-500/20 dark:bg-teal-400/20 ring-1 ring-teal-500/50' : 'bg-transparent'}`}
       >
-        <span
-          className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg border-2 ${
-            isCatat
-              ? 'bg-teal-600 border-white dark:border-gray-900 text-white'
-              : active
-                ? 'bg-teal-50 dark:bg-teal-900/60 border-teal-400 text-teal-700 dark:text-teal-300'
-                : 'bg-white dark:bg-gray-800 border-white dark:border-gray-700 text-teal-700 dark:text-teal-400'
-          }`}
-        >
-          {'img' in item ? (
-            <img src={item.img} alt="" className="w-7 h-7 object-contain" />
-          ) : (
-            <Plus className="w-6 h-6" />
-          )}
-        </span>
-        <span className="mt-1 text-[10px] font-bold text-white whitespace-nowrap [text-shadow:0_1px_3px_rgba(0,0,0,0.8)]">{item.label}</span>
+        <img src={item.img} alt="" className={`w-6 h-6 object-contain transition-all ${active ? '' : 'grayscale opacity-60'}`} />
+        <span className={`text-[10px] font-bold ${active ? 'text-teal-700 dark:text-teal-300' : 'text-gray-500 dark:text-gray-400'}`}>{item.label}</span>
+        {showDot && (
+          <span className="absolute top-0.5 right-2 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center border-2 border-white dark:border-gray-900">
+            {unread > 9 ? '9+' : unread}
+          </span>
+        )}
       </button>
     );
   };
 
+  const glass = 'bg-white/65 dark:bg-gray-900/65 backdrop-blur-xl border border-white/60 dark:border-white/10 shadow-lg shadow-black/10';
+
   return (
     <>
-      {/* Latar gelap: tekan di luar menu untuk menutup */}
-      <div
-        onClick={() => setOpen(false)}
-        className={`fixed inset-0 z-[55] bg-black/45 backdrop-blur-[2px] transition-opacity duration-300 ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
-      />
-
-      {!isModalOpen && (
-        <div
-          className="fixed left-1/2 -translate-x-1/2 z-[56] w-0 h-0"
-          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 44px)' }}
-        >
-          {ITEMS.map((item, i) => renderItem(item, place(i, ITEMS.length, 108), i))}
-
-          {/* Tombol burger */}
-          <button
-            onClick={() => setOpen((v) => !v)}
-            aria-label={open ? 'Tutup menu' : unread > 0 ? `Buka menu, ${unread} notifikasi belum dibaca` : 'Buka menu'}
-            aria-expanded={open}
-            className={`absolute left-0 top-0 -ml-7 -mt-7 w-14 h-14 rounded-full bg-teal-600 text-white shadow-lg shadow-teal-900/30 border-4 border-white dark:border-gray-900 flex items-center justify-center active:scale-95 transition-transform duration-500 ${open ? 'rotate-180' : 'rotate-0'}`}
-          >
-            <span className="relative block w-5 h-4">
-              <span className={`absolute left-0 w-5 h-0.5 bg-white rounded-full transition-all duration-300 ${open ? 'top-[7px] rotate-45' : 'top-0'}`} />
-              <span className={`absolute left-0 top-[7px] w-5 h-0.5 bg-white rounded-full transition-all duration-300 ${open ? 'opacity-0 scale-x-0' : 'opacity-100'}`} />
-              <span className={`absolute left-0 w-5 h-0.5 bg-white rounded-full transition-all duration-300 ${open ? 'top-[7px] -rotate-45' : 'top-[14px]'}`} />
-            </span>
-          </button>
-
-          {/* Titik merah di luar tombol agar tidak ikut berputar */}
-          {unread > 0 && !open && (
-            <span className="absolute left-[10px] top-[-34px] pointer-events-none min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white dark:border-gray-900">
-              {unread > 9 ? '9+' : unread}
-            </span>
-          )}
-        </div>
+      {isMain ? (
+        // Menu utama: bar melayang selalu terlihat
+        !isModalOpen && (
+          <nav aria-label="Menu utama" style={bottomStyle} className="fixed left-1/2 -translate-x-1/2 z-[56] w-[calc(100%-32px)] max-w-[380px]">
+            <div className={`flex items-center gap-1 rounded-full px-2 py-1.5 ${glass}`}>
+              {ITEMS.map((item) => renderItem(item))}
+            </div>
+          </nav>
+        )
+      ) : (
+        // Sub menu: tombol burger kanan bawah, menu utama melebar ke kiri
+        !isModalOpen && (
+          <>
+            {open && <div onClick={() => setOpen(false)} className="fixed inset-0 z-[55]" />}
+            <nav aria-label="Menu utama" style={bottomStyle} className="fixed right-4 z-[56] flex items-center gap-2 max-w-[calc(100%-32px)]">
+              <div
+                aria-hidden={!open}
+                className={`min-w-0 flex-1 origin-right transition-all duration-300 ease-out ${open ? 'opacity-100 scale-x-100 pointer-events-auto' : 'opacity-0 scale-x-50 pointer-events-none'}`}
+              >
+                <div className={`flex items-center gap-1 rounded-full px-2 py-1.5 w-[300px] max-w-full ${glass}`}>
+                  {ITEMS.map((item) => renderItem(item))}
+                </div>
+              </div>
+              <button
+                onClick={() => setOpen((v) => !v)}
+                aria-label={open ? 'Tutup menu' : unread > 0 ? `Buka menu, ${unread} notifikasi belum dibaca` : 'Buka menu'}
+                aria-expanded={open}
+                className={`relative shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-teal-700 dark:text-teal-300 active:scale-95 transition-transform ${glass}`}
+              >
+                {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                {unread > 0 && !open && (
+                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center border-2 border-white dark:border-gray-900">
+                    {unread > 9 ? '9+' : unread}
+                  </span>
+                )}
+              </button>
+            </nav>
+          </>
+        )
       )}
 
       <TransactionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSuccess={handleSuccess} showDialog={showDialog} />

@@ -9,6 +9,7 @@ import { downloadCsv } from '@/lib/exportReport';
 import { listWallets, Wallet } from '@/lib/wallets';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
+import AppHeader from '@/components/AppHeader';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import { buildReportPdf, savePdf } from '@/lib/pdfReport';
 
@@ -104,10 +105,7 @@ export default function ReportsPage() {
 
   return (
     <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-24 transition-colors">
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md px-5 py-4 flex items-center gap-4 border-b border-gray-100 dark:border-gray-800 transition-colors">
-        <button onClick={() => router.push('/dashboard')} className="text-gray-500 dark:text-gray-400 hover:text-teal-600"><ArrowLeft className="w-6 h-6" /></button>
-        <span className="font-bold text-xl text-gray-800 dark:text-white">Laporan</span>
-      </header>
+      <AppHeader title="Laporan" back />
 
       <main className="px-5 mt-4 space-y-5">
         {/* Pilih periode */}

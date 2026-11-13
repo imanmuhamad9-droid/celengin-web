@@ -10,6 +10,7 @@ import { fetchBadgeContext, syncBadges } from '@/lib/badges';
 import TransactionModal from '@/components/TransactionModal';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
+import AppHeader from '@/components/AppHeader';
 import NotificationBell, { LocalNotif } from '@/components/NotificationBell';
 import FeatureShortcuts from '@/components/FeatureShortcuts';
 import AttentionStrip, { AttentionItem } from '@/components/AttentionStrip';
@@ -447,14 +448,7 @@ const currentMonth = calendarMonth;
 
   return (
     <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-24 transition-colors">
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md px-5 py-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 transition-colors">
-        <div className="flex items-center gap-2">
-          {/* Logo Baru */}
-          <img src="/icon.png" alt="Logo" className="w-8 h-8 rounded-lg object-contain" />
-          <span className="font-bold text-xl text-teal-800 dark:text-teal-400">Celengin.</span>
-        </div>
-        <NotificationBell userId={user?.id ?? null} local={localNotifs} />
-      </header>
+      <AppHeader topRight={<NotificationBell userId={user?.id ?? null} local={localNotifs} />} />
 
       <main className="px-5 mt-4 space-y-6">
 

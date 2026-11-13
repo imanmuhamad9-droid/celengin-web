@@ -161,7 +161,7 @@ export default function NotificationBell({ userId, local }: Props) {
       {open && (
         <div className="fixed inset-0 z-[70]">
           <div onClick={() => setOpen(false)} className="absolute inset-0 bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-200" />
-          <div className="absolute inset-x-0 top-[68px] mx-auto w-full max-w-md px-3">
+          <div className="absolute inset-x-0 top-[64px] mx-auto w-full max-w-md px-3">
             <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800 max-h-[75vh] flex flex-col animate-in slide-in-from-top-4 duration-200">
               <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100 dark:border-gray-800">
                 <h3 className="font-bold text-base text-gray-800 dark:text-gray-100">Notifikasi</h3>

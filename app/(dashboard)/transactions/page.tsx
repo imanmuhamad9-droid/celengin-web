@@ -6,6 +6,7 @@ import { Search, Trash2, ArrowDownCircle, ArrowUpCircle, Calendar, XCircle, Chev
 import { formatRupiah } from '@/lib/utils';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
+import AppHeader from '@/components/AppHeader';
 import DateField from '@/components/DateField';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import EditTransactionModal from '@/components/EditTransactionModal';
@@ -114,15 +115,11 @@ function TransactionsContent() {
 
   return (
     <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-24 transition-colors">
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md px-5 py-4 flex items-center justify-between border-b border-gray-100 dark:border-gray-800 transition-colors">
-        <div className="flex items-center gap-2">
-          <img src="/icon.png" alt="Logo" className="w-8 h-8 rounded-lg object-contain" />
-          <span className="font-bold text-xl text-teal-800 dark:text-teal-400">Riwayat</span>
-        </div>
+      <AppHeader title="Riwayat" back action={
         <button onClick={() => setIsRoutineModalOpen(true)} className="text-xs font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30 px-3 py-1.5 rounded-lg border border-teal-100 dark:border-teal-800 transition-colors">
           Transaksi Rutin
         </button>
-      </header>
+      } />
 
       <main className="max-w-md mx-auto px-5 mt-4 space-y-4">
         {errorMsg && <div className="bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 text-xs p-3 rounded-xl border border-red-100 dark:border-red-800">{errorMsg}</div>}

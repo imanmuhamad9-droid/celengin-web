@@ -7,6 +7,7 @@ import { formatDateID } from '@/lib/utils';
 import { BADGES, levelFor, fetchBadgeContext, syncBadges, EarnedBadge } from '@/lib/badges';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
+import AppHeader from '@/components/AppHeader';
 import SkeletonLoader from '@/components/SkeletonLoader';
 
 export default function BadgesPage() {
@@ -56,10 +57,7 @@ export default function BadgesPage() {
 
   return (
     <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-24 transition-colors">
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md px-5 py-4 flex items-center gap-4 border-b border-gray-100 dark:border-gray-800 transition-colors">
-        <button onClick={() => router.push('/dashboard')} className="text-gray-500 dark:text-gray-400 hover:text-teal-600"><ArrowLeft className="w-6 h-6" /></button>
-        <span className="font-bold text-xl text-gray-800 dark:text-white">Pencapaian</span>
-      </header>
+      <AppHeader title="Pencapaian" back />
 
       <main className="px-5 mt-4 space-y-5">
         {!tableOk && <div className="bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 text-xs p-3 rounded-xl border border-red-100 dark:border-red-800">Tabel user_badges belum ada. Jalankan 01_fitur_baru.sql di Supabase.</div>}
