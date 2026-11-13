@@ -3,8 +3,9 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { CheckCircle2, XCircle, Eye, EyeOff } from 'lucide-react';
+import { CheckCircle2, XCircle, Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 import PasswordRequirements from '@/components/PasswordRequirements';
+import AuthShell, { authLabel, authInput, authBorder, authBorderOk, authBorderErr, authBtn, authBtnSoft, authIcon, authEye } from '@/components/AuthShell';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
@@ -19,6 +20,9 @@ export default function RegisterPage() {
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [sent, setSent] = useState(false); // sudah daftar, menunggu verifikasi email
+  const [cooldown, setCooldown] = useState(0);
+  const [resendMsg, setResendMsg] = useState('');
   const router = useRouter();
 
   const isPasswordValid = password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password);
@@ -36,6 +40,12 @@ export default function RegisterPage() {
     return () => clearTimeout(timer);
   }, [nickname]);
 
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -44,61 +54,106 @@ export default function RegisterPage() {
     if (!isMatch) return setErrorMsg('Konfirmasi password tidak cocok.');
 
     setLoading(true);
-    const { error } = await supabase.auth.signUp({ email, password, options: { data: { nickname: nickname } } });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { nickname: nickname }, emailRedirectTo: `${window.location.origin}/login` },
+    });
     if (error) setErrorMsg(error.message);
-    else {
-      setTimeout(() => { alert('Registrasi berhasil! Silakan login.'); router.push('/login'); }, 1000);
+    else if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      // Supabase tidak memberi error untuk email yang sudah terdaftar; ini cirinya.
+      setErrorMsg('Email ini sudah terdaftar. Silakan masuk, atau pakai Lupa Password bila lupa.');
+    } else if (data?.session) {
+      // Verifikasi email dimatikan di Supabase: langsung bisa masuk.
+      router.push('/login');
+    } else {
+      setSent(true);
+      setCooldown(60);
     }
     setLoading(false);
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md border border-gray-100">
-        <div className="flex flex-col items-center mb-6">
-          <img src="/icon.png" alt="Logo" className="w-16 h-16 mb-4 rounded-2xl shadow-sm object-contain" />
-          <h1 className="text-2xl font-bold text-gray-800">Daftar Celengin</h1>
+  const handleResend = async () => {
+    if (cooldown > 0) return;
+    setResendMsg('');
+    const { error } = await supabase.auth.resend({ type: 'signup', email });
+    setResendMsg(error ? error.message : 'Email verifikasi dikirim ulang.');
+    setCooldown(60);
+  };
+
+  if (sent) {
+    return (
+      <AuthShell
+        title="Cek emailmu dulu ya"
+        subtitle="Satu langkah lagi sebelum bisa masuk."
+        icon={<div className="w-16 h-16 mb-4 rounded-2xl bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center"><Mail className="w-8 h-8 text-teal-600 dark:text-teal-400" /></div>}
+        footer={<>Sudah verifikasi? <Link href="/login" className="text-teal-600 dark:text-teal-400 font-bold hover:underline">Masuk di sini</Link></>}
+      >
+        <div className="rounded-2xl bg-teal-50 dark:bg-teal-900/20 border border-teal-100 dark:border-teal-800 p-4 text-sm text-gray-700 dark:text-gray-200 leading-relaxed">
+          Kami sudah mengirim link verifikasi ke <span className="font-bold text-gray-900 dark:text-white break-all">{email}</span>. Klik link di email itu untuk mengaktifkan akun. <span className="font-bold">Kamu belum bisa masuk sebelum email diverifikasi.</span>
         </div>
-
-        {errorMsg && <div className="bg-red-50 text-red-500 text-xs p-3 rounded-xl mb-4 border border-red-100">{errorMsg}</div>}
-
-        <form onSubmit={handleRegister} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nama Panggilan (Nickname)</label>
-            <div className="relative">
-              <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value.toLowerCase().replace(/\s/g, ''))} className={`w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-teal-500 text-gray-900 ${isNicknameAvailable === false ? 'border-red-400' : isNicknameAvailable === true ? 'border-green-400' : 'border-gray-200'}`} placeholder="cth: iman123" required />
-              {nickname.length >= 3 && <div className="absolute right-3 top-3">{isCheckingNickname ? <span className="text-xs text-gray-400">Cek...</span> : isNicknameAvailable ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <XCircle className="w-5 h-5 text-red-500" />}</div>}
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 text-gray-900" placeholder="kamu@email.com" required />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            <div className="relative">
-              <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full pl-4 pr-12 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 text-gray-900" placeholder="Buat password kuat" required />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-3.5 text-gray-400 hover:text-gray-600 transition-colors">{showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}</button>
-            </div>
-            {password.length > 0 && <PasswordRequirements password={password} />}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Ulangi Password</label>
-            <div className="relative">
-              <input type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={`w-full pl-4 pr-12 py-3 rounded-xl border focus:ring-2 focus:ring-teal-500 text-gray-900 ${confirmPassword.length > 0 && !isMatch ? 'border-red-400' : 'border-gray-200'}`} placeholder="Ketik ulang password" required />
-              <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-3.5 text-gray-400 hover:text-gray-600 transition-colors">{showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}</button>
-            </div>
-            {confirmPassword.length > 0 && !isMatch && <p className="text-xs text-red-500 mt-1">Password tidak cocok.</p>}
-          </div>
-          <button type="submit" disabled={loading || !isPasswordValid || !isMatch || !isNicknameAvailable} className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-xl transition-all mt-4 disabled:opacity-50">
-            {loading ? 'Memproses...' : 'Daftar Sekarang'}
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 text-center">Tidak ketemu? Cek folder Spam atau Promosi.</p>
+        {resendMsg && <p className="text-xs font-semibold text-teal-700 dark:text-teal-300 mt-2 text-center">{resendMsg}</p>}
+        <div className="space-y-3 mt-5">
+          <button onClick={handleResend} disabled={cooldown > 0} className={authBtnSoft}>
+            {cooldown > 0 ? `Kirim ulang email (${cooldown}d)` : 'Kirim ulang email'}
           </button>
-        </form>
+          <button onClick={() => router.push('/login')} className={authBtn}>Ke Halaman Masuk</button>
+        </div>
+      </AuthShell>
+    );
+  }
 
-        <p className="text-center text-sm text-gray-500 mt-6">
-          Sudah punya akun? <Link href="/login" className="text-teal-600 font-semibold hover:underline">Masuk di sini</Link>
-        </p>
-      </div>
-    </div>
+  return (
+    <AuthShell
+      title="Daftar Celengin"
+      subtitle="Mulai atur uangmu dengan santai."
+      footer={<>Sudah punya akun? <Link href="/login" className="text-teal-600 dark:text-teal-400 font-bold hover:underline">Masuk di sini</Link></>}
+    >
+      {errorMsg && <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs p-3 rounded-2xl mb-4 border border-red-100 dark:border-red-800/40">{errorMsg}</div>}
+
+      <form onSubmit={handleRegister} className="space-y-4">
+        <div>
+          <label className={authLabel}>Nama Panggilan (Nickname)</label>
+          <div className="relative">
+            <User className={authIcon} />
+            <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value.toLowerCase().replace(/\s/g, ''))} className={`${authInput} pr-11 ${isNicknameAvailable === false ? authBorderErr : isNicknameAvailable === true ? authBorderOk : authBorder}`} placeholder="cth: iman123" autoComplete="username" required />
+            {nickname.length >= 3 && <div className="absolute right-3 top-1/2 -translate-y-1/2">{isCheckingNickname ? <span className="text-xs text-gray-400">Cek...</span> : isNicknameAvailable ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <XCircle className="w-5 h-5 text-red-500" />}</div>}
+          </div>
+          {nickname.length >= 3 && !isCheckingNickname && isNicknameAvailable === false && <p className="text-xs text-red-500 mt-1">Nickname sudah dipakai.</p>}
+          {nickname.length >= 3 && !isCheckingNickname && isNicknameAvailable === true && <p className="text-xs text-green-600 dark:text-green-400 mt-1">Nickname tersedia.</p>}
+        </div>
+        <div>
+          <label className={authLabel}>Email</label>
+          <div className="relative">
+            <Mail className={authIcon} />
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={`${authInput} ${authBorder} pr-4`} placeholder="kamu@email.com" autoComplete="email" required />
+          </div>
+        </div>
+        <div>
+          <label className={authLabel}>Password</label>
+          <div className="relative">
+            <Lock className={authIcon} />
+            <input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} className={`${authInput} ${authBorder} pr-12`} placeholder="Buat password kuat" autoComplete="new-password" required />
+            <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'} className={authEye}>{showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}</button>
+          </div>
+          {password.length > 0 && <PasswordRequirements password={password} />}
+        </div>
+        <div>
+          <label className={authLabel}>Ulangi Password</label>
+          <div className="relative">
+            <Lock className={authIcon} />
+            <input type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={`${authInput} pr-12 ${confirmPassword.length > 0 ? (isMatch ? authBorderOk : authBorderErr) : authBorder}`} placeholder="Ketik ulang password" autoComplete="new-password" required />
+            <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} aria-label={showConfirmPassword ? 'Sembunyikan password' : 'Tampilkan password'} className={authEye}>{showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}</button>
+          </div>
+          {confirmPassword.length > 0 && !isMatch && <p className="text-xs text-red-500 mt-1">Password tidak cocok.</p>}
+          {confirmPassword.length > 0 && isMatch && <p className="text-xs text-green-600 dark:text-green-400 mt-1">Password cocok.</p>}
+        </div>
+        <button type="submit" disabled={loading || !isPasswordValid || !isMatch || !isNicknameAvailable} className={`${authBtn} mt-2`}>
+          {loading ? 'Memproses...' : 'Daftar Sekarang'}
+        </button>
+        <p className="text-[11px] text-gray-400 dark:text-gray-500 text-center">Setelah daftar, kamu perlu verifikasi lewat email sebelum bisa masuk.</p>
+      </form>
+    </AuthShell>
   );
 }

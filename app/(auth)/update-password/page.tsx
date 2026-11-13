@@ -1,9 +1,10 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { KeyRound, Eye, EyeOff } from 'lucide-react';
+import { KeyRound, Eye, EyeOff, Lock } from 'lucide-react';
 import PasswordRequirements from '@/components/PasswordRequirements';
+import AuthShell, { authLabel, authInput, authBorder, authBorderOk, authBorderErr, authBtn, authIcon, authEye } from '@/components/AuthShell';
 
 export default function UpdatePasswordPage() {
   const [password, setPassword] = useState('');
@@ -13,10 +14,10 @@ export default function UpdatePasswordPage() {
   const [msg, setMsg] = useState({ text: '', type: 'error' });
   const router = useRouter();
 
-  const isPasswordValid = 
-    password.length >= 8 && 
-    /[A-Z]/.test(password) && 
-    /[0-9]/.test(password) && 
+  const isPasswordValid =
+    password.length >= 8 &&
+    /[A-Z]/.test(password) &&
+    /[0-9]/.test(password) &&
     /[^A-Za-z0-9]/.test(password);
   const isMatch = password === confirmPassword && password !== '';
 
@@ -40,58 +41,43 @@ export default function UpdatePasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md border border-gray-100">
-        <div className="flex flex-col items-center mb-6">
-          <div className="bg-teal-500 p-3 rounded-2xl mb-4">
-            <KeyRound className="w-8 h-8 text-white" />
+    <AuthShell
+      title="Buat Password Baru"
+      subtitle="Pilih password yang kuat dan mudah kamu ingat."
+      icon={<div className="w-16 h-16 mb-4 rounded-2xl bg-teal-600 flex items-center justify-center shadow-md"><KeyRound className="w-8 h-8 text-white" /></div>}
+    >
+      {msg.text && (
+        <div className={`text-xs p-3 rounded-2xl mb-4 border ${msg.type === 'error' ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-100 dark:border-red-800/40' : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-100 dark:border-green-800/40'}`}>
+          {msg.text}
+        </div>
+      )}
+
+      <form onSubmit={handleUpdate} className="space-y-4">
+        <div>
+          <label className={authLabel}>Password Baru</label>
+          <div className="relative">
+            <Lock className={authIcon} />
+            <input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} className={`${authInput} ${authBorder} pr-12`} placeholder="Buat password kuat" autoComplete="new-password" required />
+            <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'} className={authEye}>
+              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            </button>
           </div>
-          <h1 className="text-2xl font-bold text-gray-800">Buat Password Baru</h1>
+          {password.length > 0 && <PasswordRequirements password={password} />}
         </div>
 
-        {msg.text && (
-          <div className={`text-xs p-3 rounded-xl mb-4 border ${msg.type === 'error' ? 'bg-red-50 text-red-500 border-red-100' : 'bg-green-50 text-green-600 border-green-100'}`}>
-            {msg.text}
+        <div>
+          <label className={authLabel}>Ulangi Password Baru</label>
+          <div className="relative">
+            <Lock className={authIcon} />
+            <input type={showPassword ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={`${authInput} pr-4 ${confirmPassword.length > 0 ? (isMatch ? authBorderOk : authBorderErr) : authBorder}`} placeholder="Ketik ulang password" autoComplete="new-password" required />
           </div>
-        )}
+          {confirmPassword.length > 0 && !isMatch && <p className="text-xs text-red-500 mt-1">Password tidak cocok.</p>}
+        </div>
 
-        <form onSubmit={handleUpdate} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password Baru</label>
-            <div className="relative">
-              <input 
-                type={showPassword ? "text" : "password"} 
-                value={password} 
-                onChange={(e) => setPassword(e.target.value)} 
-                className="w-full pl-4 pr-12 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 text-gray-900" 
-                placeholder="Buat password kuat" 
-                required 
-              />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-3.5 text-gray-400 hover:text-gray-600 transition-colors">
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
-            {password.length > 0 && <PasswordRequirements password={password} />}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Ulangi Password Baru</label>
-            <input 
-              type={showPassword ? "text" : "password"} 
-              value={confirmPassword} 
-              onChange={(e) => setConfirmPassword(e.target.value)} 
-              className={`w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-teal-500 text-gray-900 ${confirmPassword.length > 0 && !isMatch ? 'border-red-400' : 'border-gray-200'}`} 
-              placeholder="Ketik ulang password" 
-              required 
-            />
-            {confirmPassword.length > 0 && !isMatch && <p className="text-xs text-red-500 mt-1">Password tidak cocok.</p>}
-          </div>
-
-          <button type="submit" disabled={loading} className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-xl transition-all mt-4 disabled:opacity-50">
-            {loading ? 'Menyimpan...' : 'Simpan Password Baru'}
-          </button>
-        </form>
-      </div>
-    </div>
+        <button type="submit" disabled={loading} className={`${authBtn} mt-2`}>
+          {loading ? 'Menyimpan...' : 'Simpan Password Baru'}
+        </button>
+      </form>
+    </AuthShell>
   );
 }
