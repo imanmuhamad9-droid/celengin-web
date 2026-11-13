@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Check } from 'lucide-react';
+import { ArrowLeft, Check, User } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { formatDateID } from '@/lib/utils';
 import { BADGES, levelFor, fetchBadgeContext, syncBadges, EarnedBadge } from '@/lib/badges';
@@ -16,6 +16,7 @@ export default function BadgesPage() {
   const [progress, setProgress] = useState<Record<string, number>>({});
   const [earned, setEarned] = useState<EarnedBadge[]>([]);
   const [tableOk, setTableOk] = useState(true);
+  const [profile, setProfile] = useState<any>(null);
 
   const [dialog, setDialog] = useState({ isOpen: false, title: '', msg: '', type: 'info' as 'info' | 'success' | 'danger', onConfirm: undefined as (() => void) | undefined });
   const showDialog = (title: string, msg: string, type: 'info' | 'success' | 'danger', onConfirm?: () => void) => setDialog({ isOpen: true, title, msg, type, onConfirm });
@@ -26,6 +27,10 @@ export default function BadgesPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return router.push('/login');
       const uid = session.user.id;
+
+      // Foto profil + sampul untuk kartu level (kosong bila gagal dimuat -> kartu memakai tampilan polos)
+      const { data: prof } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle();
+      if (prof) setProfile(prof);
 
       const { data: tx } = await supabase.from('transactions').select('type,amount,transaction_date');
       const { data: targets } = await supabase.from('targets').select('*').eq('user_id', uid);
@@ -62,18 +67,31 @@ export default function BadgesPage() {
       <main className="px-5 mt-4 space-y-5">
         {!tableOk && <div className="bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 text-xs p-3 rounded-xl border border-red-100 dark:border-red-800">Tabel user_badges belum ada. Jalankan 01_fitur_baru.sql di Supabase.</div>}
 
-        <div className="rounded-3xl p-6 text-white shadow-lg bg-teal-700">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-white/15 flex items-center justify-center text-4xl shrink-0">{current.emoji}</div>
-            <div>
-              <p className="text-white/80 text-xs font-medium">Levelmu</p>
-              <h3 className="text-2xl font-extrabold">{current.name}</h3>
-              <p className="text-white/80 text-[11px] mt-0.5">{count} dari {BADGES.length} badge diraih</p>
+        {/* KARTU LEVEL: foto profil + sampul profil sebagai latar. Lapisan gelap tipis menjaga tulisan tetap terbaca di sampul apa pun. */}
+        <div
+          className="rounded-3xl p-6 text-white shadow-lg relative overflow-hidden bg-cover bg-center"
+          style={{ backgroundColor: profile?.theme_color || '#0f766e', ...(profile?.cover_url ? { backgroundImage: `url(${profile.cover_url})` } : {}) }}
+        >
+          {profile?.cover_url && <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/45 to-black/60" />}
+          <div className="relative z-10 [text-shadow:0_1px_3px_rgba(0,0,0,0.45)]">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-white/20 border-2 border-white/70 overflow-hidden flex items-center justify-center shrink-0 shadow-md">
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="Foto profil" className="w-full h-full object-cover" />
+                ) : (
+                  <User className="w-8 h-8 text-white/90" />
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="text-white/85 text-xs font-medium">Levelmu</p>
+                <h3 className="text-2xl font-extrabold truncate">{current.name}</h3>
+                <p className="text-white/85 text-[11px] mt-0.5">{count} dari {BADGES.length} badge diraih</p>
+              </div>
             </div>
-          </div>
-          <div className="mt-4">
-            <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden"><div className="h-2 rounded-full bg-white" style={{ width: `${levelPct}%` }}></div></div>
-            <p className="text-white/70 text-[10px] mt-1.5">{next ? `${toNext} badge lagi menuju ${next.emoji} ${next.name}` : 'Level tertinggi tercapai! 🎉'}</p>
+            <div className="mt-4">
+              <div className="w-full bg-black/25 rounded-full h-2 overflow-hidden"><div className="h-2 rounded-full bg-white" style={{ width: `${levelPct}%` }}></div></div>
+              <p className="text-white/85 text-[10px] mt-1.5">{next ? `${toNext} badge lagi menuju ${next.emoji} ${next.name}` : 'Level tertinggi tercapai! 🎉'}</p>
+            </div>
           </div>
         </div>
 
