@@ -22,7 +22,6 @@ type Props = {
 };
 
 const SEEN_PREFIX = 'celengin:menu-info-seen:';
-const MENU_LABELS: string[] = ['Home', 'Tantangan', 'Impian', 'Kolektif', 'Split Bill', 'Laporan'];
 
 // Foto profil dibaca sekali per sesi halaman (hanya baca, tidak mengubah data)
 let avatarCache: string | null | undefined;
@@ -59,15 +58,14 @@ export default function AppHeader({ title, onBack, topRight, action, z = 'z-50',
     try { localStorage.setItem(SEEN_PREFIX + key, '1'); } catch (_) { /* abaikan */ }
   };
 
-  const pageTitle = title && !MENU_LABELS.includes(title) ? title : '';
+  // Judul menu tampil di kiri atas (kecuali Home yang tanpa judul)
+  const pageTitle = title && title !== 'Home' ? title : '';
   const showToolbar = Boolean(action || info || pageTitle);
 
   return (
     <>
-      <header
-        className={`sticky top-0 ${z} px-4 pt-[calc(env(safe-area-inset-top,0px)+10px)] pb-2`}
-        style={{ background: 'color-mix(in srgb, var(--bg-main) 80%, transparent)', WebkitBackdropFilter: 'blur(14px)', backdropFilter: 'blur(14px)' }}
-      >
+      {/* Bar biasa (tidak sticky): ikut tergulung saat halaman di-scroll */}
+      <header className={`relative ${z} px-4 pt-[calc(env(safe-area-inset-top,0px)+10px)] pb-2`}>
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
             {onBack && (
@@ -93,8 +91,8 @@ export default function AppHeader({ title, onBack, topRight, action, z = 'z-50',
         </div>
 
         {showToolbar && (
-          <div className="mt-2.5 flex items-center justify-between gap-3 min-h-[36px]">
-            <h1 className="font-bold text-base truncate" style={{ color: 'var(--text-main)' }}>{pageTitle}</h1>
+          <div className="mt-3 flex items-center justify-between gap-3 min-h-[36px]">
+            <h1 className="font-extrabold text-xl tracking-tight truncate" style={{ color: 'var(--text-main)' }}>{pageTitle}</h1>
             <div className="shrink-0 flex items-center gap-2">
               {info && (
                 <button

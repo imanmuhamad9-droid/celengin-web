@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { CalendarClock, History, BarChart3, Receipt, Wallet } from 'lucide-react';
 
 export type SubTabItem = {
   label: string;
@@ -60,7 +61,7 @@ export default function SubTabs({ items }: { items: SubTabItem[] }) {
               }}
               className={`flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-full text-[10px] font-bold transition-colors duration-300 active:scale-95 ${on ? 'seg-active' : 'text-gray-500 dark:text-gray-400'}`}
             >
-              <span className={`transition-all duration-300 ${on ? '' : 'grayscale opacity-60'}`}>{it.icon}</span>
+              {it.icon}
               <span className="truncate max-w-full px-1">{it.label}</span>
             </button>
           );
@@ -70,19 +71,19 @@ export default function SubTabs({ items }: { items: SubTabItem[] }) {
   );
 }
 
-const ic = 'w-7 h-7 object-contain';
-const img = (src: string) => <img src={src} alt="" className={ic} />;
+// Ikon general (lucide), seragam dengan ikon di bottom nav; warnanya mengikuti teks tab
+const ic = 'w-5 h-5';
 
 // Menu Laporan: Tagihan, Riwayat, Laporan
 export const LAPORAN_TABS: SubTabItem[] = [
-  { label: 'Tagihan', href: '/bills', icon: img('/menu-icons/tagihan.png') },
-  { label: 'Riwayat', href: '/transactions', icon: img('/menu-icons/riwayat.png') },
-  { label: 'Laporan', href: '/reports', icon: img('/menu-icons/laporan.png') },
+  { label: 'Tagihan', href: '/bills', icon: <CalendarClock className={ic} /> },
+  { label: 'Riwayat', href: '/transactions', icon: <History className={ic} /> },
+  { label: 'Laporan', href: '/reports', icon: <BarChart3 className={ic} /> },
 ];
 export const RIWAYAT_TABS = LAPORAN_TABS;
 
 // Menu Split Bill: Patungan, Bayarin (Nabung Bareng pindah ke menu Kolektif tersendiri tanpa tab)
 export const SPLIT_TABS: SubTabItem[] = [
-  { label: 'Patungan', href: '/splitbill', icon: img('/menu-icons/split.png') },
-  { label: 'Bayarin', href: '/gantian', icon: img('/menu-icons/gantian.png') },
+  { label: 'Patungan', href: '/splitbill', icon: <Receipt className={ic} /> },
+  { label: 'Bayarin', href: '/gantian', icon: <Wallet className={ic} /> },
 ];

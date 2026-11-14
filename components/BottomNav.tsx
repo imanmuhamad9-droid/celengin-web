@@ -154,10 +154,10 @@ export default function BottomNav() {
             <button
               onClick={() => setIsModalOpen(true)}
               aria-label="Catat transaksi"
-              className="glass glass-solid-teal glass-pressable w-14 h-14 rounded-full flex flex-col items-center justify-center"
+              className="glass glass-solid-teal glass-pressable h-11 px-5 rounded-full flex items-center justify-center gap-1.5"
             >
-              <Plus className="w-5 h-5" strokeWidth={2.6} />
-              <span className="text-[9px] font-extrabold leading-none mt-0.5">Catat</span>
+              <Plus className="w-4 h-4" strokeWidth={2.6} />
+              <span className="text-xs font-extrabold leading-none">Catat</span>
             </button>
           </div>
 
