@@ -66,6 +66,10 @@ export default function SettingsPage() {
 
   // Mode tampilan
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
+  // Ukuran tampilan & warna aksen tombol (lihat globals.css)
+  const [uiSize, setUiSize] = useState<'kecil' | 'sedang' | 'besar'>('sedang');
+  const [accent, setAccent] = useState<'aqua' | 'silver' | 'abu' | 'biru'>('aqua');
+  const [btnStyle, setBtnStyle] = useState<'bold' | 'soft'>('bold');
 
   // Tanggal gajian (disimpan langsung saat dipilih)
   const [payday, setPayday] = useState(1);
@@ -115,6 +119,11 @@ export default function SettingsPage() {
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | 'system' || 'system';
     setTheme(savedTheme);
+    const savedSize = localStorage.getItem('ui-size');
+    if (savedSize === 'kecil' || savedSize === 'besar') setUiSize(savedSize);
+    const savedAccent = localStorage.getItem('ui-accent');
+    if (savedAccent === 'silver' || savedAccent === 'abu' || savedAccent === 'biru') setAccent(savedAccent);
+    if (localStorage.getItem('ui-btn') === 'soft') setBtnStyle('soft');
 
     const fetchProfile = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -174,6 +183,28 @@ export default function SettingsPage() {
     } else {
       document.documentElement.classList.remove('dark');
     }
+  };
+
+  // Ukuran "sedang" dan warna "aqua" adalah bawaan, jadi atributnya cukup dihapus
+  const handleSizeChange = (s: 'kecil' | 'sedang' | 'besar') => {
+    setUiSize(s);
+    localStorage.setItem('ui-size', s);
+    if (s === 'sedang') document.documentElement.removeAttribute('data-size');
+    else document.documentElement.setAttribute('data-size', s);
+  };
+
+  const handleAccentChange = (a: 'aqua' | 'silver' | 'abu' | 'biru') => {
+    setAccent(a);
+    localStorage.setItem('ui-accent', a);
+    if (a === 'aqua') document.documentElement.removeAttribute('data-accent');
+    else document.documentElement.setAttribute('data-accent', a);
+  };
+
+  const handleBtnStyleChange = (b: 'bold' | 'soft') => {
+    setBtnStyle(b);
+    localStorage.setItem('ui-btn', b);
+    if (b === 'bold') document.documentElement.removeAttribute('data-btn');
+    else document.documentElement.setAttribute('data-btn', 'soft');
   };
 
   const reloadProfile = async (uid: string) => {
@@ -489,16 +520,67 @@ export default function SettingsPage() {
 
         {/* ===== TAMPILAN ===== */}
         {view === 'tampilan' && (
-          <div className={CARD}>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Pilih mode warna aplikasi. Tersimpan otomatis.</p>
-            <div className="grid grid-cols-3 gap-2">
-              {[['light', 'Terang', Sun], ['dark', 'Gelap', Moon], ['system', 'Sistem', Monitor]].map(([val, label, Icon]: any) => (
-                <button key={val} onClick={() => handleThemeChange(val)} className={`py-4 rounded-2xl text-xs font-bold border-2 flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95 ${theme === val ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400' : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400'}`}>
-                  <Icon className="w-5 h-5" /> {label}
-                </button>
-              ))}
+          <>
+            {/* Mode warna */}
+            <div className={CARD}>
+              <p className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-1">Mode warna</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Pilih mode warna aplikasi. Tersimpan otomatis.</p>
+              <div className="grid grid-cols-3 gap-2">
+                {[['light', 'Terang', Sun], ['dark', 'Gelap', Moon], ['system', 'Sistem', Monitor]].map(([val, label, Icon]: any) => (
+                  <button key={val} onClick={() => handleThemeChange(val)} className={`py-4 rounded-2xl text-xs font-bold border-2 flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95 ${theme === val ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400' : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400'}`}>
+                    <Icon className="w-5 h-5" /> {label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+
+            {/* Ukuran tampilan */}
+            <div className={CARD}>
+              <p className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-1">Ukuran tampilan</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Mengubah besar teks, tombol, dan kolom di seluruh aplikasi. Tersimpan otomatis.</p>
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                {(['kecil', 'sedang', 'besar'] as const).map((s) => (
+                  <button key={s} onClick={() => handleSizeChange(s)} className={`py-3.5 rounded-2xl font-bold border-2 capitalize transition-all active:scale-95 ${s === 'kecil' ? 'text-[11px]' : s === 'sedang' ? 'text-xs' : 'text-sm'} ${uiSize === s ? 'border-[var(--accent-border)] bg-[var(--accent-tint)] text-[var(--accent-text)]' : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400'}`}>{s}</button>
+                ))}
+              </div>
+              <div className="rounded-2xl border border-dashed border-gray-200 dark:border-gray-600 p-4 space-y-2">
+                <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Pratinjau</p>
+                <p className="text-2xl font-extrabold text-gray-900 dark:text-white">{formatRupiah(1250000)}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">Contoh teks: jajan kopi pagi ini.</p>
+                <button type="button" className="border btn-accent font-bold text-sm px-5 py-2.5 rounded-xl active:scale-95 transition-transform">Contoh Tombol</button>
+              </div>
+            </div>
+
+            {/* Warna tombol */}
+            <div className={CARD}>
+              <p className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-1">Warna tombol</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Pilih warna tombol; tombol pratinjau di atas ikut berubah.</p>
+              <div className="grid grid-cols-4 gap-2">
+                {([['aqua', 'Aqua', '#14b8a6'], ['silver', 'Silver', '#94a3b8'], ['abu', 'Abu', '#9ca3af'], ['biru', 'Biru', '#60a5fa']] as const).map(([key, label, color]) => (
+                  <button key={key} onClick={() => handleAccentChange(key)} className={`py-3 rounded-2xl border-2 flex flex-col items-center gap-1.5 text-[11px] font-bold transition-all active:scale-95 ${accent === key ? 'border-[var(--accent-border)] bg-[var(--accent-tint)] text-[var(--accent-text)]' : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400'}`}>
+                    <span className="w-6 h-6 rounded-full border border-black/10 dark:border-white/20" style={{ backgroundColor: color }} />
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Gaya tombol */}
+            <div className={CARD}>
+              <p className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-1">Gaya tombol</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Bold: latar pekat dengan tulisan putih. Soft: outline, putih berbingkai warna.</p>
+              <div className="grid grid-cols-2 gap-2">
+                <button onClick={() => handleBtnStyleChange('bold')} className={`py-4 rounded-2xl border-2 flex flex-col items-center gap-2 text-[11px] font-bold transition-all active:scale-95 ${btnStyle === 'bold' ? 'border-[var(--accent-border)] bg-[var(--accent-tint)] text-[var(--accent-text)]' : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400'}`}>
+                  <span className="px-5 py-2 rounded-[9px] text-xs font-bold" style={{ background: 'var(--accent-grad)', color: '#fff' }}>Simpan</span>
+                  Bold
+                </button>
+                <button onClick={() => handleBtnStyleChange('soft')} className={`py-4 rounded-2xl border-2 flex flex-col items-center gap-2 text-[11px] font-bold transition-all active:scale-95 ${btnStyle === 'soft' ? 'border-[var(--accent-border)] bg-[var(--accent-tint)] text-[var(--accent-text)]' : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400'}`}>
+                  <span className="px-5 py-2 rounded-[9px] text-xs font-bold border" style={{ background: 'transparent', borderColor: 'var(--accent-bold)', color: 'var(--accent-text)' }}>Simpan</span>
+                  Soft
+                </button>
+              </div>
+            </div>
+          </>
         )}
 
         {/* ===== NOTIFIKASI ===== */}

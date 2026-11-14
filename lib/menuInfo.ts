@@ -32,7 +32,7 @@ export const MENU_INFO: Record<string, MenuInfo> = {
   },
   Kolektif: {
     heading: 'Kolektif: untuk apa menu ini?',
-    body: 'Untuk urusan uang bersama orang lain. Ada tiga pilihan di bagian atas: Nabung Bareng, Patungan, dan Bayarin.',
+    body: 'Untuk menabung bersama orang lain lewat Nabung Bareng. Urusan bagi-bagi tagihan (Patungan dan Bayarin) ada di menu Split Bill.',
   },
   'Nabung Bareng': {
     heading: 'Nabung Bareng: untuk apa menu ini?',

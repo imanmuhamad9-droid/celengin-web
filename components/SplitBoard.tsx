@@ -13,7 +13,7 @@ import { buildExpenseMessage, buildPersonMessage, buildDebtSummaryMessage, build
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import AppHeader from '@/components/AppHeader';
-import SubTabs, { BARENG_TABS } from '@/components/SubTabs';
+import SubTabs, { SPLIT_TABS } from '@/components/SubTabs';
 import { Btn, HeaderBtn } from '@/components/ui';
 import SkeletonLoader from '@/components/SkeletonLoader';
 
@@ -478,7 +478,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
     <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-40 transition-colors">
       <AppHeader
         z="z-40"
-        title={group ? group.name : 'Kolektif'}
+        title={group ? group.name : 'Split Bill'}
         infoKey={group ? undefined : (isRunning ? 'Bayarin' : 'Patungan')}
         onBack={group ? goBack : undefined}
         action={group
@@ -487,8 +487,8 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
       />
 
       <main className="px-5 mt-4 space-y-4">
-        {/* Di daftar (bukan di dalam sebuah grup): tiga pilihan Kolektif */}
-        {!group && <SubTabs items={BARENG_TABS} />}
+        {/* Di daftar (bukan di dalam sebuah grup): dua pilihan Split Bill */}
+        {!group && <SubTabs items={SPLIT_TABS} />}
         {missingTable && (
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-4 rounded-2xl text-xs text-yellow-800 dark:text-yellow-300">
             Database {L.menu} belum siap. Jalankan <strong>{L.sqlFile}</strong> (versi terbaru) di Supabase SQL Editor, lalu muat ulang halaman ini.

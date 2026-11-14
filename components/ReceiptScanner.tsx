@@ -93,8 +93,8 @@ export default function ReceiptScanner({ onResult, showDialog }: Props) {
         </div>
       ) : (
         <div className="flex gap-2 mt-3">
-          <button type="button" onClick={pick(cameraRef)} className="flex-1 h-11 rounded-xl bg-teal-600 text-white text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"><Camera className="w-4 h-4" /> Foto struk</button>
-          <button type="button" onClick={pick(galleryRef)} className="flex-1 h-11 rounded-xl bg-white dark:bg-gray-700 border border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-300 text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"><ImageIcon className="w-4 h-4" /> Dari galeri</button>
+          <button type="button" onClick={pick(cameraRef)} className="flex-1 h-11 rounded-[9px] border btn-accent text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"><Camera className="w-4 h-4" /> Foto struk</button>
+          <button type="button" onClick={pick(galleryRef)} className="flex-1 h-11 rounded-[9px] border btn-accent-soft text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"><ImageIcon className="w-4 h-4" /> Dari galeri</button>
         </div>
       )}
 

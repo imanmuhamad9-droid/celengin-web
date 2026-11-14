@@ -44,6 +44,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 } else {
                   document.documentElement.classList.remove('dark');
                 }
+                let size = localStorage.getItem('ui-size');
+                if (size === 'kecil' || size === 'besar') document.documentElement.setAttribute('data-size', size);
+                let accent = localStorage.getItem('ui-accent');
+                if (accent === 'silver' || accent === 'abu' || accent === 'biru') document.documentElement.setAttribute('data-accent', accent);
+                let btn = localStorage.getItem('ui-btn');
+                if (btn === 'soft') document.documentElement.setAttribute('data-btn', 'soft');
               } catch (_) {}
             `,
           }}

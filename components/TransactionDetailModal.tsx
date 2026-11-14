@@ -44,14 +44,14 @@ export default function TransactionDetailModal({ tx, onClose }: { tx: any | null
             </div>
           )}
           {tx.notes && (
-            <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800">
+            <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20">
               <StickyNote className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
               <p className="text-gray-700 dark:text-gray-300 break-words min-w-0">{tx.notes}</p>
             </div>
           )}
         </div>
 
-        <button onClick={onClose} className="mt-5 w-full h-11 rounded-2xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-bold active:scale-[0.98] transition-all">Tutup</button>
+        <button onClick={onClose} className="mt-5 w-full h-11 rounded-[9px] border btn-accent-soft text-sm font-bold active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"><X className="w-4 h-4" /> Tutup</button>
       </div>
     </div>
   );

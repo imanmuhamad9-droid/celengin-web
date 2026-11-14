@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
-import { X, Plus, Receipt, Calculator } from 'lucide-react';
+import { X, Plus, Receipt, Calculator, Save } from 'lucide-react';
 import { Btn } from '@/components/ui';
 import { supabase } from '@/lib/supabaseClient';
 import { formatRupiah, parseRupiahInput, toLocalDateStr } from '@/lib/utils';
@@ -424,7 +424,7 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
             </section>
           )}
 
-          <button type="submit" disabled={saving} className="w-full bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl transition-all">{saving ? 'Menyimpan...' : isG ? 'Simpan Catatan' : 'Simpan Pengeluaran'}</button>
+          <button type="submit" disabled={saving} className="w-full border btn-accent hover:brightness-95 font-bold py-3.5 rounded-[9px] transition-all flex items-center justify-center gap-2"><Save className="w-4 h-4" /> {saving ? 'Menyimpan...' : isG ? 'Simpan Catatan' : 'Simpan Pengeluaran'}</button>
         </form>
       </div>
     </div>

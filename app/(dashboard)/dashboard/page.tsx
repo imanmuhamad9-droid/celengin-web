@@ -370,7 +370,14 @@ const currentMonth = calendarMonth;
 
   return (
     <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-40 transition-colors">
-      <AppHeader topRight={<NotificationBell userId={user?.id ?? null} local={localNotifs} />} />
+      <AppHeader topRight={
+        <div className="flex items-center gap-2">
+          <NotificationBell userId={user?.id ?? null} local={localNotifs} />
+          <button onClick={() => router.push('/settings')} aria-label="Pengaturan" className="w-9 h-9 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-teal-600 transition-all active:scale-95">
+            <Settings className="w-5 h-5" />
+          </button>
+        </div>
+      } />
 
       <main className="px-5 mt-4 space-y-4">
 
@@ -476,7 +483,7 @@ const currentMonth = calendarMonth;
           ) : (
             <div className="space-y-2">
               {recentTx.map(t => (
-                <button key={t.id} onClick={() => setDetailTx(t)} className={`w-full flex items-center justify-between px-3.5 py-3 text-left rounded-2xl border active:scale-[0.99] transition-all ${t.type === 'income' ? 'bg-green-50/70 dark:bg-green-900/10 border-green-100 dark:border-green-900/30' : 'bg-red-50/60 dark:bg-red-900/10 border-red-100 dark:border-red-900/30'}`}>
+                <button key={t.id} onClick={() => setDetailTx(t)} className={`w-full flex items-center justify-between px-3.5 py-3 text-left rounded-2xl active:scale-[0.99] transition-all ${t.type === 'income' ? 'bg-green-50 dark:bg-green-900/15' : 'bg-red-50 dark:bg-red-900/15'}`}>
                   <div className="min-w-0 mr-3">
                     <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate flex items-center gap-1">
                       <span className="truncate">{t.merchant_name}</span>
@@ -491,7 +498,7 @@ const currentMonth = calendarMonth;
               ))}
             </div>
           )}
-          <button onClick={() => router.push('/transactions')} className="mt-4 w-full h-11 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold shadow-sm active:scale-[0.98] transition-all flex items-center justify-center gap-1.5">
+          <button onClick={() => router.push('/transactions')} className="mt-4 w-full h-11 rounded-[9px] border btn-accent hover:brightness-95 text-sm font-bold active:scale-[0.98] transition-all flex items-center justify-center gap-1.5">
             Buka Riwayat <ChevronRight className="w-4 h-4" />
           </button>
           </div>)}

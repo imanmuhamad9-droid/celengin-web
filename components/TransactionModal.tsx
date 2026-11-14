@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { X, Plus, Settings2, Camera, ImageUp, Loader2 } from 'lucide-react';
+import { X, Plus, Settings2, Camera, ImageUp, Loader2, Save, Check } from 'lucide-react';
 import { toLocalDateStr } from '@/lib/utils';
 import { Frequency } from '@/lib/recurring';
 import { createRecurringRule } from '@/lib/recurringClient';
@@ -254,11 +254,11 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-2">
-                    <label className="cursor-pointer flex items-center justify-center gap-1.5 py-3 rounded-xl text-xs font-extrabold bg-teal-600 text-white active:scale-95 transition-all">
+                    <label className="cursor-pointer flex items-center justify-center gap-1.5 py-3 rounded-[9px] text-xs font-extrabold border btn-accent active:scale-95 transition-all">
                       <Camera className="w-4 h-4" /> Foto Struk
                       <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => { handleReceiptFile(e.target.files?.[0]); e.target.value = ''; }} />
                     </label>
-                    <label className="cursor-pointer flex items-center justify-center gap-1.5 py-3 rounded-xl text-xs font-extrabold bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/30 active:scale-95 transition-all">
+                    <label className="cursor-pointer flex items-center justify-center gap-1.5 py-3 rounded-[9px] text-xs font-extrabold border btn-accent-soft active:scale-95 transition-all">
                       <ImageUp className="w-4 h-4" /> Unggah Gambar
                       <input type="file" accept="image/*" className="hidden" onChange={(e) => { handleReceiptFile(e.target.files?.[0]); e.target.value = ''; }} />
                     </label>
@@ -268,7 +268,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
             )}
 
             {activeMode === 'manual' && scanNote && (
-              <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+              <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-900/20">
                 <p className="text-xs font-bold text-amber-800 dark:text-amber-300">Hasil scan, mohon diperiksa</p>
                 <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-1">
                   {scanNote.foundAmount ? 'Nominal terbaca.' : 'Nominal tidak terbaca, isi manual.'} {scanNote.foundDate ? 'Tanggal terbaca.' : 'Tanggal tidak terbaca, periksa tanggalnya.'}
@@ -349,7 +349,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
                 </div>
 
                 {tx.isRoutine && (
-                  <div className="mt-3 p-3 bg-teal-50 dark:bg-teal-900/20 border border-teal-100 dark:border-teal-800 rounded-xl">
+                  <div className="mt-3 p-3 bg-teal-50 dark:bg-teal-900/20 rounded-xl">
                     <p className="text-[10px] font-bold text-teal-700 dark:text-teal-400 mb-2">Tercatat otomatis, ulangi:</p>
                     <FrequencyPicker value={tx.frequency} onChange={(v) => updateRow(tx.id, 'frequency', v)} />
                     <p className="text-[9px] text-teal-700/70 dark:text-teal-400/70 mt-2">Kamu tidak perlu mencatat lagi. Kelola di Tagihan → Transaksi Rutin.</p>
@@ -364,7 +364,8 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
           </div>
 
           <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 transition-colors">
-            <button onClick={handleSaveAll} disabled={loading} className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all disabled:opacity-50 shadow-md">
+            <button onClick={handleSaveAll} disabled={loading} className="w-full border btn-accent hover:brightness-95 font-bold py-3 rounded-[9px] transition-all flex items-center justify-center gap-2">
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               {loading ? 'Menyimpan...' : `Simpan ${txList.length} Transaksi`}
             </button>
           </div>
@@ -381,7 +382,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
             
             <div className="flex items-center gap-1.5 mb-4 bg-gray-50 dark:bg-gray-700 p-2 rounded-xl border border-gray-100 dark:border-gray-600 w-full">
               <input type="text" value={newPresetLabel} onChange={(e) => setNewPresetLabel(e.target.value)} className="flex-1 min-w-0 h-10 border border-gray-300 dark:border-gray-500 rounded-lg px-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 transition-all" placeholder="Nama..." />
-              <Btn variant="primary" size="md" onClick={handleSavePreset} className="shrink-0">{editingPresetId ? 'Update' : 'Tambah'}</Btn>
+              <Btn variant="primary" size="md" onClick={handleSavePreset} className="shrink-0">{editingPresetId ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}{editingPresetId ? 'Update' : 'Tambah'}</Btn>
             </div>
 
             <div className="overflow-y-auto space-y-2 flex-1 pr-1">

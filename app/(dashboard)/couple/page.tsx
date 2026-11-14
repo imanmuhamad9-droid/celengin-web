@@ -8,10 +8,10 @@ import { formatRupiah, digitsOnly, noDigits } from '@/lib/utils';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import AppHeader from '@/components/AppHeader';
-import SubTabs, { BARENG_TABS } from '@/components/SubTabs';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import DateField from '@/components/DateField';
 import { Btn, HeaderBtn, RowActions } from '@/components/ui';
+import SegmentedControl from '@/components/SegmentedControl';
 import { toLocalDateStr } from '@/lib/utils';
 
 const BANKS = [
@@ -313,13 +313,15 @@ export default function SharedSpacePage() {
       <AppHeader title="Kolektif" infoKey="Nabung Bareng" action={<HeaderBtn onClick={handleOpenAdd} />} />
 
       <main className="px-5 mt-4 space-y-5">
-        <SubTabs items={BARENG_TABS} />
-
-        <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
-          <Btn variant={filterCategory === 'all' ? 'primary' : 'neutral'} onClick={() => setFilterCategory('all')}>Semua</Btn>
-          <Btn variant={filterCategory === 'couple' ? 'pink' : 'neutral'} className={filterCategory === 'couple' ? 'ring-2 ring-pink-500/40' : ''} onClick={() => setFilterCategory('couple')}><Heart className="w-3.5 h-3.5" /> Pasangan</Btn>
-          <Btn variant={filterCategory === 'friend' ? 'blue' : 'neutral'} className={filterCategory === 'friend' ? 'ring-2 ring-blue-500/40' : ''} onClick={() => setFilterCategory('friend')}><Users className="w-3.5 h-3.5" /> Teman</Btn>
-        </div>
+        <SegmentedControl
+          value={filterCategory}
+          onChange={setFilterCategory}
+          options={[
+            { value: 'all', label: 'Semua' },
+            { value: 'couple', label: <><Heart className="w-3.5 h-3.5" /> Pasangan</> },
+            { value: 'friend', label: <><Users className="w-3.5 h-3.5" /> Teman</> },
+          ]}
+        />
 
         {pendingInvites.length > 0 && (
           <div className="space-y-3 mb-4">
@@ -481,8 +483,8 @@ export default function SharedSpacePage() {
             <h2 className="text-lg font-bold text-center mb-4 text-gray-800 dark:text-white">{editingId ? 'Edit Target Bareng' : 'Buat Target Bareng'}</h2>
             <form onSubmit={handleSaveGoal} className="space-y-4">
               <div className="flex gap-2">
-                <button type="button" onClick={() => setGoalCategory('couple')} className={`flex-1 py-2 rounded-xl text-xs font-bold border-2 flex items-center justify-center gap-1 transition-all ${goalCategory === 'couple' ? 'border-pink-500 bg-pink-50 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}><Heart className="w-4 h-4" /> Pasangan</button>
-                <button type="button" onClick={() => setGoalCategory('friend')} className={`flex-1 py-2 rounded-xl text-xs font-bold border-2 flex items-center justify-center gap-1 transition-all ${goalCategory === 'friend' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}><Users className="w-4 h-4" /> Teman</button>
+                <button type="button" onClick={() => setGoalCategory('couple')} className={`flex-1 py-2 rounded-[9px] text-xs font-bold border-2 flex items-center justify-center gap-1 transition-all ${goalCategory === 'couple' ? 'btn-accent-line-pink' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}><Heart className="w-4 h-4" /> Pasangan</button>
+                <button type="button" onClick={() => setGoalCategory('friend')} className={`flex-1 py-2 rounded-[9px] text-xs font-bold border-2 flex items-center justify-center gap-1 transition-all ${goalCategory === 'friend' ? 'btn-accent-line-blue' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}><Users className="w-4 h-4" /> Teman</button>
               </div>
               
               <div>

@@ -17,8 +17,10 @@ const ITEMS: Item[] = [
   { key: 'home', label: 'Home', href: '/dashboard', img: '/nav-icons/home.png' },
   { key: 'target', label: 'Tantangan', href: '/spending-challenge', img: '/nav-icons/tantangan.png' },
   { key: 'impian', label: 'Impian', href: '/dream-planner', img: '/nav-icons/impian.png' },
-  // Kolektif mencakup tiga tab: Nabung Bareng (/couple), Patungan (/splitbill), Bayarin (/gantian)
-  { key: 'bareng', label: 'Kolektif', href: '/couple', img: '/nav-icons/kolektif.png', also: ['/splitbill', '/gantian'] },
+  // Kolektif hanya berisi Nabung Bareng
+  { key: 'bareng', label: 'Kolektif', href: '/couple', img: '/nav-icons/kolektif.png' },
+  // Split Bill mencakup dua tab: Patungan (/splitbill), Bayarin (/gantian)
+  { key: 'splitbill', label: 'Split Bill', href: '/splitbill', img: '/nav-icons/splitbill.png', also: ['/gantian'] },
   // Laporan mencakup tiga tab: Tagihan, Riwayat, Laporan
   { key: 'laporan', label: 'Laporan', href: '/reports', img: '/menu-icons/laporan.png', also: ['/transactions', '/bills'] },
 ];
@@ -178,12 +180,12 @@ export default function BottomNav() {
     );
   };
 
-  // Catat: gelembung tersendiri di pojok paling kanan, terpisah dari bar menu
+  // Catat: gelembung tersendiri, melayang di atas menu Laporan (ujung kanan bar)
   const catatBubble = (
     <button
       onClick={() => { setOpen(false); setIsModalOpen(true); }}
       aria-label="Catat transaksi"
-      className="shrink-0 w-14 h-14 rounded-full bg-teal-600 text-white flex flex-col items-center justify-center shadow-lg shadow-teal-900/30 border-2 border-white/70 dark:border-white/10 active:scale-95 transition-transform"
+      className="shrink-0 w-14 h-14 rounded-full border-2 btn-accent backdrop-blur-xl flex flex-col items-center justify-center active:scale-95 transition-transform"
     >
       <Plus className="w-5 h-5" />
       <span className="text-[9px] font-extrabold leading-none mt-0.5">Catat</span>
@@ -215,9 +217,9 @@ export default function BottomNav() {
       {isMain ? (
         // Menu utama: bar melayang selalu terlihat
         !isModalOpen && (
-          <nav aria-label="Menu utama" style={bottomStyle} className="fixed left-1/2 -translate-x-1/2 z-[56] w-[calc(100%-24px)] max-w-[400px] flex items-center gap-2">
-            <div className="min-w-0 flex-1">{renderBar('')}</div>
-            {catatBubble}
+          <nav aria-label="Menu utama" style={bottomStyle} className="fixed left-1/2 -translate-x-1/2 z-[56] w-[calc(100%-24px)] max-w-[400px]">
+            <div className="absolute right-0 bottom-[calc(100%+10px)]">{catatBubble}</div>
+            {renderBar('')}
           </nav>
         )
       ) : (

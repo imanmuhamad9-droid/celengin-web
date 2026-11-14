@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import DateField from '@/components/DateField';
 import { Toggle } from '@/components/ui';
-import { X, ArrowDownCircle, ArrowUpCircle, Check, Repeat } from 'lucide-react';
+import { X, ArrowDownCircle, ArrowUpCircle, Check, Repeat, Save } from 'lucide-react';
 import { formatDateID } from '@/lib/utils';
 import { Frequency, describeFrequency } from '@/lib/recurring';
 import { createRecurringRule } from '@/lib/recurringClient';
@@ -181,7 +181,7 @@ export default function EditTransactionModal({ isOpen, onClose, onSuccess, showD
           </div>
 
           {isRoutine && rule && (
-            <div className="p-3 bg-teal-50 dark:bg-teal-900/20 border border-teal-100 dark:border-teal-800 rounded-xl flex items-start gap-2">
+            <div className="p-3 bg-teal-50 dark:bg-teal-900/20 rounded-xl flex items-start gap-2">
               <Repeat className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
               <div>
                 <p className="text-[11px] font-bold text-teal-700 dark:text-teal-400">{describeFrequency(rule)}</p>
@@ -190,14 +190,14 @@ export default function EditTransactionModal({ isOpen, onClose, onSuccess, showD
             </div>
           )}
           {isRoutine && !rule && (
-            <div className="p-3 bg-teal-50 dark:bg-teal-900/20 border border-teal-100 dark:border-teal-800 rounded-xl">
+            <div className="p-3 bg-teal-50 dark:bg-teal-900/20 rounded-xl">
               <p className="text-[10px] font-bold text-teal-700 dark:text-teal-400 mb-2">Tercatat otomatis, ulangi:</p>
               <FrequencyPicker value={frequency} onChange={setFrequency} />
             </div>
           )}
 
-          <button type="submit" disabled={loading} className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-xl transition-all mt-4 disabled:opacity-50">
-            {loading ? 'Menyimpan...' : 'Simpan Perubahan'}
+          <button type="submit" disabled={loading} className="w-full border btn-accent hover:brightness-95 font-bold py-3.5 rounded-[9px] transition-all mt-4 flex items-center justify-center gap-2">
+            <Save className="w-4 h-4" /> {loading ? 'Menyimpan...' : 'Simpan Perubahan'}
           </button>
         </form>
       </div>

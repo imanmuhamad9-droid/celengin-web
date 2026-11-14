@@ -1,5 +1,5 @@
 'use client';
-import { X } from 'lucide-react';
+import { X, Check, Trash2 } from 'lucide-react';
 
 interface DialogProps {
   isOpen: boolean;
@@ -24,14 +24,15 @@ export default function CustomDialog({ isOpen, onClose, onConfirm, title, messag
         
         <div className="flex gap-3">
           {onConfirm && (
-            <button onClick={onClose} className="flex-1 py-3 rounded-xl font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all">
-              Batal
+            <button onClick={onClose} className="flex-1 py-3 rounded-[9px] font-bold border btn-accent-soft hover:brightness-95 active:scale-[0.97] transition-all flex items-center justify-center gap-1.5">
+              <X className="w-4 h-4" /> Batal
             </button>
           )}
-          <button 
-            onClick={() => { if (onConfirm) onConfirm(); onClose(); }} 
-            className={`flex-1 py-3 rounded-xl font-bold text-white transition-all ${type === 'danger' ? 'bg-red-500 hover:bg-red-600' : 'bg-teal-600 hover:bg-teal-700'}`}
+          <button
+            onClick={() => { if (onConfirm) onConfirm(); onClose(); }}
+            className={`flex-1 py-3 rounded-[9px] font-bold text-white hover:brightness-95 active:scale-[0.97] transition-all flex items-center justify-center gap-1.5 ${type === 'danger' ? 'bg-[#DC2626]' : 'border border-transparent btn-accent'}`}
           >
+            {type === 'danger' && onConfirm ? <Trash2 className="w-4 h-4" /> : <Check className="w-4 h-4" />}
             {onConfirm ? 'Ya, Lanjutkan' : 'Tutup'}
           </button>
         </div>
