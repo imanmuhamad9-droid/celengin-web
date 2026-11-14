@@ -23,6 +23,7 @@ export default function EditTransactionModal({ isOpen, onClose, onSuccess, showD
   const [rule, setRule] = useState<any>(null);
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [walletId, setWalletId] = useState('');
+  const [notes, setNotes] = useState('');
 
   // State untuk Presets
   const [presets, setPresets] = useState<any[]>([]);
@@ -40,6 +41,7 @@ export default function EditTransactionModal({ isOpen, onClose, onSuccess, showD
       setPreset(txData.merchant_name);
       setDate(txData.transaction_date);
       setIsRoutine(txData.is_routine);
+      setNotes(txData.notes || '');
       setFrequency('monthly');
       setRule(null);
       fetchPresets();
@@ -100,6 +102,7 @@ export default function EditTransactionModal({ isOpen, onClose, onSuccess, showD
         merchant_name: preset,
         transaction_date: date,
         is_routine: isRoutine,
+        notes: notes.trim() || null,
         ...(ruleId ? { recurring_rule_id: ruleId } : {}),
         ...(walletId ? { wallet_id: walletId } : {})
       }).eq('id', txData.id);
@@ -158,6 +161,11 @@ export default function EditTransactionModal({ isOpen, onClose, onSuccess, showD
                 </button>
               ))}
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Keterangan (opsional)</label>
+            <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={200} placeholder="Cth: beli pulsa buat ibu" className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-teal-500" />
           </div>
 
           <WalletChips wallets={wallets} value={walletId} onChange={setWalletId} />

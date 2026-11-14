@@ -45,6 +45,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
     isRoutine: false,
     frequency: 'monthly' as Frequency,
     walletId: defaultWalletId,
+    notes: '',
     scanned: false
   });
 
@@ -168,6 +169,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
           transaction_date: tx.date,
           is_routine: tx.isRoutine,
           is_ai_scanned: !!tx.scanned,
+          ...(tx.notes?.trim() ? { notes: tx.notes.trim() } : {}),
           ...(ruleId ? { recurring_rule_id: ruleId } : {}),
           ...(tx.walletId ? { wallet_id: tx.walletId } : {})
         });
@@ -321,6 +323,17 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
                       </button>
                     ))}
                   </div>
+                </div>
+
+                <div className="mb-3">
+                  <input
+                    type="text"
+                    value={tx.notes}
+                    onChange={(e) => updateRow(tx.id, 'notes', e.target.value)}
+                    placeholder="Keterangan (opsional), cth: beli pulsa buat ibu"
+                    maxLength={200}
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 text-sm transition-colors"
+                  />
                 </div>
 
                 <WalletChips wallets={wallets} value={tx.walletId} onChange={(id) => updateRow(tx.id, 'walletId', id)} />

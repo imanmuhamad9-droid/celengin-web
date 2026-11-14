@@ -2,12 +2,13 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { User, X, LogOut, Settings, Eye, EyeOff, CalendarDays, Flame, Info, ChevronLeft, ChevronRight, ChevronDown, CheckCircle2, AlertCircle } from 'lucide-react';
+import { User, X, LogOut, Settings, Eye, EyeOff, CalendarDays, Flame, Info, ChevronLeft, ChevronRight, ChevronDown, CheckCircle2, AlertCircle, StickyNote } from 'lucide-react';
 import { formatRupiah, toLocalDateStr } from '@/lib/utils';
 import { diffDays } from '@/lib/recurring';
 import { listWallets, computeWalletBalances, Wallet, WalletTransfer } from '@/lib/wallets';
 import { fetchBadgeContext, syncBadges } from '@/lib/badges';
 import TransactionModal from '@/components/TransactionModal';
+import TransactionDetailModal from '@/components/TransactionDetailModal';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import AppHeader from '@/components/AppHeader';
@@ -54,6 +55,8 @@ const [todayStr, setTodayStr] = useState('');
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [categoryDetails, setCategoryDetails] = useState<any[]>([]);
+
+  const [detailTx, setDetailTx] = useState<any>(null); // transaksi yang sedang dibuka detailnya
 
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
   const [txType, setTxType] = useState<'income' | 'expense'>('expense');
@@ -473,9 +476,12 @@ const currentMonth = calendarMonth;
           ) : (
             <div className="space-y-2">
               {recentTx.map(t => (
-                <button key={t.id} onClick={() => router.push(`/transactions?date=${t.transaction_date}`)} className={`w-full flex items-center justify-between px-3.5 py-3 text-left rounded-2xl border active:scale-[0.99] transition-all ${t.type === 'income' ? 'bg-green-50/70 dark:bg-green-900/10 border-green-100 dark:border-green-900/30' : 'bg-red-50/60 dark:bg-red-900/10 border-red-100 dark:border-red-900/30'}`}>
+                <button key={t.id} onClick={() => setDetailTx(t)} className={`w-full flex items-center justify-between px-3.5 py-3 text-left rounded-2xl border active:scale-[0.99] transition-all ${t.type === 'income' ? 'bg-green-50/70 dark:bg-green-900/10 border-green-100 dark:border-green-900/30' : 'bg-red-50/60 dark:bg-red-900/10 border-red-100 dark:border-red-900/30'}`}>
                   <div className="min-w-0 mr-3">
-                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{t.merchant_name}</p>
+                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate flex items-center gap-1">
+                      <span className="truncate">{t.merchant_name}</span>
+                      {t.notes && <StickyNote className="w-3.5 h-3.5 text-amber-500 shrink-0" aria-label="Ada catatan" />}
+                    </p>
                     <p className="text-[10px] text-gray-400">{new Date(t.transaction_date + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</p>
                   </div>
                   <span className={`text-sm font-bold shrink-0 ${t.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
@@ -693,6 +699,7 @@ const currentMonth = calendarMonth;
           </div>
         </div>
       )}
+      <TransactionDetailModal tx={detailTx} onClose={() => setDetailTx(null)} />
       <TransactionModal isOpen={isTxModalOpen} onClose={() => { setIsTxModalOpen(false); setTxDate(undefined); }} onSuccess={() => fetchData()} showDialog={showDialog} initialType={txType} initialDate={txDate} />
       <CustomDialog isOpen={dialog.isOpen} onClose={closeDialog} title={dialog.title} message={dialog.msg} type={dialog.type} onConfirm={dialog.onConfirm} />
       <BottomNav />
