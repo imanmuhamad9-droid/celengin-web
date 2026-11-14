@@ -59,10 +59,10 @@ export default function SubTabs({ items }: { items: SubTabItem[] }) {
                 if (i >= 0 && cur >= 0) { setPos(i); lastPos[key] = i; }
                 router.replace(it.href);
               }}
-              className={`flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-full text-[10px] font-bold transition-colors duration-300 active:scale-95 ${on ? 'seg-active' : 'text-gray-500 dark:text-gray-400'}`}
+              className={`flex items-center justify-center gap-1.5 py-2.5 rounded-full text-[11px] font-bold transition-colors duration-300 active:scale-95 ${on ? 'seg-active' : 'text-gray-500 dark:text-gray-400'}`}
             >
               {it.icon}
-              <span className="truncate max-w-full px-1">{it.label}</span>
+              <span className="truncate px-0.5">{it.label}</span>
             </button>
           );
         })}
@@ -71,8 +71,8 @@ export default function SubTabs({ items }: { items: SubTabItem[] }) {
   );
 }
 
-// Ikon general (lucide), seragam dengan ikon di bottom nav; warnanya mengikuti teks tab
-const ic = 'w-5 h-5';
+// Ikon general (lucide) di kiri teks, seragam dengan ikon di bottom nav; warnanya mengikuti teks tab
+const ic = 'w-4 h-4 shrink-0';
 
 // Menu Laporan: Tagihan, Riwayat, Laporan
 export const LAPORAN_TABS: SubTabItem[] = [

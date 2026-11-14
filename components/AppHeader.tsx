@@ -64,8 +64,11 @@ export default function AppHeader({ title, onBack, topRight, action, z = 'z-50',
 
   return (
     <>
-      {/* Bar biasa (tidak sticky): ikut tergulung saat halaman di-scroll */}
-      <header className={`relative ${z} px-4 pt-[calc(env(safe-area-inset-top,0px)+10px)] pb-2`}>
+      {/* Bar menempel di atas saat scroll; latar blur supaya konten yang lewat di bawahnya tetap rapi */}
+      <header
+        className={`sticky top-0 ${z} px-4 pt-[calc(env(safe-area-inset-top,0px)+10px)] pb-2`}
+        style={{ background: 'color-mix(in srgb, var(--bg-main) 85%, transparent)', WebkitBackdropFilter: 'blur(14px)', backdropFilter: 'blur(14px)' }}
+      >
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
             {onBack && (
@@ -92,7 +95,7 @@ export default function AppHeader({ title, onBack, topRight, action, z = 'z-50',
 
         {showToolbar && (
           <div className="mt-3 flex items-center justify-between gap-3 min-h-[36px]">
-            <h1 className="font-extrabold text-xl tracking-tight truncate" style={{ color: 'var(--text-main)' }}>{pageTitle}</h1>
+            <h1 className="font-extrabold text-2xl tracking-tight truncate" style={{ color: 'var(--text-main)' }}>{pageTitle}</h1>
             <div className="shrink-0 flex items-center gap-2">
               {info && (
                 <button
