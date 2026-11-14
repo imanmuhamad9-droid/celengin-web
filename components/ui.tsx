@@ -36,7 +36,7 @@ export function Btn({ variant = 'soft', size = 'sm', full = false, className = '
 // Tombol "+ Buat" di pojok kanan atas header, sama di semua menu
 export function HeaderBtn({ onClick, label = 'Buat' }: { onClick: () => void; label?: string }) {
   return (
-    <button type="button" onClick={onClick} className={`${BASE} ${SIZE.sm}glass-teal h-8 min-h-0 px-3`}>
+    <button type="button" onClick={onClick} className={`${BASE} ${SIZE.sm} glass-teal h-8 min-h-0 px-3`}>
       <Plus className="w-4 h-4" /> {label}
     </button>
   );

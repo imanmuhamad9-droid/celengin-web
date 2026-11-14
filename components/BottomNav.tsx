@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Home, History, Plus, Receipt, User } from 'lucide-react';
+import { Home, Flame, Sparkles, Users, Receipt, BarChart3, Plus } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { NOTIF_EVENT, emitNotifChanged, fetchUnreadCount } from '@/lib/notifications';
 import TransactionModal from './TransactionModal';
@@ -9,15 +9,18 @@ import CustomDialog from './CustomDialog';
 
 type NavLink = { key: string; label: string; href: string; icon: typeof Home; also?: string[] };
 
-// Bottom bar kaca melayang: tepat 5 menu. Catat (tengah) membuka modal Catat + OCR yang sudah ada.
-const LEFT: NavLink[] = [
-  { key: 'beranda', label: 'Beranda', href: '/dashboard', icon: Home },
-  { key: 'riwayat', label: 'Riwayat', href: '/transactions', icon: History },
-];
-const RIGHT: NavLink[] = [
+// Bottom bar kaca melayang: 6 menu utama seperti semula; Catat = gelembung terpisah di atas menu Laporan.
+const ITEMS: NavLink[] = [
+  { key: 'home', label: 'Home', href: '/dashboard', icon: Home },
+  { key: 'target', label: 'Tantangan', href: '/spending-challenge', icon: Flame },
+  { key: 'impian', label: 'Impian', href: '/dream-planner', icon: Sparkles },
+  { key: 'bareng', label: 'Kolektif', href: '/couple', icon: Users },
   { key: 'splitbill', label: 'Split Bill', href: '/splitbill', icon: Receipt, also: ['/gantian'] },
-  { key: 'profil', label: 'Profil', href: '/settings', icon: User },
+  { key: 'laporan', label: 'Laporan', href: '/reports', icon: BarChart3, also: ['/transactions', '/bills'] },
 ];
+
+// Posisi sorotan terakhir, di level modul supaya sorotan meluncur antar halaman
+let lastIdx: number | null = null;
 
 const matches = (pathname: string, it: NavLink) =>
   [it.href, ...(it.also || [])].some((p) => pathname === p || pathname.startsWith(p + '/'));
@@ -25,6 +28,14 @@ const matches = (pathname: string, it: NavLink) =>
 export default function BottomNav() {
   const router = useRouter();
   const pathname = usePathname();
+
+  const curIdx = ITEMS.findIndex((it) => matches(pathname, it));
+  const [pos, setPos] = useState<number>(lastIdx !== null && lastIdx >= 0 ? lastIdx : Math.max(curIdx, 0));
+  useEffect(() => {
+    if (curIdx < 0) return;
+    const t = setTimeout(() => { setPos(curIdx); lastIdx = curIdx; }, 30);
+    return () => clearTimeout(t);
+  }, [curIdx]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [unread, setUnread] = useState(0);
@@ -99,26 +110,30 @@ export default function BottomNav() {
   };
 
   const handleSelect = (item: NavLink) => {
-    if (pathname !== item.href) router.push(item.href);
+    if (pathname !== item.href) {
+      // Sorotan langsung meluncur ke menu tujuan selagi halaman dimuat
+      const idx = ITEMS.indexOf(item);
+      if (idx >= 0 && curIdx >= 0) { setPos(idx); lastIdx = idx; }
+      router.push(item.href);
+    }
   };
 
   const renderItem = (item: NavLink) => {
     const active = matches(pathname, item);
     const Icon = item.icon;
-    const showDot = item.key === 'beranda' && unread > 0;
+    const showDot = item.key === 'home' && unread > 0;
     return (
       <button
         key={item.key}
         onClick={() => handleSelect(item)}
         aria-label={item.label}
         aria-current={active ? 'page' : undefined}
-        className={`glass-pressable relative flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-full ${active ? 'text-[color:var(--teal-primary)]' : 'text-[color:var(--text-muted)]'}`}
-        style={active ? { background: 'rgba(44, 143, 126, 0.14)' } : undefined}
+        className={`glass-pressable relative z-10 flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-full ${active ? 'text-[color:var(--teal-primary)]' : 'text-[color:var(--text-muted)]'}`}
       >
-        <Icon className="w-[22px] h-[22px]" strokeWidth={active ? 2.4 : 2} />
-        <span className="text-[10px] font-bold">{item.label}</span>
+        <Icon className="w-5 h-5" strokeWidth={active ? 2.4 : 2} />
+        <span className="text-[9.5px] font-bold whitespace-nowrap">{item.label}</span>
         {showDot && (
-          <span className="glass glass-danger absolute top-0 right-3 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold flex items-center justify-center">
+          <span className="glass glass-danger absolute top-0 right-1.5 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold flex items-center justify-center">
             {unread > 9 ? '9+' : unread}
           </span>
         )}
@@ -134,19 +149,31 @@ export default function BottomNav() {
           style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 14px)' }}
           className="fixed left-1/2 -translate-x-1/2 z-[56] w-[calc(100%-24px)] max-w-[400px]"
         >
-          <div className="glass rounded-full px-2 py-1.5 flex items-center">
-            {LEFT.map(renderItem)}
-            <div className="flex-1 min-w-0 flex flex-col items-center">
-              <button
-                onClick={() => setIsModalOpen(true)}
-                aria-label="Catat transaksi"
-                className="glass glass-solid-teal glass-pressable -mt-7 w-[60px] h-[60px] rounded-full flex items-center justify-center"
-              >
-                <Plus className="w-7 h-7" strokeWidth={2.6} />
-              </button>
-              <span className="text-[10px] font-bold mt-0.5 text-[color:var(--teal-primary)]">Catat</span>
+          {/* Catat: gelembung tersendiri, melayang di atas menu Laporan (ujung kanan bar) */}
+          <div className="absolute right-0 bottom-[calc(100%+10px)]">
+            <button
+              onClick={() => setIsModalOpen(true)}
+              aria-label="Catat transaksi"
+              className="glass glass-solid-teal glass-pressable w-14 h-14 rounded-full flex flex-col items-center justify-center"
+            >
+              <Plus className="w-5 h-5" strokeWidth={2.6} />
+              <span className="text-[9px] font-extrabold leading-none mt-0.5">Catat</span>
+            </button>
+          </div>
+
+          <div className="glass rounded-full px-2 py-1.5">
+            <div className="relative flex items-center">
+              {curIdx >= 0 && (
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-y-0 left-0 transition-transform duration-300 ease-[cubic-bezier(0.34,1.3,0.64,1)]"
+                  style={{ width: `${100 / ITEMS.length}%`, transform: `translateX(${pos * 100}%)` }}
+                >
+                  <span className="block h-full mx-0.5 rounded-full" style={{ background: 'rgba(44, 143, 126, 0.14)', boxShadow: 'inset 0 0 0 1px rgba(44, 143, 126, 0.30)' }} />
+                </span>
+              )}
+              {ITEMS.map(renderItem)}
             </div>
-            {RIGHT.map(renderItem)}
           </div>
         </nav>
       )}

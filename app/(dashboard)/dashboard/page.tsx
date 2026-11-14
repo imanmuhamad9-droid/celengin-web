@@ -20,7 +20,6 @@ import { cycleFor, normalizePayday } from '@/lib/cycle';
 import WeeklyChart from '@/components/WeeklyChart';
 import { getRange } from '@/lib/insights';
 import SkeletonLoader from '@/components/SkeletonLoader';
-import EditTransactionModal from '@/components/EditTransactionModal';
 import GlassCard from '@/components/GlassCard';
 import GlassButton from '@/components/GlassButton';
 import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
@@ -61,8 +60,6 @@ const [todayStr, setTodayStr] = useState('');
   const [categoryDetails, setCategoryDetails] = useState<any[]>([]);
 
   const [detailTx, setDetailTx] = useState<any>(null); // transaksi yang sedang dibuka detailnya
-  const [editTx, setEditTx] = useState<any>(null); // transaksi yang sedang diubah (tombol Ubah)
-  const [isEditTxOpen, setIsEditTxOpen] = useState(false);
 
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
   const [txType, setTxType] = useState<'income' | 'expense'>('expense');
@@ -161,14 +158,6 @@ const [todayStr, setTodayStr] = useState('');
   };
 
   // Simpan tanggal gajian. Kolom belum ada (SQL 08 belum dijalankan) -> beri petunjuk, jangan diam saja.
-  // Hapus transaksi dari daftar Beranda: dialog + query yang sama dengan halaman Riwayat
-  const handleDeleteTx = (id: string) => {
-    showDialog('Hapus Transaksi?', 'Data ini akan dihapus permanen.', 'danger', async () => {
-      await supabase.from('transactions').delete().eq('id', id);
-      fetchData();
-    });
-  };
-
   const handleSavePayday = async (day: number) => {
     if (!user) return;
     const { error } = await supabase.from('profiles').update({ payday: day }).eq('id', user.id);
@@ -435,12 +424,12 @@ const currentMonth = calendarMonth;
 
             <div className="grid grid-cols-2 gap-2.5 mt-4">
               <div className="rounded-2xl px-3.5 py-2.5 bg-white/30 dark:bg-white/5 border border-white/40 dark:border-white/10">
-                <p className="text-[11px] font-semibold flex items-center gap-1 text-[color:var(--text-muted)]"><ArrowDownLeft className="w-3.5 h-3.5" /> Uang Masuk</p>
-                <p className="text-sm font-extrabold mt-0.5" style={{ color: 'var(--text-main)' }}>{isBalanceHidden ? 'Rp ***' : formatRupiah(totalIncome)}</p>
+                <p className="text-[11px] font-semibold flex items-center gap-1 text-[color:var(--text-muted)]"><ArrowDownLeft className="w-3.5 h-3.5 text-green-600 dark:text-green-400" /> Uang Masuk</p>
+                <p className="text-sm font-extrabold mt-0.5 text-green-600 dark:text-green-400">{isBalanceHidden ? 'Rp ***' : formatRupiah(totalIncome)}</p>
               </div>
               <div className="rounded-2xl px-3.5 py-2.5 bg-white/30 dark:bg-white/5 border border-white/40 dark:border-white/10">
-                <p className="text-[11px] font-semibold flex items-center gap-1 text-[color:var(--text-muted)]"><ArrowUpRight className="w-3.5 h-3.5" /> Uang Keluar</p>
-                <p className="text-sm font-extrabold mt-0.5" style={{ color: 'var(--text-main)' }}>{isBalanceHidden ? 'Rp ***' : formatRupiah(totalExpense)}</p>
+                <p className="text-[11px] font-semibold flex items-center gap-1 text-[color:var(--text-muted)]"><ArrowUpRight className="w-3.5 h-3.5 text-red-500 dark:text-red-400" /> Uang Keluar</p>
+                <p className="text-sm font-extrabold mt-0.5 text-red-500 dark:text-red-400">{isBalanceHidden ? 'Rp ***' : formatRupiah(totalExpense)}</p>
               </div>
             </div>
 
@@ -504,14 +493,10 @@ const currentMonth = calendarMonth;
                       </p>
                       <p className="text-[10px] text-[color:var(--text-muted)]">{new Date(t.transaction_date + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} · {t.type === 'income' ? 'Masuk' : 'Keluar'}</p>
                     </div>
-                    <span className="text-sm font-bold shrink-0" style={{ color: 'var(--text-main)' }}>
-                      {t.type === 'income' ? '+' : '-'}{formatRupiah(Number(t.amount))}
+                    <span className={`text-sm font-bold shrink-0 ${t.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
+                      {t.type === 'income' ? '+' : ''}{formatRupiah(Number(t.amount))}
                     </span>
                   </button>
-                  <div className="flex justify-end gap-2 mt-2.5">
-                    <GlassButton variant="teal" size="sm" onClick={() => { setEditTx(t); setIsEditTxOpen(true); }}>Ubah</GlassButton>
-                    <GlassButton variant="danger" size="sm" onClick={() => handleDeleteTx(t.id)}>Hapus</GlassButton>
-                  </div>
                 </div>
               ))}
             </div>
@@ -725,7 +710,6 @@ const currentMonth = calendarMonth;
         </div>
       )}
       <TransactionDetailModal tx={detailTx} onClose={() => setDetailTx(null)} />
-      <EditTransactionModal isOpen={isEditTxOpen} onClose={() => setIsEditTxOpen(false)} onSuccess={() => fetchData()} showDialog={showDialog} txData={editTx} />
       <TransactionModal isOpen={isTxModalOpen} onClose={() => { setIsTxModalOpen(false); setTxDate(undefined); }} onSuccess={() => fetchData()} showDialog={showDialog} initialType={txType} initialDate={txDate} />
       <CustomDialog isOpen={dialog.isOpen} onClose={closeDialog} title={dialog.title} message={dialog.msg} type={dialog.type} onConfirm={dialog.onConfirm} />
       <BottomNav />

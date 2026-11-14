@@ -4,8 +4,6 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Info, Settings, User, X } from 'lucide-react';
 import { MENU_INFO } from '@/lib/menuInfo';
 import { supabase } from '@/lib/supabaseClient';
-import { CelenginMark } from './CelenginLogo';
-import TopSegmented, { MAIN_MENUS } from './TopSegmented';
 
 type Props = {
   /** Nama menu yang sedang dibuka. Dipakai untuk penjelasan ⓘ dan subjudul halaman non-menu (mis. Pengaturan). */
@@ -24,7 +22,7 @@ type Props = {
 };
 
 const SEEN_PREFIX = 'celengin:menu-info-seen:';
-const MENU_LABELS: string[] = MAIN_MENUS.map((m) => m.label);
+const MENU_LABELS: string[] = ['Home', 'Tantangan', 'Impian', 'Kolektif', 'Split Bill', 'Laporan'];
 
 // Foto profil dibaca sekali per sesi halaman (hanya baca, tidak mengubah data)
 let avatarCache: string | null | undefined;
@@ -78,7 +76,7 @@ export default function AppHeader({ title, onBack, topRight, action, z = 'z-50',
               </button>
             )}
             <button onClick={() => router.push('/dashboard')} aria-label="Ke Home" className="glass-pressable flex items-center gap-2.5 min-w-0">
-              <CelenginMark size={36} />
+              <img src="/icon.png" alt="" width={36} height={36} className="rounded-xl object-contain shrink-0" />
               <span className="font-bold text-lg tracking-tight truncate" style={{ color: 'var(--text-main)' }}>Celengin</span>
             </button>
           </div>
@@ -92,10 +90,6 @@ export default function AppHeader({ title, onBack, topRight, action, z = 'z-50',
               {avatar ? <img src={avatar} alt="Foto profil" className="w-full h-full object-cover" /> : <User className="w-[18px] h-[18px]" />}
             </button>
           </div>
-        </div>
-
-        <div className="mt-2.5">
-          <TopSegmented />
         </div>
 
         {showToolbar && (
