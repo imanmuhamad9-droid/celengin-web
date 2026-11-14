@@ -1,22 +1,23 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Home, Flame, Sparkles, Users, Receipt, BarChart3, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { NOTIF_EVENT, emitNotifChanged, fetchUnreadCount } from '@/lib/notifications';
 import TransactionModal from './TransactionModal';
 import CustomDialog from './CustomDialog';
 
-type NavLink = { key: string; label: string; href: string; icon: typeof Home; also?: string[] };
+type NavLink = { key: string; label: string; href: string; img: string; also?: string[] };
 
-// Bottom bar kaca melayang: 6 menu utama seperti semula; Catat = gelembung terpisah di atas menu Laporan.
+// Bottom bar kaca melayang: 6 menu utama dengan ikon gambar; Catat = gelembung terpisah di atas menu Laporan.
+// Ikon tidak dipilih = abu (grayscale) tembus pandang; dipilih = warna penuh (teal).
 const ITEMS: NavLink[] = [
-  { key: 'home', label: 'Home', href: '/dashboard', icon: Home },
-  { key: 'target', label: 'Tantangan', href: '/spending-challenge', icon: Flame },
-  { key: 'impian', label: 'Impian', href: '/dream-planner', icon: Sparkles },
-  { key: 'bareng', label: 'Kolektif', href: '/couple', icon: Users },
-  { key: 'splitbill', label: 'Split Bill', href: '/splitbill', icon: Receipt, also: ['/gantian'] },
-  { key: 'laporan', label: 'Laporan', href: '/reports', icon: BarChart3, also: ['/transactions', '/bills'] },
+  { key: 'home', label: 'Home', href: '/dashboard', img: '/nav-icons/home.png' },
+  { key: 'target', label: 'Tantangan', href: '/spending-challenge', img: '/nav-icons/tantangan.png' },
+  { key: 'impian', label: 'Impian', href: '/dream-planner', img: '/nav-icons/impian.png' },
+  { key: 'bareng', label: 'Kolektif', href: '/couple', img: '/nav-icons/kolektif.png' },
+  { key: 'splitbill', label: 'Split Bill', href: '/splitbill', img: '/nav-icons/splitbill.png', also: ['/gantian'] },
+  { key: 'laporan', label: 'Laporan', href: '/reports', img: '/nav-icons/laporan.png', also: ['/transactions', '/bills'] },
 ];
 
 // Posisi sorotan terakhir, di level modul supaya sorotan meluncur antar halaman
@@ -120,7 +121,6 @@ export default function BottomNav() {
 
   const renderItem = (item: NavLink) => {
     const active = matches(pathname, item);
-    const Icon = item.icon;
     const showDot = item.key === 'home' && unread > 0;
     return (
       <button
@@ -130,7 +130,7 @@ export default function BottomNav() {
         aria-current={active ? 'page' : undefined}
         className={`glass-pressable relative z-10 flex-1 min-w-0 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-full ${active ? 'text-[color:var(--teal-primary)]' : 'text-[color:var(--text-muted)]'}`}
       >
-        <Icon className="w-5 h-5" strokeWidth={active ? 2.4 : 2} />
+        <img src={item.img} alt="" className={`w-6 h-6 object-contain transition-all duration-300 ${active ? '' : 'grayscale opacity-55'}`} />
         <span className="text-[9.5px] font-bold whitespace-nowrap">{item.label}</span>
         {showDot && (
           <span className="glass glass-danger absolute top-0 right-1.5 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold flex items-center justify-center">
