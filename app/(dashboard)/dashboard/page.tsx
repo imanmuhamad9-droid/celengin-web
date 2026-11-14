@@ -2,13 +2,14 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { User, X, LogOut, Settings, Eye, EyeOff, CalendarDays, Flame, Info, ChevronLeft, ChevronRight, ChevronDown, CheckCircle2, AlertCircle, StickyNote } from 'lucide-react';
+import { User, X, LogOut, Settings, Eye, EyeOff, CalendarDays, Flame, Info, ChevronLeft, ChevronRight, ChevronDown, CheckCircle2, AlertCircle } from 'lucide-react';
 import { formatRupiah, toLocalDateStr } from '@/lib/utils';
 import { diffDays } from '@/lib/recurring';
 import { listWallets, computeWalletBalances, Wallet, WalletTransfer } from '@/lib/wallets';
 import { fetchBadgeContext, syncBadges } from '@/lib/badges';
 import TransactionModal from '@/components/TransactionModal';
 import TransactionDetailModal from '@/components/TransactionDetailModal';
+import TxList from '@/components/TxList';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import AppHeader from '@/components/AppHeader';
@@ -52,7 +53,6 @@ const [todayStr, setTodayStr] = useState('');
   const [showCalendar, setShowCalendar] = useState(true);
   const [greeting, setGreeting] = useState('Halo');
   const [paydayLater, setPaydayLater] = useState(false);
-  const [showRecent, setShowRecent] = useState(true); // Daftar Transaksi tampil langsung
   const [showMonth, setShowMonth] = useState(false); // lipatan Statistik
   const [statsView, setStatsView] = useState<'week' | 'month'>('month');
 
@@ -475,36 +475,19 @@ const currentMonth = calendarMonth;
           />
         </div>
 
-        {/* 3) CARD DAFTAR TRANSAKSI */}
+        {/* 3) CARD DAFTAR TRANSAKSI: 5 terakhir, dikelompokkan per tanggal */}
         <GlassCard>
-          <SectionToggle title="Daftar Transaksi" open={showRecent} onToggle={() => setShowRecent(v => !v)} />
-          {showRecent && (<div className="mt-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-bold text-base" style={{ color: 'var(--text-main)' }}>Daftar Transaksi</h2>
+            <button onClick={() => router.push('/transactions')} className="text-sm font-bold flex items-center gap-0.5 text-[color:var(--teal-primary)] active:opacity-70 transition-opacity">
+              Lihat semua <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
           {recentTx.length === 0 ? (
-            <p className="text-xs py-3 text-center text-[color:var(--text-muted)]">Belum ada transaksi. Ketuk Catat untuk mulai.</p>
+            <p className="text-xs py-4 text-center text-[color:var(--text-muted)]">Belum ada transaksi. Ketuk Catat untuk mulai.</p>
           ) : (
-            <div className="space-y-2.5">
-              {recentTx.map(t => (
-                <div key={t.id} className="rounded-2xl px-3.5 py-3 bg-white/30 dark:bg-white/5 border border-white/40 dark:border-white/10">
-                  <button onClick={() => setDetailTx(t)} className="w-full flex items-center justify-between text-left">
-                    <div className="min-w-0 mr-3">
-                      <p className="text-sm font-semibold truncate flex items-center gap-1" style={{ color: 'var(--text-main)' }}>
-                        <span className="truncate">{t.merchant_name}</span>
-                        {t.notes && <StickyNote className="w-3.5 h-3.5 shrink-0 text-[color:var(--text-muted)]" aria-label="Ada catatan" />}
-                      </p>
-                      <p className="text-[10px] text-[color:var(--text-muted)]">{new Date(t.transaction_date + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} · {t.type === 'income' ? 'Masuk' : 'Keluar'}</p>
-                    </div>
-                    <span className={`text-sm font-bold shrink-0 ${t.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
-                      {t.type === 'income' ? '+' : ''}{formatRupiah(Number(t.amount))}
-                    </span>
-                  </button>
-                </div>
-              ))}
-            </div>
+            <TxList transactions={recentTx} onSelect={setDetailTx} />
           )}
-          <GlassButton variant="teal" size="lg" full className="mt-4" onClick={() => router.push('/transactions')}>
-            Buka Riwayat <ChevronRight className="w-4 h-4" />
-          </GlassButton>
-          </div>)}
         </GlassCard>
 
         {/* LIPATAN: STATISTIK (mingguan / bulanan) */}

@@ -2,7 +2,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, Trash2, ArrowDownCircle, ArrowUpCircle, Calendar, XCircle, ChevronLeft, ChevronRight, Edit3 } from 'lucide-react';
+import { Search, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatRupiah } from '@/lib/utils';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
@@ -11,10 +11,9 @@ import DateField from '@/components/DateField';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import EditTransactionModal from '@/components/EditTransactionModal';
 import SubTabs, { RIWAYAT_TABS } from '@/components/SubTabs';
-import { DateStack, RowActions } from '@/components/ui';
+import TxList from '@/components/TxList';
 import GlassCard from '@/components/GlassCard';
 import GlassButton from '@/components/GlassButton';
-import { listWallets, Wallet } from '@/lib/wallets';
 
 function TransactionsContent() {
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -34,7 +33,6 @@ function TransactionsContent() {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTx, setSelectedTx] = useState<any>(null);
-  const [wallets, setWallets] = useState<Wallet[]>([]);
 
   const [dialog, setDialog] = useState({ isOpen: false, title: '', msg: '', type: 'info' as 'info'|'success'|'danger', onConfirm: undefined as (()=>void)|undefined });
   const showDialog = (title: string, msg: string, type: 'info'|'success'|'danger', onConfirm?: () => void) => setDialog({ isOpen: true, title, msg, type, onConfirm });
@@ -51,8 +49,6 @@ function TransactionsContent() {
     try {
       const { data, error } = await supabase.from('transactions').select('*').order('transaction_date', { ascending: false }).order('created_at', { ascending: false });
       if (error) throw error;
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) setWallets(await listWallets(session.user.id, false));
       if (data) {
         setTransactions(data);
         const uniqueCats = Array.from(new Set(data.map((t: any) => t.merchant_name)));
@@ -109,7 +105,6 @@ function TransactionsContent() {
 
   const totalPages = Math.ceil(filteredTx.length / itemsPerPage);
   const paginatedTx = filteredTx.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-  const walletLabel = (id?: string | null) => { const w = wallets.find(x => x.id === id); return w ? `${w.emoji} ${w.name}` : ''; };
 
   if (isLoading) return <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>;
 
@@ -143,30 +138,20 @@ function TransactionsContent() {
           {(startDate || endDate) && <GlassButton variant="danger" size="icon" onClick={() => { setStartDate(''); setEndDate(''); router.push('/transactions'); }} aria-label="Hapus filter tanggal"><XCircle className="w-5 h-5" /></GlassButton>}
         </div>
 
-        <div className="space-y-3">
+        <GlassCard className="!py-2">
           {paginatedTx.length === 0 ? (
-            <GlassCard><p className="text-center text-xs py-6 text-[color:var(--text-muted)]">Tidak ada transaksi yang cocok.</p></GlassCard>
+            <p className="text-center text-xs py-6 text-[color:var(--text-muted)]">Tidak ada transaksi yang cocok.</p>
           ) : (
-            paginatedTx.map(tx => (
-              <GlassCard key={tx.id} className="!p-3 !rounded-3xl">
-                <div className="flex items-center gap-3">
-                  <DateStack ymd={tx.transaction_date} />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-extrabold text-base truncate" style={{ color: 'var(--text-main)' }}>{tx.merchant_name}</p>
-                    <p className="font-extrabold text-base mt-0.5" style={{ color: 'var(--text-main)' }}>{tx.type === 'income' ? '+' : '-'}{formatRupiah(tx.amount)}</p>
-                    {(tx.is_routine || (wallets.length > 1 && tx.wallet_id) || tx.notes) && (
-                      <p className="text-[10px] text-[color:var(--text-muted)] truncate mt-0.5">
-                        {tx.is_routine && <span className="glass glass-teal text-[9px] px-1.5 py-0.5 rounded-full font-bold mr-1">Rutin</span>}
-                        {[wallets.length > 1 ? walletLabel(tx.wallet_id) : '', tx.notes].filter(Boolean).join(' · ')}
-                      </p>
-                    )}
-                  </div>
-                  <RowActions vertical onEdit={() => { setSelectedTx(tx); setIsEditModalOpen(true); }} onDelete={() => handleDelete(tx.id)} />
-                </div>
-              </GlassCard>
-            ))
+            <>
+              <p className="text-[10px] pt-1 px-1 text-[color:var(--text-muted)]">Ketuk transaksi untuk mengubahnya.</p>
+              <TxList
+                transactions={paginatedTx}
+                onSelect={(tx) => { setSelectedTx(tx); setIsEditModalOpen(true); }}
+                onDelete={(tx) => handleDelete(tx.id)}
+              />
+            </>
           )}
-        </div>
+        </GlassCard>
 
         {totalPages > 1 && (
           <div className="flex justify-center items-center gap-4 mt-2">
