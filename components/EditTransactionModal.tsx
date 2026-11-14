@@ -124,17 +124,17 @@ export default function EditTransactionModal({ isOpen, onClose, onSuccess, showD
 
   return (
     <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative max-h-[90vh] overflow-y-auto transition-colors">
+      <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative max-h-[90vh] overflow-y-auto transition-colors">
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
         <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4 text-center">Edit Transaksi</h2>
 
         <form onSubmit={handleSave} className="space-y-4">
           {/* Tipe */}
           <div className="flex gap-2 mb-2">
-            <button type="button" onClick={() => setType('expense')} className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 border-2 transition-all ${type === 'expense' ? 'border-red-500 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}>
+            <button type="button" onClick={() => setType('expense')} className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 border-2 transition-all ${type === 'expense' ? 'glass glass-danger' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}>
               <ArrowUpCircle className="w-4 h-4" /> Keluar
             </button>
-            <button type="button" onClick={() => setType('income')} className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 border-2 transition-all ${type === 'income' ? 'border-green-500 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}>
+            <button type="button" onClick={() => setType('income')} className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 border-2 transition-all ${type === 'income' ? 'glass glass-teal' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}>
               <ArrowDownCircle className="w-4 h-4" /> Masuk
             </button>
           </div>
@@ -154,7 +154,7 @@ export default function EditTransactionModal({ isOpen, onClose, onSuccess, showD
                   key={p.id} 
                   type="button" 
                   onClick={() => setPreset(`${p.emoji} ${p.label}`)} 
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border-2 flex items-center gap-1 ${preset === `${p.emoji} ${p.label}` ? 'bg-teal-50 dark:bg-teal-900/30 border-teal-500 text-teal-700 dark:text-teal-400' : 'bg-gray-50 dark:bg-gray-700 border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'}`}
+                  className={`glass glass-pressable px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1 ${preset === `${p.emoji} ${p.label}` ? 'glass-teal' : 'text-gray-600 dark:text-gray-300'}`}
                 >
                   {p.emoji} {p.label}
                   {preset === `${p.emoji} ${p.label}` && <Check className="w-3 h-3 ml-1" />}
@@ -196,7 +196,7 @@ export default function EditTransactionModal({ isOpen, onClose, onSuccess, showD
             </div>
           )}
 
-          <button type="submit" disabled={loading} className="w-full border btn-accent hover:brightness-95 font-bold py-3.5 rounded-[9px] transition-all mt-4 flex items-center justify-center gap-2">
+          <button type="submit" disabled={loading} className="glass glass-solid-teal w-full border hover:brightness-95 font-bold py-3.5 rounded-[9px] transition-all mt-4 flex items-center justify-center gap-2">
             <Save className="w-4 h-4" /> {loading ? 'Menyimpan...' : 'Simpan Perubahan'}
           </button>
         </form>

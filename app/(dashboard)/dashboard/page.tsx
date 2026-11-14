@@ -20,6 +20,10 @@ import { cycleFor, normalizePayday } from '@/lib/cycle';
 import WeeklyChart from '@/components/WeeklyChart';
 import { getRange } from '@/lib/insights';
 import SkeletonLoader from '@/components/SkeletonLoader';
+import EditTransactionModal from '@/components/EditTransactionModal';
+import GlassCard from '@/components/GlassCard';
+import GlassButton from '@/components/GlassButton';
+import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
@@ -49,7 +53,7 @@ const [todayStr, setTodayStr] = useState('');
   const [showCalendar, setShowCalendar] = useState(true);
   const [greeting, setGreeting] = useState('Halo');
   const [paydayLater, setPaydayLater] = useState(false);
-  const [showRecent, setShowRecent] = useState(false); // Riwayat Terakhir tersembunyi dulu, buka lewat tombol Tampilkan
+  const [showRecent, setShowRecent] = useState(true); // Daftar Transaksi tampil langsung
   const [showMonth, setShowMonth] = useState(false); // lipatan Statistik
   const [statsView, setStatsView] = useState<'week' | 'month'>('month');
 
@@ -57,6 +61,8 @@ const [todayStr, setTodayStr] = useState('');
   const [categoryDetails, setCategoryDetails] = useState<any[]>([]);
 
   const [detailTx, setDetailTx] = useState<any>(null); // transaksi yang sedang dibuka detailnya
+  const [editTx, setEditTx] = useState<any>(null); // transaksi yang sedang diubah (tombol Ubah)
+  const [isEditTxOpen, setIsEditTxOpen] = useState(false);
 
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
   const [txType, setTxType] = useState<'income' | 'expense'>('expense');
@@ -155,6 +161,14 @@ const [todayStr, setTodayStr] = useState('');
   };
 
   // Simpan tanggal gajian. Kolom belum ada (SQL 08 belum dijalankan) -> beri petunjuk, jangan diam saja.
+  // Hapus transaksi dari daftar Beranda: dialog + query yang sama dengan halaman Riwayat
+  const handleDeleteTx = (id: string) => {
+    showDialog('Hapus Transaksi?', 'Data ini akan dihapus permanen.', 'danger', async () => {
+      await supabase.from('transactions').delete().eq('id', id);
+      fetchData();
+    });
+  };
+
   const handleSavePayday = async (day: number) => {
     if (!user) return;
     const { error } = await supabase.from('profiles').update({ payday: day }).eq('id', user.id);
@@ -365,19 +379,15 @@ const currentMonth = calendarMonth;
   const mostExpensiveDay = daysArray.reduce((prev, current) => (prev.expense > current.expense) ? prev : current, daysArray[0]);
 
   if (isLoading || !currentMonthStr) return (
-    <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950"><SkeletonLoader /></div>
+    <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>
   );
 
   return (
-    <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-40 transition-colors">
-      <AppHeader topRight={
-        <div className="flex items-center gap-2">
-          <NotificationBell userId={user?.id ?? null} local={localNotifs} />
-          <button onClick={() => router.push('/settings')} aria-label="Pengaturan" className="w-9 h-9 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-teal-600 transition-all active:scale-95">
-            <Settings className="w-5 h-5" />
-          </button>
-        </div>
-      } />
+    <div className="min-h-screen bg-[var(--bg-main)] pb-40 transition-colors">
+      <AppHeader
+        topRight={<NotificationBell userId={user?.id ?? null} local={localNotifs} />}
+        onAvatarClick={() => setIsProfileModalOpen(true)}
+      />
 
       <main className="px-5 mt-4 space-y-4">
 
@@ -390,71 +400,73 @@ const currentMonth = calendarMonth;
           </div>
           <div className="flex items-center gap-3 shrink-0">
             {dailyAllowance > 0 && (
-              <button onClick={() => setShowInfoStreak(true)} aria-label="Streak hemat" className="flex items-center gap-1 bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800/40 text-orange-600 dark:text-orange-400 text-xs font-bold px-2.5 py-1.5 rounded-full active:scale-95 transition-transform">
+              <button onClick={() => setShowInfoStreak(true)} aria-label="Streak hemat" className="glass glass-teal flex items-center gap-1 border text-xs font-bold px-2.5 py-1.5 rounded-full active:scale-95 transition-transform">
                 <Flame className="w-3.5 h-3.5" /> {streak}
               </button>
             )}
-            <button
-              onClick={() => setIsProfileModalOpen(true)}
-              className="w-12 h-12 rounded-full border-[3px] border-teal-500 shadow-md overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:scale-105 transition-all"
-            >
-              {profile?.avatar_url ? (
-                <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-              ) : (
-                <User className="w-5 h-5 text-gray-400" />
-              )}
-            </button>
           </div>
         </div>
 
-        {/* KARTU SALDO (latar berubah Aman / Kritis sesuai batas saldo minimum) */}
-        <div className="rounded-3xl p-6 text-white shadow-lg relative overflow-hidden bg-teal-700">
-          {profile?.safe_limit && (
+        {/* 1) KOTAK RINGKASAN KEUANGAN (Liquid Glass; latar kartu kustom dari profil tetap dipakai di bawah kaca) */}
+        <GlassCard padded={false} className="relative overflow-hidden">
+          {profile?.safe_limit && profile?.bg_safe_url && (
             <div className="absolute inset-0 z-0" style={{ backgroundImage: balance >= profile.safe_limit ? `url(${profile.bg_safe_url})` : `url(${profile.bg_low_url})`, backgroundSize: balance >= profile.safe_limit ? `${(profile.bg_safe_zoom || 1) * 100}%` : `${(profile.bg_low_zoom || 1) * 100}%`, backgroundPosition: balance >= profile.safe_limit ? (profile.bg_safe_pos || 'center') : (profile.bg_low_pos || 'center'), backgroundRepeat: 'no-repeat' }}></div>
           )}
-          <div className="absolute inset-0 bg-black/40 z-0"></div>
+          {profile?.safe_limit && profile?.bg_safe_url && <div className="absolute inset-0 z-0 bg-white/60 dark:bg-black/50"></div>}
 
-          {profile?.safe_limit && (
-            <div className={`absolute top-4 right-4 z-20 px-3 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-sm backdrop-blur-md border border-white/20 ${balance >= profile.safe_limit ? 'bg-green-500/80 text-white' : 'bg-red-500/80 text-white'}`}>
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-              {balance >= profile.safe_limit ? 'Saldo Aman' : 'Saldo Kritis'}
-            </div>
-          )}
-
-          <div className="relative z-10">
-            <div className="flex items-center gap-2 mb-1">
-              <p className="text-white/80 text-xs font-medium">Total Saldo Kamu</p>
-              <button onClick={() => setIsBalanceHidden(!isBalanceHidden)} className="bg-black/20 hover:bg-black/40 p-1 rounded-full text-white transition-all backdrop-blur-sm">
-                {isBalanceHidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-              </button>
-            </div>
-            <h3 className="text-3xl font-extrabold mb-3">{isBalanceHidden ? 'Rp ******' : formatRupiah(balance)}</h3>
-
-            <div className="flex gap-6 text-sm mb-3">
-              <div><p className="text-white/80 text-[10px] uppercase font-bold">Masuk</p><p className="font-bold text-green-300">{isBalanceHidden ? '+Rp ***' : `+${formatRupiah(totalIncome)}`}</p></div>
-              <div><p className="text-white/80 text-[10px] uppercase font-bold">Keluar</p><p className="font-bold text-red-300">{isBalanceHidden ? '-Rp ***' : `-${formatRupiah(totalExpense)}`}</p></div>
-            </div>
-
-            {/* Status jatah hari ini */}
-            {primaryTarget ? (
-              <button onClick={() => setShowInfoJatah(true)} className="w-full bg-white/15 backdrop-blur-sm rounded-2xl px-4 py-3 flex items-center justify-between text-left active:scale-[0.99] transition-transform">
-                <div className="min-w-0">
-                  <p className="text-sm font-bold">{todayExpenseAmt > dailyAllowance ? 'Jatah hari ini habis' : jatahHariIni < dailyAllowance * 0.25 ? 'Hati-hati, jatah tinggal sedikit' : 'Aman, hari ini boleh jajan'}</p>
-                  <p className="text-[11px] text-white/80">{todayExpenseAmt > dailyAllowance ? `Lewat ${formatRupiah(todayExpenseAmt - dailyAllowance)}` : `${formatRupiah(jatahHariIni)} lagi`} · target bulan ini {targetUsedPct}%</p>
+          <div className="relative z-10 p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="text-xs font-semibold text-[color:var(--text-muted)]">Uang Sisa</p>
+                  <GlassButton size="icon" onClick={() => setIsBalanceHidden(!isBalanceHidden)} aria-label={isBalanceHidden ? 'Tampilkan saldo' : 'Sembunyikan saldo'} className="!w-7 !h-7 text-[color:var(--text-muted)]">
+                    {isBalanceHidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </GlassButton>
                 </div>
-                {todayExpenseAmt > dailyAllowance ? <AlertCircle className="w-6 h-6 text-red-300 shrink-0" /> : <CheckCircle2 className="w-6 h-6 text-green-300 shrink-0" />}
+                <h3 className="text-3xl font-extrabold tracking-tight" style={{ color: 'var(--text-main)' }}>{isBalanceHidden ? 'Rp ******' : formatRupiah(balance)}</h3>
+              </div>
+              {profile?.safe_limit && (
+                <span className={`glass shrink-0 px-3 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 ${balance >= profile.safe_limit ? 'glass-teal' : 'glass-danger'}`}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></span>
+                  {balance >= profile.safe_limit ? 'Aman' : 'Krisis'}
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5 mt-4">
+              <div className="rounded-2xl px-3.5 py-2.5 bg-white/30 dark:bg-white/5 border border-white/40 dark:border-white/10">
+                <p className="text-[11px] font-semibold flex items-center gap-1 text-[color:var(--text-muted)]"><ArrowDownLeft className="w-3.5 h-3.5" /> Uang Masuk</p>
+                <p className="text-sm font-extrabold mt-0.5" style={{ color: 'var(--text-main)' }}>{isBalanceHidden ? 'Rp ***' : formatRupiah(totalIncome)}</p>
+              </div>
+              <div className="rounded-2xl px-3.5 py-2.5 bg-white/30 dark:bg-white/5 border border-white/40 dark:border-white/10">
+                <p className="text-[11px] font-semibold flex items-center gap-1 text-[color:var(--text-muted)]"><ArrowUpRight className="w-3.5 h-3.5" /> Uang Keluar</p>
+                <p className="text-sm font-extrabold mt-0.5" style={{ color: 'var(--text-main)' }}>{isBalanceHidden ? 'Rp ***' : formatRupiah(totalExpense)}</p>
+              </div>
+            </div>
+
+            {/* Pengeluaran yang diperbolehkan hari ini */}
+            {primaryTarget ? (
+              <button onClick={() => setShowInfoJatah(true)} className="glass-pressable mt-3 w-full rounded-2xl px-4 py-3 flex items-center justify-between gap-3 text-left bg-white/30 dark:bg-white/5 border border-white/40 dark:border-white/10">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold text-[color:var(--text-muted)]">Boleh dipakai hari ini</p>
+                  <p className="text-lg font-extrabold leading-tight" style={{ color: 'var(--text-main)' }}>{isBalanceHidden ? 'Rp ***' : formatRupiah(jatahHariIni)}</p>
+                  <p className="text-[11px] text-[color:var(--text-muted)]">
+                    {todayExpenseAmt > dailyAllowance ? `Jatah habis, lewat ${formatRupiah(todayExpenseAmt - dailyAllowance)}` : jatahHariIni < dailyAllowance * 0.25 ? 'Jatah tinggal sedikit' : `Dari jatah ${formatRupiah(dailyAllowance)} per hari`} · target bulan ini {targetUsedPct}%
+                  </p>
+                </div>
+                {todayExpenseAmt > dailyAllowance ? <AlertCircle className="w-6 h-6 shrink-0 text-[color:var(--text-muted)]" /> : <CheckCircle2 className="w-6 h-6 shrink-0 text-[color:var(--teal-primary)]" />}
               </button>
             ) : (
-              <button onClick={() => router.push('/spending-challenge')} className="w-full bg-white/15 backdrop-blur-sm rounded-2xl px-4 py-3 flex items-center justify-between text-left">
+              <button onClick={() => router.push('/spending-challenge')} className="glass-pressable mt-3 w-full rounded-2xl px-4 py-3 flex items-center justify-between text-left bg-white/30 dark:bg-white/5 border border-white/40 dark:border-white/10">
                 <div>
-                  <p className="text-sm font-bold">Atur tantangan utama</p>
-                  <p className="text-[11px] text-white/80">Biar kamu tahu boleh jajan berapa tiap hari</p>
+                  <p className="text-sm font-bold" style={{ color: 'var(--text-main)' }}>Atur tantangan utama</p>
+                  <p className="text-[11px] text-[color:var(--text-muted)]">Biar kamu tahu boleh jajan berapa tiap hari</p>
                 </div>
-                <ChevronRight className="w-5 h-5 shrink-0" />
+                <ChevronRight className="w-5 h-5 shrink-0 text-[color:var(--text-muted)]" />
               </button>
             )}
           </div>
-        </div>
+        </GlassCard>
 
         {/* PINTASAN (chip) */}
 
@@ -474,38 +486,44 @@ const currentMonth = calendarMonth;
           />
         </div>
 
-        {/* TERAKHIR */}
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
-          <SectionToggle title="Riwayat Terakhir" open={showRecent} onToggle={() => setShowRecent(v => !v)} />
+        {/* 3) CARD DAFTAR TRANSAKSI */}
+        <GlassCard>
+          <SectionToggle title="Daftar Transaksi" open={showRecent} onToggle={() => setShowRecent(v => !v)} />
           {showRecent && (<div className="mt-3">
           {recentTx.length === 0 ? (
-            <p className="text-xs text-gray-400 dark:text-gray-500 py-3 text-center">Belum ada transaksi. Ketuk Catat untuk mulai.</p>
+            <p className="text-xs py-3 text-center text-[color:var(--text-muted)]">Belum ada transaksi. Ketuk Catat untuk mulai.</p>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {recentTx.map(t => (
-                <button key={t.id} onClick={() => setDetailTx(t)} className={`w-full flex items-center justify-between px-3.5 py-3 text-left rounded-2xl active:scale-[0.99] transition-all ${t.type === 'income' ? 'bg-green-50 dark:bg-green-900/15' : 'bg-red-50 dark:bg-red-900/15'}`}>
-                  <div className="min-w-0 mr-3">
-                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate flex items-center gap-1">
-                      <span className="truncate">{t.merchant_name}</span>
-                      {t.notes && <StickyNote className="w-3.5 h-3.5 text-amber-500 shrink-0" aria-label="Ada catatan" />}
-                    </p>
-                    <p className="text-[10px] text-gray-400">{new Date(t.transaction_date + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</p>
+                <div key={t.id} className="rounded-2xl px-3.5 py-3 bg-white/30 dark:bg-white/5 border border-white/40 dark:border-white/10">
+                  <button onClick={() => setDetailTx(t)} className="w-full flex items-center justify-between text-left">
+                    <div className="min-w-0 mr-3">
+                      <p className="text-sm font-semibold truncate flex items-center gap-1" style={{ color: 'var(--text-main)' }}>
+                        <span className="truncate">{t.merchant_name}</span>
+                        {t.notes && <StickyNote className="w-3.5 h-3.5 shrink-0 text-[color:var(--text-muted)]" aria-label="Ada catatan" />}
+                      </p>
+                      <p className="text-[10px] text-[color:var(--text-muted)]">{new Date(t.transaction_date + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} · {t.type === 'income' ? 'Masuk' : 'Keluar'}</p>
+                    </div>
+                    <span className="text-sm font-bold shrink-0" style={{ color: 'var(--text-main)' }}>
+                      {t.type === 'income' ? '+' : '-'}{formatRupiah(Number(t.amount))}
+                    </span>
+                  </button>
+                  <div className="flex justify-end gap-2 mt-2.5">
+                    <GlassButton variant="teal" size="sm" onClick={() => { setEditTx(t); setIsEditTxOpen(true); }}>Ubah</GlassButton>
+                    <GlassButton variant="danger" size="sm" onClick={() => handleDeleteTx(t.id)}>Hapus</GlassButton>
                   </div>
-                  <span className={`text-sm font-bold shrink-0 ${t.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
-                    {formatRupiah(Number(t.amount))}
-                  </span>
-                </button>
+                </div>
               ))}
             </div>
           )}
-          <button onClick={() => router.push('/transactions')} className="mt-4 w-full h-11 rounded-[9px] border btn-accent hover:brightness-95 text-sm font-bold active:scale-[0.98] transition-all flex items-center justify-center gap-1.5">
+          <GlassButton variant="teal" size="lg" full className="mt-4" onClick={() => router.push('/transactions')}>
             Buka Riwayat <ChevronRight className="w-4 h-4" />
-          </button>
+          </GlassButton>
           </div>)}
-        </div>
+        </GlassCard>
 
         {/* LIPATAN: STATISTIK (mingguan / bulanan) */}
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
+        <GlassCard>
           <SectionToggle title="Statistik" open={showMonth} onToggle={() => setShowMonth(v => !v)} />
         {showMonth && (
           <div className="mt-4">
@@ -526,8 +544,8 @@ const currentMonth = calendarMonth;
             <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
               <div className="mb-4">
                 <div className="flex p-1 rounded-2xl bg-teal-500/10 border border-teal-500/20">
-                  <button onClick={() => setStatsView('week')} className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition-all active:scale-95 ${statsView === 'week' ? 'bg-teal-600 text-white shadow-sm' : 'text-gray-600 dark:text-gray-300'}`}>Mingguan</button>
-                  <button onClick={() => setStatsView('month')} className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition-all active:scale-95 ${statsView === 'month' ? 'bg-teal-600 text-white shadow-sm' : 'text-gray-600 dark:text-gray-300'}`}>{payday > 1 ? 'Siklus Gajian' : 'Bulanan'}</button>
+                  <button onClick={() => setStatsView('week')} className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition-all active:scale-95 ${statsView === 'week' ? 'glass glass-teal' : 'text-gray-600 dark:text-gray-300'}`}>Mingguan</button>
+                  <button onClick={() => setStatsView('month')} className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition-all active:scale-95 ${statsView === 'month' ? 'glass glass-teal' : 'text-gray-600 dark:text-gray-300'}`}>{payday > 1 ? 'Siklus Gajian' : 'Bulanan'}</button>
                 </div>
                 <p className="text-[10px] text-gray-400 dark:text-gray-500 text-center mt-2">
                   {statsView === 'week' && weekRange ? `Minggu ini: ${weekRange.label}` : payday > 1 && cycle ? cycle.label : 'Bulan ini'}
@@ -607,7 +625,7 @@ const currentMonth = calendarMonth;
         })()}
           </div>
         )}
-        </div>
+        </GlassCard>
 
       </main>
 
@@ -625,10 +643,10 @@ const currentMonth = calendarMonth;
             <div className="px-5 pb-5 -mt-6 text-center relative z-10">
               <h2 className="text-lg font-bold text-gray-800 dark:text-white bg-white dark:bg-gray-700 rounded-xl py-2 shadow-sm mb-5 inline-block px-6 border border-gray-100 dark:border-gray-600">{profile?.nickname || profile?.full_name || user?.email?.split('@')[0]}</h2>
               <div className="space-y-3">
-                <button onClick={() => { setIsProfileModalOpen(false); router.push('/settings'); }} className="w-full h-12 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-sm shadow-md shadow-teal-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                <button onClick={() => { setIsProfileModalOpen(false); router.push('/settings'); }} className="glass glass-solid-teal w-full h-12 rounded-2xl font-bold text-sm active:scale-[0.98] transition-all flex items-center justify-center gap-2">
                   <Settings className="w-4 h-4" /> Pengaturan
                 </button>
-                <button onClick={() => { setIsProfileModalOpen(false); showDialog('Keluar dari Celengin?', 'Kamu perlu masuk lagi nanti untuk membuka akunmu.', 'danger', handleLogout); }} className="w-full h-12 rounded-2xl bg-white dark:bg-gray-700 border border-red-200 dark:border-red-900/50 text-red-500 font-bold text-sm active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                <button onClick={() => { setIsProfileModalOpen(false); showDialog('Keluar dari Celengin?', 'Kamu perlu masuk lagi nanti untuk membuka akunmu.', 'danger', handleLogout); }} className="glass glass-danger w-full h-12 rounded-2xl border font-bold text-sm active:scale-[0.98] transition-all flex items-center justify-center gap-2">
                   <LogOut className="w-4 h-4" /> Keluar
                 </button>
               </div>
@@ -639,7 +657,7 @@ const currentMonth = calendarMonth;
 
       {selectedCategory && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative max-h-[80vh] flex flex-col transition-colors">
+          <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative max-h-[80vh] flex flex-col transition-colors">
             <button onClick={() => setSelectedCategory(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-center mb-1 text-gray-800 dark:text-white">Detail Kategori</h2>
             <p className="text-xs text-center text-gray-500 dark:text-gray-400 mb-4">{selectedCategory}</p>
@@ -662,7 +680,7 @@ const currentMonth = calendarMonth;
       {/* MODAL EDUKASI JATAH HARIAN */}
       {showInfoJatah && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative transition-colors">
+          <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative transition-colors">
             <button onClick={() => setShowInfoJatah(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-2">Apa itu Jatah Hari Ini?</h2>
             <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
@@ -686,7 +704,7 @@ const currentMonth = calendarMonth;
       {/* MODAL EDUKASI STREAK */}
       {showInfoStreak && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative transition-colors">
+          <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative transition-colors">
             <button onClick={() => setShowInfoStreak(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-2">Apa itu Streak Hemat?</h2>
             <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
@@ -707,6 +725,7 @@ const currentMonth = calendarMonth;
         </div>
       )}
       <TransactionDetailModal tx={detailTx} onClose={() => setDetailTx(null)} />
+      <EditTransactionModal isOpen={isEditTxOpen} onClose={() => setIsEditTxOpen(false)} onSuccess={() => fetchData()} showDialog={showDialog} txData={editTx} />
       <TransactionModal isOpen={isTxModalOpen} onClose={() => { setIsTxModalOpen(false); setTxDate(undefined); }} onSuccess={() => fetchData()} showDialog={showDialog} initialType={txType} initialDate={txDate} />
       <CustomDialog isOpen={dialog.isOpen} onClose={closeDialog} title={dialog.title} message={dialog.msg} type={dialog.type} onConfirm={dialog.onConfirm} />
       <BottomNav />

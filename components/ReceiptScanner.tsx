@@ -70,7 +70,7 @@ export default function ReceiptScanner({ onResult, showDialog }: Props) {
   return (
     <div className="rounded-2xl border border-teal-200 dark:border-teal-800 bg-teal-50/60 dark:bg-teal-900/20 p-3">
       <div className="flex items-start gap-2.5">
-        <div className="w-9 h-9 shrink-0 rounded-xl bg-white dark:bg-gray-800 text-teal-600 dark:text-teal-400 flex items-center justify-center shadow-sm"><ScanLine className="w-5 h-5" /></div>
+        <div className="w-9 h-9 shrink-0 rounded-xl glass text-teal-600 dark:text-teal-400 flex items-center justify-center shadow-sm"><ScanLine className="w-5 h-5" /></div>
         <div className="min-w-0">
           <p className="text-sm font-bold text-gray-800 dark:text-gray-100">Scan struk</p>
           <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-snug">Foto struknya, item dan harga terisi otomatis. Hasilnya bisa kamu perbaiki. Gratis, foto tidak dikirim ke mana-mana.</p>
@@ -93,15 +93,15 @@ export default function ReceiptScanner({ onResult, showDialog }: Props) {
         </div>
       ) : (
         <div className="flex gap-2 mt-3">
-          <button type="button" onClick={pick(cameraRef)} className="flex-1 h-11 rounded-[9px] border btn-accent text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"><Camera className="w-4 h-4" /> Foto struk</button>
-          <button type="button" onClick={pick(galleryRef)} className="flex-1 h-11 rounded-[9px] border btn-accent-soft text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"><ImageIcon className="w-4 h-4" /> Dari galeri</button>
+          <button type="button" onClick={pick(cameraRef)} className="glass glass-solid-teal flex-1 h-11 rounded-[9px] border text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"><Camera className="w-4 h-4" /> Foto struk</button>
+          <button type="button" onClick={pick(galleryRef)} className="glass glass-teal flex-1 h-11 rounded-[9px] border text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"><ImageIcon className="w-4 h-4" /> Dari galeri</button>
         </div>
       )}
 
       {!busy && rawText && (
         <div className="mt-2.5">
           <button type="button" onClick={() => setShowRaw((v) => !v)} className="text-[10px] font-bold text-teal-700 dark:text-teal-300 underline underline-offset-2">{showRaw ? 'Sembunyikan teks yang terbaca' : 'Lihat teks yang terbaca'}</button>
-          {showRaw && <pre className="mt-1.5 max-h-40 overflow-auto whitespace-pre-wrap break-words text-[10px] leading-snug bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-xl p-2.5 border border-gray-100 dark:border-gray-700">{rawText}</pre>}
+          {showRaw && <pre className="mt-1.5 max-h-40 overflow-auto whitespace-pre-wrap break-words text-[10px] leading-snug glass glass-sheet text-gray-600 dark:text-gray-300 rounded-xl p-2.5 border border-gray-100 dark:border-gray-700">{rawText}</pre>}
         </div>
       )}
     </div>

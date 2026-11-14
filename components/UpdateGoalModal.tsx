@@ -32,7 +32,7 @@ export default function UpdateGoalModal({ isOpen, onClose, onSave, goal }: Props
 
   return (
     <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
-      <form onSubmit={submit} className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative shadow-2xl">
+      <form onSubmit={submit} className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative shadow-2xl">
         <button type="button" onClick={onClose} aria-label="Tutup" className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><X className="w-5 h-5" /></button>
 
         <h3 className="text-xl font-extrabold text-center text-gray-900 dark:text-white">Update Tabungan</h3>
@@ -41,10 +41,10 @@ export default function UpdateGoalModal({ isOpen, onClose, onSave, goal }: Props
         </p>
 
         <div className="grid grid-cols-2 gap-3 mb-5">
-          <button type="button" onClick={() => setAction('add')} className={`flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold border-2 transition-all ${action === 'add' ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400' : 'border-gray-200 dark:border-gray-600 text-gray-400 dark:text-gray-500'}`}>
+          <button type="button" onClick={() => setAction('add')} className={`flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold border-2 transition-all ${action === 'add' ? 'glass glass-teal' : 'border-gray-200 dark:border-gray-600 text-gray-400 dark:text-gray-500'}`}>
             <ArrowDownCircle className="w-4 h-4" /> Nabung
           </button>
-          <button type="button" onClick={() => setAction('subtract')} className={`flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold border-2 transition-all ${action === 'subtract' ? 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400' : 'border-gray-200 dark:border-gray-600 text-gray-400 dark:text-gray-500'}`}>
+          <button type="button" onClick={() => setAction('subtract')} className={`flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold border-2 transition-all ${action === 'subtract' ? 'glass glass-danger' : 'border-gray-200 dark:border-gray-600 text-gray-400 dark:text-gray-500'}`}>
             <ArrowUpCircle className="w-4 h-4" /> Kepake
           </button>
         </div>
@@ -72,7 +72,7 @@ export default function UpdateGoalModal({ isOpen, onClose, onSave, goal }: Props
         <button
           type="submit"
           disabled={raw <= 0 || saving}
-          className={`w-full py-3.5 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 ${action === 'add' ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'}`}
+          className={`w-full py-3.5 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 ${action === 'add' ? 'glass glass-teal' : 'glass glass-danger'}`}
         >
           {saving && <Loader2 className="w-4 h-4 animate-spin" />} Simpan Perubahan
         </button>

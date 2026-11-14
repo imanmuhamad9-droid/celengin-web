@@ -69,7 +69,7 @@ export default function CardBgEditor({ safe, low, uploading, onChange, onPick }:
       </div>
 
       {!slot.url ? (
-        <button type="button" onClick={() => onPick(side)} className="w-full bg-gray-50 dark:bg-gray-700 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl flex flex-col items-center justify-center text-gray-500 dark:text-gray-300 hover:border-teal-500 transition-all text-xs font-semibold gap-1" style={{ aspectRatio: '1.9 / 1' }}>
+        <button type="button" onClick={() => onPick(side)} className="glass glass-teal w-full border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-gray-500 dark:text-gray-300 transition-all text-xs font-semibold gap-1" style={{ aspectRatio: '1.9 / 1' }}>
           {uploading[side] ? 'Mengunggah...' : <><Upload className="w-5 h-5" /> Pilih foto</>}
         </button>
       ) : (
@@ -87,13 +87,13 @@ export default function CardBgEditor({ safe, low, uploading, onChange, onPick }:
               <p className="text-[11px] text-white/80">Total Saldo Kamu</p>
               <p className="text-2xl font-extrabold">{side === 'safe' ? 'Rp 1.250.000' : 'Rp 85.000'}</p>
             </div>
-            <div className={`absolute right-3 top-3 px-3 py-1 rounded-full text-[10px] font-bold text-white pointer-events-none ${side === 'safe' ? 'bg-green-500/80' : 'bg-red-500/80'}`}>{side === 'safe' ? 'Saldo Aman' : 'Saldo Kritis'}</div>
+            <div className={`absolute right-3 top-3 px-3 py-1 rounded-full text-[10px] font-bold pointer-events-none glass ${side === 'safe' ? 'glass-teal' : 'glass-danger'}`}>{side === 'safe' ? 'Aman' : 'Krisis'}</div>
           </div>
 
           <div className="flex items-center gap-3 mt-3">
-            <button type="button" onClick={() => setZoom(zoom - 0.2)} aria-label="Perkecil" className="w-9 h-9 shrink-0 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-200 flex items-center justify-center"><Minus className="w-4 h-4" /></button>
+            <button type="button" onClick={() => setZoom(zoom - 0.2)} aria-label="Perkecil" className="glass w-9 h-9 shrink-0 rounded-xl text-gray-600 dark:text-gray-200 flex items-center justify-center"><Minus className="w-4 h-4" /></button>
             <input type="range" min={1} max={3} step={0.05} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} className="flex-1 accent-teal-600" aria-label="Zoom" />
-            <button type="button" onClick={() => setZoom(zoom + 0.2)} aria-label="Perbesar" className="w-9 h-9 shrink-0 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-200 flex items-center justify-center"><Plus className="w-4 h-4" /></button>
+            <button type="button" onClick={() => setZoom(zoom + 0.2)} aria-label="Perbesar" className="glass w-9 h-9 shrink-0 rounded-xl text-gray-600 dark:text-gray-200 flex items-center justify-center"><Plus className="w-4 h-4" /></button>
           </div>
 
           <div className="flex gap-2 mt-3">

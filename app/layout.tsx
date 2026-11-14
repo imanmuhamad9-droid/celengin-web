@@ -55,11 +55,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body className={`${jakarta.className} bg-[#faf8ff] dark:bg-gray-950 text-gray-800 dark:text-gray-100 antialiased transition-colors duration-300`}>
+      <body className={`${jakarta.className} bg-[var(--bg-main)] text-gray-800 dark:text-gray-100 antialiased transition-colors duration-300`}>
         <PwaRegister />
         <AutoRefresh />
         <MoneyRain />
-        <div className="mx-auto max-w-md min-h-screen shadow-2xl relative transition-colors duration-300 bg-[#faf8ff] dark:bg-gray-950">
+        <div className="mx-auto max-w-md min-h-screen shadow-2xl relative transition-colors duration-300 bg-[var(--bg-main)]">
           {children}
         </div>
       </body>

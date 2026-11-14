@@ -87,68 +87,129 @@ html[data-accent="biru"] {
 }
 html.dark[data-accent="biru"] { --accent-text: #93c5fd; }
 
-/* Gaya tombol (Pengaturan -> Tampilan -> Gaya tombol), mengikuti design system:
-   Bold (bawaan): latar pekat, tulisan putih. Soft: outline, putih berbingkai warna.
-   btn-accent = tombol utama (Simpan, Catat), btn-accent-soft = tombol pendukung (outline). */
-.btn-accent {
-  background: var(--accent-bold);
-  background: var(--accent-grad);
+/* Kelas lama (btn-accent*, seg-*) dipetakan ke Liquid Glass supaya tombol/segmen yang masih memakainya
+   otomatis ikut tampil kaca. Warna mengikuti token teal #2C8F7E. */
+.btn-accent {                       /* aksi utama (Simpan, submit) */
+  background: var(--teal-primary);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-transform: translateZ(0);
   border-color: transparent;
   color: #ffffff;
-  box-shadow: var(--accent-shadow);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 8px 20px rgba(44, 143, 126, 0.30);
 }
-
-/* Tombol teal bergradien dengan garis penanda kategori (Pasangan pink, Teman biru) */
-.btn-accent-line-pink {
-  background: var(--accent-grad);
-  color: #ffffff;
-  border-color: #ec4899;
+.btn-accent-soft,
+html[data-btn="soft"] .btn-accent {  /* aksi pendukung: kaca teal */
+  background: var(--teal-tint);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-transform: translateZ(0);
+  border-color: var(--teal-tint-border);
+  color: var(--teal-primary);
+  box-shadow: var(--glass-highlight);
 }
-.btn-accent-line-blue {
-  background: var(--accent-grad);
-  color: #ffffff;
-  border-color: #3b82f6;
-}
-html[data-btn="soft"] .btn-accent {
-  background: #ffffff;
-  border-color: var(--accent-bold);
-  color: var(--accent-text);
-  box-shadow: none;
-}
-html.dark[data-btn="soft"] .btn-accent { background: #1f2937; }
-
-.btn-accent-soft {
-  background: #ffffff;
-  border-color: var(--accent-bold);
-  color: var(--accent-text);
-}
-html.dark .btn-accent-soft { background: #1f2937; }
-
-/* Disabled sesuai design system (#CBD5E1, tulisan putih) */
 .btn-accent:disabled,
-.btn-accent-soft:disabled {
-  background: #CBD5E1;
-  color: #ffffff;
-  border-color: transparent;
-  box-shadow: none;
-}
-html.dark .btn-accent:disabled,
-html.dark .btn-accent-soft:disabled { background: #374151; color: #9CA3AF; }
+.btn-accent-soft:disabled { opacity: .45; box-shadow: none; }
 
-/* Sorotan pilihan (tab/segmen) yang meluncur, gaya sama persis dengan bottom nav:
-   wadah kaca transparan, pil sorotan semburat aksen bercincin tipis */
+/* Segmen / tab */
 .seg-glass {
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-transform: translateZ(0);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-highlight), var(--glass-shadow);
 }
-html.dark .seg-glass {
-  background: rgba(17, 24, 39, 0.65);
-  border-color: rgba(255, 255, 255, 0.1);
+.seg-pill { background: rgba(44, 143, 126, 0.14); }
+.seg-active { color: var(--teal-primary); }
+
+/* =====================================================================
+   LIQUID GLASS (iOS 26) - TAHAP 1: FONDASI
+   Token & kelas di bawah ini bersifat TAMBAHAN. Kelas lama (btn-accent,
+   seg-glass, dst.) belum disentuh; dimigrasi bertahap di Tahap 2-4.
+   ===================================================================== */
+:root {
+  --bg-main: #F2F4F7;
+  --teal-primary: #2C8F7E;
+  --teal-mint: #7FE0C4;                          /* ujung gradasi logo */
+  --teal-tint: rgba(44, 143, 126, 0.14);         /* item aktif, tombol Ubah */
+  --teal-tint-border: rgba(44, 143, 126, 0.28);
+  --danger: #FF3B30;
+  --danger-tint: rgba(255, 59, 48, 0.08);        /* HANYA kaca merah transparan */
+  --danger-tint-border: rgba(255, 59, 48, 0.22);
+
+  --glass-bg: rgba(255, 255, 255, 0.4);
+  --glass-blur: blur(22px) saturate(180%);
+  --glass-border: rgba(255, 255, 255, 0.55);
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.7);   /* kilau tepi atas */
+  --glass-shadow: 0 8px 28px rgba(31, 41, 55, 0.08);
+  --text-main: #1C2430;
+  --text-muted: #6B7685;
 }
-.seg-pill {
-  background: var(--accent-tint-strong);
-  box-shadow: inset 0 0 0 1px var(--accent-border);
+html.dark {
+  --bg-main: #0B1014;
+  --glass-bg: rgba(30, 41, 59, 0.4);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  --glass-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  --teal-tint: rgba(44, 143, 126, 0.24);
+  --text-main: #EEF2F6;
+  --text-muted: #9AA6B5;
 }
-.seg-active { color: var(--accent-text); }
+
+/* Permukaan kaca dasar: dipakai card, tombol, bar, dan segmented control */
+.glass {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-highlight), var(--glass-shadow);
+}
+
+/* Varian tombol kaca */
+.glass-teal {                      /* Ubah, aksi sekunder, item aktif */
+  background: var(--teal-tint);
+  border-color: var(--teal-tint-border);
+  color: var(--teal-primary);
+}
+.glass-danger {                    /* Hapus, status Krisis: kaca merah, bukan solid */
+  background: var(--danger-tint);
+  border-color: var(--danger-tint-border);
+  color: var(--danger);
+}
+.glass-solid-teal {                /* satu-satunya yang boleh pekat: Catat & submit utama */
+  background: var(--teal-primary);
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 8px 20px rgba(44, 143, 126, 0.35);
+}
+.glass-pressable { transition: transform .18s ease, filter .18s ease; }
+.glass-pressable:active { transform: scale(0.96) translateZ(0); }
+.glass-pressable:focus-visible { outline: 2px solid var(--teal-primary); outline-offset: 2px; }
+.glass-pressable:disabled { opacity: .45; pointer-events: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-pressable { transition: none; }
+}
+
+.hide-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+
+/* Panel modal/bottom-sheet: kaca lebih pekat supaya teks form tetap terbaca di atas overlay gelap */
+.glass-sheet { background: rgba(255, 255, 255, 0.78); }
+html.dark .glass-sheet { background: rgba(17, 24, 39, 0.78); }
+
+/* Tombol kaca di atas kartu berwarna teal gelap (mis. kartu saldo Split Bill): putih transparan, teks putih */
+.glass-on-color {
+  background: rgba(255, 255, 255, 0.18);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+}
+.glass-on-color-strong { background: rgba(255, 255, 255, 0.92); color: #1F6F61; border-color: transparent; }

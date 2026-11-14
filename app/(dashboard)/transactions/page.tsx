@@ -12,6 +12,8 @@ import SkeletonLoader from '@/components/SkeletonLoader';
 import EditTransactionModal from '@/components/EditTransactionModal';
 import SubTabs, { RIWAYAT_TABS } from '@/components/SubTabs';
 import { DateStack, RowActions } from '@/components/ui';
+import GlassCard from '@/components/GlassCard';
+import GlassButton from '@/components/GlassButton';
 import { listWallets, Wallet } from '@/lib/wallets';
 
 function TransactionsContent() {
@@ -109,27 +111,27 @@ function TransactionsContent() {
   const paginatedTx = filteredTx.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const walletLabel = (id?: string | null) => { const w = wallets.find(x => x.id === id); return w ? `${w.emoji} ${w.name}` : ''; };
 
-  if (isLoading) return <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950"><SkeletonLoader /></div>;
+  if (isLoading) return <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>;
 
   return (
-    <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-40 transition-colors">
+    <div className="min-h-screen bg-[var(--bg-main)] pb-40 transition-colors">
       <AppHeader title="Riwayat" />
 
-      <main className="max-w-md mx-auto px-5 mt-4 space-y-4">
+      <main className="max-w-md mx-auto px-4 mt-3 space-y-4">
         <SubTabs items={RIWAYAT_TABS} />
 
-        {errorMsg && <div className="bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 text-xs p-3 rounded-xl border border-red-100 dark:border-red-800">{errorMsg}</div>}
+        {errorMsg && <div className="glass glass-danger text-xs p-3 rounded-2xl">{errorMsg}</div>}
 
         <div className="relative">
-          <Search className="w-5 h-5 text-gray-400 absolute left-3 top-3" />
-          <input type="text" placeholder="Cari catatan..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-10 pr-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 shadow-sm focus:ring-2 focus:ring-teal-500 text-sm transition-colors" />
+          <Search className="w-5 h-5 absolute left-3.5 top-3.5 z-10 text-[color:var(--text-muted)]" />
+          <input type="text" placeholder="Cari catatan..." value={search} onChange={(e) => setSearch(e.target.value)} className="glass w-full pl-10 pr-4 py-3 rounded-full text-sm outline-none focus:ring-2 focus:ring-[color:var(--teal-primary)]" style={{ color: 'var(--text-main)' }} />
         </div>
 
         <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
-          <select value={filterType} onChange={e => setFilterType(e.target.value as any)} className="text-xs border-gray-200 dark:border-gray-700 rounded-xl p-2 bg-white dark:bg-gray-800 font-semibold text-gray-600 dark:text-gray-300 shadow-sm shrink-0 transition-colors">
+          <select value={filterType} onChange={e => setFilterType(e.target.value as any)} className="glass text-xs rounded-full px-3 py-2 font-semibold shrink-0 outline-none" style={{ color: 'var(--text-main)' }}>
             <option value="all">Semua Tipe</option><option value="income">Masuk</option><option value="expense">Keluar</option>
           </select>
-          <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="text-xs border-gray-200 dark:border-gray-700 rounded-xl p-2 bg-white dark:bg-gray-800 font-semibold text-gray-600 dark:text-gray-300 shadow-sm shrink-0 transition-colors">
+          <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="glass text-xs rounded-full px-3 py-2 font-semibold shrink-0 outline-none" style={{ color: 'var(--text-main)' }}>
             <option value="all">Semua Kategori</option>
             {categories.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
@@ -138,39 +140,39 @@ function TransactionsContent() {
         <div className="flex items-end gap-2">
           <DateField compact label="Dari" placeholder="Semua tanggal" value={startDate} max={endDate || undefined} onChange={setStartDate} className="flex-1" />
           <DateField compact label="Sampai" placeholder="Semua tanggal" value={endDate} min={startDate || undefined} onChange={setEndDate} className="flex-1" />
-          {(startDate || endDate) && <button onClick={() => { setStartDate(''); setEndDate(''); router.push('/transactions'); }} className="h-10 w-10 shrink-0 flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-900/30 text-red-400 hover:text-red-600" aria-label="Hapus filter tanggal"><XCircle className="w-5 h-5" /></button>}
+          {(startDate || endDate) && <GlassButton variant="danger" size="icon" onClick={() => { setStartDate(''); setEndDate(''); router.push('/transactions'); }} aria-label="Hapus filter tanggal"><XCircle className="w-5 h-5" /></GlassButton>}
         </div>
 
         <div className="space-y-3">
           {paginatedTx.length === 0 ? (
-            <p className="text-center text-xs text-gray-400 dark:text-gray-500 py-10 bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700">Tidak ada transaksi yang cocok.</p>
+            <GlassCard><p className="text-center text-xs py-6 text-[color:var(--text-muted)]">Tidak ada transaksi yang cocok.</p></GlassCard>
           ) : (
             paginatedTx.map(tx => (
-              <div key={tx.id} className="bg-white dark:bg-gray-800 rounded-2xl p-3 shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
+              <GlassCard key={tx.id} className="!p-3 !rounded-3xl">
                 <div className="flex items-center gap-3">
                   <DateStack ymd={tx.transaction_date} />
                   <div className="min-w-0 flex-1">
-                    <p className="font-extrabold text-gray-900 dark:text-white text-base truncate">{tx.merchant_name}</p>
-                    <p className={`font-extrabold text-base mt-0.5 ${tx.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>{formatRupiah(tx.amount)}</p>
+                    <p className="font-extrabold text-base truncate" style={{ color: 'var(--text-main)' }}>{tx.merchant_name}</p>
+                    <p className="font-extrabold text-base mt-0.5" style={{ color: 'var(--text-main)' }}>{tx.type === 'income' ? '+' : '-'}{formatRupiah(tx.amount)}</p>
                     {(tx.is_routine || (wallets.length > 1 && tx.wallet_id) || tx.notes) && (
-                      <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate mt-0.5">
-                        {tx.is_routine && <span className="text-[9px] bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 px-1.5 py-0.5 rounded font-bold mr-1">Rutin</span>}
+                      <p className="text-[10px] text-[color:var(--text-muted)] truncate mt-0.5">
+                        {tx.is_routine && <span className="glass glass-teal text-[9px] px-1.5 py-0.5 rounded-full font-bold mr-1">Rutin</span>}
                         {[wallets.length > 1 ? walletLabel(tx.wallet_id) : '', tx.notes].filter(Boolean).join(' · ')}
                       </p>
                     )}
                   </div>
                   <RowActions vertical onEdit={() => { setSelectedTx(tx); setIsEditModalOpen(true); }} onDelete={() => handleDelete(tx.id)} />
                 </div>
-              </div>
+              </GlassCard>
             ))
           )}
         </div>
 
         {totalPages > 1 && (
           <div className="flex justify-center items-center gap-4 mt-2">
-            <button disabled={currentPage === 1} onClick={() => setCurrentPage(c => c - 1)} className="p-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700"><ChevronLeft className="w-4 h-4" /></button>
-            <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">Halaman {currentPage} dari {totalPages}</span>
-            <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(c => c + 1)} className="p-2 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700"><ChevronRight className="w-4 h-4" /></button>
+            <GlassButton size="icon" disabled={currentPage === 1} onClick={() => setCurrentPage(c => c - 1)} aria-label="Halaman sebelumnya"><ChevronLeft className="w-4 h-4" /></GlassButton>
+            <span className="text-xs font-semibold text-[color:var(--text-muted)]">Halaman {currentPage} dari {totalPages}</span>
+            <GlassButton size="icon" disabled={currentPage === totalPages} onClick={() => setCurrentPage(c => c + 1)} aria-label="Halaman berikutnya"><ChevronRight className="w-4 h-4" /></GlassButton>
           </div>
         )}
       </main>
@@ -184,7 +186,7 @@ function TransactionsContent() {
 
 export default function TransactionsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950"><SkeletonLoader /></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>}>
       <TransactionsContent />
     </Suspense>
   );

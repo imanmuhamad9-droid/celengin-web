@@ -12,7 +12,7 @@ export default function TransactionDetailModal({ tx, onClose }: { tx: any | null
 
   return (
     <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-4 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative transition-colors" onClick={(e) => e.stopPropagation()}>
+      <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative transition-colors" onClick={(e) => e.stopPropagation()}>
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
 
         {/* Kategori + tipe */}
@@ -51,7 +51,7 @@ export default function TransactionDetailModal({ tx, onClose }: { tx: any | null
           )}
         </div>
 
-        <button onClick={onClose} className="mt-5 w-full h-11 rounded-[9px] border btn-accent-soft text-sm font-bold active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"><X className="w-4 h-4" /> Tutup</button>
+        <button onClick={onClose} className="glass glass-teal mt-5 w-full h-11 rounded-[9px] border text-sm font-bold active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"><X className="w-4 h-4" /> Tutup</button>
       </div>
     </div>
   );

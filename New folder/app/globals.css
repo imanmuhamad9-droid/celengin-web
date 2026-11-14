@@ -1,0 +1,154 @@
+@import "tailwindcss";
+@custom-variant dark (&:is(.dark *)); /* Tambahkan baris ini untuk Dark Mode */
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* =====================================================================
+   UKURAN TAMPILAN (Pengaturan -> Tampilan)
+   Hampir semua ukuran Tailwind berbasis rem (mengacu ke font-size <html>),
+   jadi satu nilai ini menskalakan teks, tombol, dan jarak sekaligus.
+   ===================================================================== */
+html[data-size="kecil"] { font-size: 93.75%; }  /* 15px */
+html[data-size="besar"] { font-size: 107.5%; }  /* ~17px */
+
+/* =====================================================================
+   WARNA AKSEN TOMBOL (Pengaturan -> Tampilan)
+   Tombol memakai variabel di bawah, jadi ganti template = ganti nilai var.
+   Default: aqua. Template lain dipilih lewat atribut data-accent di <html>.
+   ===================================================================== */
+:root {
+  --accent-solid: #14b8a6;                      /* warna penuh (saklar, titik aktif) */
+  --accent-bold: #0d9488;                       /* latar tombol gaya Bold (tulisan putih) */
+  --accent-grad: linear-gradient(160deg, #1fc2ae 0%, #0d9488 55%, #0b7f74 100%); /* gradien tombol */
+  --accent-tint: rgba(20, 184, 166, 0.16);      /* latar tombol lembut */
+  --accent-tint-strong: rgba(20, 184, 166, 0.32); /* latar tombol utama gaya Soft */
+  --accent-border: rgba(20, 184, 166, 0.40);
+  --accent-text: #0f766e;
+  --accent-shadow: 0 4px 14px rgba(13, 148, 136, 0.28);
+}
+html.dark { --accent-text: #5eead4; }
+
+html[data-accent="silver"] {
+  --accent-solid: #94a3b8;
+  --accent-bold: #64748b;
+  --accent-grad: linear-gradient(160deg, #94a3b8 0%, #64748b 55%, #566274 100%);
+  --accent-tint: rgba(148, 163, 184, 0.18);
+  --accent-tint-strong: rgba(148, 163, 184, 0.36);
+  --accent-border: rgba(148, 163, 184, 0.45);
+  --accent-text: #475569;
+  --accent-shadow: 0 4px 14px rgba(100, 116, 139, 0.28);
+}
+html.dark[data-accent="silver"] { --accent-text: #cbd5e1; }
+
+html[data-accent="abu"] {
+  --accent-solid: #9ca3af;
+  --accent-bold: #6b7280;
+  --accent-grad: linear-gradient(160deg, #9ca3af 0%, #6b7280 55%, #596170 100%);
+  --accent-tint: rgba(156, 163, 175, 0.18);
+  --accent-tint-strong: rgba(156, 163, 175, 0.36);
+  --accent-border: rgba(156, 163, 175, 0.45);
+  --accent-text: #374151;
+  --accent-shadow: 0 4px 14px rgba(107, 114, 128, 0.25);
+}
+html.dark[data-accent="abu"] { --accent-text: #d1d5db; }
+
+html[data-accent="biru"] {
+  --accent-solid: #60a5fa;
+  --accent-bold: #2563EB;
+  --accent-grad: linear-gradient(160deg, #60a5fa 0%, #2563eb 55%, #1d4ed8 100%);
+  --accent-tint: rgba(96, 165, 250, 0.16);
+  --accent-tint-strong: rgba(96, 165, 250, 0.32);
+  --accent-border: rgba(96, 165, 250, 0.40);
+  --accent-text: #1d4ed8;
+  --accent-shadow: 0 4px 14px rgba(59, 130, 246, 0.28);
+}
+html.dark[data-accent="biru"] { --accent-text: #93c5fd; }
+
+/* Gaya tombol (Pengaturan -> Tampilan -> Gaya tombol), mengikuti design system:
+   Bold (bawaan): latar pekat, tulisan putih. Soft: outline, putih berbingkai warna.
+   btn-accent = tombol utama (Simpan, Catat), btn-accent-soft = tombol pendukung (outline). */
+.btn-accent {
+  background: var(--accent-bold);
+  background: var(--accent-grad);
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: var(--accent-shadow);
+}
+
+/* Tombol teal bergradien dengan garis penanda kategori (Pasangan pink, Teman biru) */
+.btn-accent-line-pink {
+  background: var(--accent-grad);
+  color: #ffffff;
+  border-color: #ec4899;
+}
+.btn-accent-line-blue {
+  background: var(--accent-grad);
+  color: #ffffff;
+  border-color: #3b82f6;
+}
+html[data-btn="soft"] .btn-accent {
+  background: #ffffff;
+  border-color: var(--accent-bold);
+  color: var(--accent-text);
+  box-shadow: none;
+}
+html.dark[data-btn="soft"] .btn-accent { background: #1f2937; }
+
+.btn-accent-soft {
+  background: #ffffff;
+  border-color: var(--accent-bold);
+  color: var(--accent-text);
+}
+html.dark .btn-accent-soft { background: #1f2937; }
+
+/* Disabled sesuai design system (#CBD5E1, tulisan putih) */
+.btn-accent:disabled,
+.btn-accent-soft:disabled {
+  background: #CBD5E1;
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: none;
+}
+html.dark .btn-accent:disabled,
+html.dark .btn-accent-soft:disabled { background: #374151; color: #9CA3AF; }
+
+/* Sorotan pilihan (tab/segmen) yang meluncur, gaya sama persis dengan bottom nav:
+   wadah kaca transparan, pil sorotan semburat aksen bercincin tipis */
+.seg-glass {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+html.dark .seg-glass {
+  background: rgba(17, 24, 39, 0.65);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.seg-pill {
+  background: var(--accent-tint-strong);
+  box-shadow: inset 0 0 0 1px var(--accent-border);
+}
+.seg-active { color: var(--accent-text); }

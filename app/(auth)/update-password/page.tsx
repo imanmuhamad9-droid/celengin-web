@@ -62,7 +62,7 @@ export default function UpdatePasswordPage() {
           {password.length > 0 && <PasswordRequirements password={password} />}
         </div>
 
-        <button type="submit" disabled={loading || !isPasswordValid} className={`${authBtn} mt-2`}>
+        <button type="submit" disabled={loading || !isPasswordValid} className={`${authBtn}mt-2`}>
           {loading ? 'Menyimpan...' : 'Simpan Password Baru'}
         </button>
       </form>

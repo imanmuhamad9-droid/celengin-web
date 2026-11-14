@@ -62,7 +62,7 @@ export default function WaShareSheet({ isOpen, onClose, title = 'Kirim ke WhatsA
         <div className="w-10 h-1 rounded-full bg-gray-200 dark:bg-gray-700 mx-auto mb-4" />
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-bold text-lg text-gray-800 dark:text-gray-100 flex items-center gap-2"><MessageCircle className="w-5 h-5 text-teal-600 dark:text-teal-400" /> {title}</h3>
-          <button onClick={onClose} aria-label="Tutup" className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 flex items-center justify-center"><X className="w-4 h-4" /></button>
+          <button onClick={onClose} aria-label="Tutup" className="glass w-8 h-8 rounded-full text-gray-500 dark:text-gray-400 flex items-center justify-center"><X className="w-4 h-4" /></button>
         </div>
 
         {options.length > 1 && (
@@ -71,7 +71,7 @@ export default function WaShareSheet({ isOpen, onClose, title = 'Kirim ke WhatsA
               <button
                 key={o.key}
                 onClick={() => pick(o)}
-                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border-2 max-w-full truncate ${o.key === current.key ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300' : 'border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400'}`}
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border-2 max-w-full truncate ${o.key === current.key ? 'glass glass-teal' : 'border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400'}`}
               >
                 {o.label}
               </button>
@@ -89,10 +89,10 @@ export default function WaShareSheet({ isOpen, onClose, title = 'Kirim ke WhatsA
         />
 
         <div className="flex gap-2 mt-3">
-          <button onClick={openWa} className="flex-1 h-12 rounded-xl bg-teal-600 text-white text-sm font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform">
+          <button onClick={openWa} className="glass glass-solid-teal flex-1 h-12 rounded-xl text-sm font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform">
             <MessageCircle className="w-4 h-4" /> {phone ? `Kirim ke ${current.label}` : 'Buka WhatsApp'}
           </button>
-          <button onClick={copy} aria-label="Salin pesan" className="h-12 px-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-teal-700 dark:text-teal-300 text-sm font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform">
+          <button onClick={copy} aria-label="Salin pesan" className="glass h-12 px-4 rounded-xl border text-teal-700 dark:text-teal-300 text-sm font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform">
             <Copy className="w-4 h-4" /> Salin
           </button>
         </div>

@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Celengin — iOS 26 Liquid Glass Theme Reference</title>
+
+  <!-- Referensi Library: ObaidQatan/liquid-glass-component-library -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/ObaidQatan/liquid-glass-component-library@main/dist/liquid-glass.min.css" media="print" onload="this.media='all'" />
+
+  <style>
+    /* ==========================================================================
+       1. DESIGN TOKENS & CSS VARIABLES (WAJIB DIPERTAHANKAN)
+       ========================================================================== */
+    :root {
+      --bg-main: #F2F4F7;
+      --teal-primary: #2C8F7E;
+      --teal-tint: rgba(44, 143, 126, 0.14);
+      --teal-border: rgba(44, 143, 126, 0.30);
+
+      --danger: #FF3B30;
+      --danger-tint: rgba(255, 59, 48, 0.08);
+      --danger-border: rgba(255, 59, 48, 0.24);
+
+      /* Liquid Glass Surfaces */
+      --glass-bg: rgba(255, 255, 255, 0.4);
+      --glass-bg-strong: rgba(255, 255, 255, 0.62);
+      --glass-border: rgba(255, 255, 255, 0.75);
+      --glass-highlight: rgba(255, 255, 255, 0.92);
+      --glass-shadow: 0 10px 30px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.03);
+
+      /* Text Tokens */
+      --text-primary: #111827;
+      --text-secondary: #4B5563;
+      --text-muted: #6B7280;
+      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", system-ui, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      min-height: 100dvh;
+      display: flex;
+      justify-content: center;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Ambient Light Orbs di belakang kaca untuk efek refraksi alami */
+    .ambient-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(75px);
+      opacity: 0.55;
+    }
+
+    .orb-teal {
+      width: 280px;
+      height: 280px;
+      top: -50px;
+      right: -40px;
+      background: radial-gradient(circle, rgba(44, 143, 126, 0.18) 0%, transparent 70%);
+    }
+
+    .orb-slate {
+      width: 320px;
+      height: 320px;
+      top: 260px;
+      left: -100px;
+      background: radial-gradient(circle, rgba(148, 163, 184, 0.22) 0%, transparent 70%);
+    }
+
+    /* ==========================================================================
+       2. LIQUID GLASS PRIMITIVES (SAFARI iOS COMPATIBLE)
+       ========================================================================== */
+    .lg-surface {
+      background: var(--glass-bg);
+      -webkit-backdrop-filter: blur(22px) saturate(180%);
+      backdrop-filter: blur(22px) saturate(180%);
+      border: 1px solid var(--glass-border);
+      box-shadow:
+        var(--glass-shadow),
+        inset 0 1.5px 1px var(--glass-highlight),
+        inset 0 -1px 1px rgba(255, 255, 255, 0.25);
+      -webkit-transform: translateZ(0);
+      transform: translateZ(0);
+    }
+
+    .lg-card {
+      border-radius: 26px;
+      padding: 18px 20px;
+    }
+
+    /* Template Standar Semua Tombol (Mencegah Button Nyangkut) */
+    .lg-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: var(--glass-bg);
+      -webkit-backdrop-filter: blur(18px) saturate(170%);
+      backdrop-filter: blur(18px) saturate(170%);
+      border: 1px solid var(--glass-border);
+      box-shadow:
+        0 4px 12px rgba(15, 23, 42, 0.04),
+        inset 0 1px 0.5px var(--glass-highlight);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 600;
+      border-radius: 999px;
+      padding: 9px 16px;
+      cursor: pointer;
+      transition: transform 0.18s ease, background-color 0.18s ease;
+      -webkit-transform: translateZ(0);
+      transform: translateZ(0);
+    }
+
+    .lg-btn:active {
+      transform: scale(0.96);
+    }
+
+    .lg-btn-primary {
+      background: var(--teal-primary);
+      color: #FFFFFF;
+      border-color: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 20px rgba(44, 143, 126, 0.28);
+    }
+
+    .lg-btn-teal-glass {
+      color: var(--teal-primary);
+      background: linear-gradient(135deg, var(--glass-bg), var(--teal-tint));
+      border-color: var(--teal-border);
+    }
+
+    .lg-btn-danger-glass {
+      color: var(--danger);
+      background: linear-gradient(135deg, var(--glass-bg), var(--danger-tint));
+      border-color: var(--danger-border);
+    }
+
+    /* ==========================================================================
+       3. APP SHELL & TOP BAR
+       ========================================================================== */
+    .app-shell {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 440px;
+      padding: calc(14px + env(safe-area-inset-top)) 18px calc(112px + env(safe-area-inset-bottom));
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 2px 0;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--text-primary);
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .icon-circle-btn {
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border-radius: 50%;
+    }
+
+    .avatar-btn {
+      width: 40px;
+      height: 40px;
+      padding: 2px;
+      border-radius: 50%;
+      overflow: hidden;
+    }
+
+    .avatar-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #2C8F7E, #5ED4B3);
+      color: #FFFFFF;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Segmented Control (Floating Glass Pill) */
+    .segmented-pill {
+      border-radius: 999px;
+      padding: 5px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .segmented-pill::-webkit-scrollbar {
+      display: none;
+    }
+
+    .segmented-track {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      width: max-content;
+    }
+
+    .seg-tab {
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 7px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+
+    .seg-tab.active {
+      background: var(--teal-tint);
+      border-color: var(--teal-border);
+      color: var(--teal-primary);
+      font-weight: 600;
+    }
+
+    /* ==========================================================================
+       4. KOTAK RINGKASAN KEUANGAN (DI ATAS STATISTIK MINGGUAN)
+       ========================================================================== */
+    .summary-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .label-muted {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .balance-value {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-top: 2px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 11px;
+      border-radius: 999px;
+    }
+
+    .status-pill.aman {
+      color: var(--teal-primary);
+      background: var(--teal-tint);
+      border: 1px solid var(--teal-border);
+    }
+
+    .status-pill.krisis {
+      color: var(--danger);
+      background: var(--danger-tint);
+      border: 1px solid var(--danger-border);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .cashflow-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .cashflow-box {
+      border-radius: 18px;
+      padding: 11px 13px;
+    }
+
+    .cashflow-val {
+      font-size: 15px;
+      font-weight: 700;
+      margin-top: 3px;
+    }
+
+    .val-in { color: var(--teal-primary); }
+    .val-out { color: var(--danger); }
+
+    .daily-limit-box {
+      border-radius: 18px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .daily-limit-val {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--teal-primary);
+    }
+
+    /* ==========================================================================
+       5. STATISTIK MINGGUAN & TRANSAKSI
+       ========================================================================== */
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .chart-svg {
+      width: 100%;
+      height: 105px;
+      display: block;
+      overflow: visible;
+    }
+
+    .chart-days {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .tx-item {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .tx-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .tx-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .tx-icon-box {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--teal-primary);
+    }
+
+    .tx-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.55);
+    }
+
+    .tx-actions .lg-btn {
+      padding: 7px 14px;
+      font-size: 12.5px;
+    }
+
+    /* ==========================================================================
+       6. BOTTOM BAR 5 MENU (BERANDA, RIWAYAT, CATAT MENONJOL, SPLIT BILL, PROFIL)
+       ========================================================================== */
+    .bottom-nav-wrap {
+      position: fixed;
+      bottom: calc(14px + env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 32px);
+      max-width: 408px;
+      z-index: 40;
+    }
+
+    .bottom-bar {
+      border-radius: 999px;
+      padding: 6px 8px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      align-items: center;
+      gap: 2px;
+    }
+
+    .nav-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 6px 2px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 10.5px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .nav-tab.active {
+      background: var(--teal-tint);
+      border-color: var(--teal-border);
+      color: var(--teal-primary);
+      font-weight: 600;
+    }
+
+    /* Tombol Tengah "Catat" Menonjol */
+    .nav-catat-slot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-top: -22px;
+    }
+
+    .nav-catat-btn {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background-color: var(--teal-primary);
+      color: #FFFFFF;
+      border: 2px solid rgba(255, 255, 255, 0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow:
+        0 10px 22px rgba(44, 143, 126, 0.36),
+        0 2px 6px rgba(44, 143, 126, 0.2);
+      transition: transform 0.18s ease;
+    }
+
+    .nav-catat-btn:active {
+      transform: scale(0.93);
+    }
+
+    .nav-catat-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--teal-primary);
+      margin-top: 3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient-bg" aria-hidden="true">
+    <div class="orb orb-teal"></div>
+    <div class="orb orb-slate"></div>
+  </div>
+
+  <main class="app-shell">
+    <!-- 1. TOP BAR -->
+    <header class="top-bar">
+      <div class="brand-group">
+        <!-- Logo C dengan Panah Naik (Sesuai icon.png) -->
+        <div class="lg-surface brand-logo" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 100 100" fill="none">
+            <defs>
+              <linearGradient id="celenginBrandGrad" x1="15" y1="85" x2="88" y2="12" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#1E8A8A" />
+                <stop offset="55%" stop-color="#2C8F7E" />
+                <stop offset="100%" stop-color="#6CE0AE" />
+              </linearGradient>
+            </defs>
+            <path d="M76 24A38 38 0 1 0 76 76" stroke="url(#celenginBrandGrad)" stroke-width="13" stroke-linecap="butt" />
+            <path d="M12 68L41 41L53 53L84 22" stroke="#F2F4F7" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M12 68L41 41L53 53L84 22" stroke="url(#celenginBrandGrad)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M68 18L90 16L87 38Z" fill="url(#celenginBrandGrad)" />
+          </svg>
+        </div>
+        <h1 class="brand-title">Celengin</h1>
+      </div>
+
+      <div class="top-actions">
+        <button type="button" class="lg-btn icon-circle-btn" aria-label="Settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+
+        <button type="button" class="lg-btn avatar-btn" aria-label="Foto Profil">
+          <span class="avatar-inner">AR</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- 2. SEGMENTED CONTROL -->
+    <nav class="lg-surface segmented-pill" aria-label="Kategori Fitur">
+      <div class="segmented-track">
+        <button type="button" class="seg-tab active">Home</button>
+        <button type="button" class="seg-tab">Tantangan</button>
+        <button type="button" class="seg-tab">Impian</button>
+        <button type="button" class="seg-tab">Kolektif</button>
+        <button type="button" class="seg-tab">Split Bill</button>
+        <button type="button" class="seg-tab">Laporan</button>
+      </div>
+    </nav>
+
+    <!-- 3. KOTAK DETAIL KEUANGAN (DI ATAS STATISTIK) -->
+    <section class="lg-surface lg-card">
+      <div class="summary-top">
+        <div>
+          <p class="label-muted">Uang Sisa Bulan Ini</p>
+          <p class="balance-value">Rp 4.850.000</p>
+        </div>
+        <span class="status-pill aman">
+          <span class="status-dot"></span>
+          Status: Aman
+        </span>
+      </div>
+
+      <div class="cashflow-grid">
+        <div class="lg-surface cashflow-box">
+          <p class="label-muted">Uang Masuk</p>
+          <p class="cashflow-val val-in">+Rp 7.300.000</p>
+        </div>
+        <div class="lg-surface cashflow-box">
+          <p class="label-muted">Uang Keluar</p>
+          <p class="cashflow-val val-out">-Rp 2.450.000</p>
+        </div>
+      </div>
+
+      <div class="lg-surface daily-limit-box">
+        <div>
+          <p class="label-muted">Pengeluaran Diperbolehkan / Hari</p>
+          <p class="daily-limit-val">Rp 303.125 <span style="font-size:11.5px;font-weight:500;color:var(--text-muted)">/ hari</span></p>
+        </div>
+        <span style="font-size:11.5px;font-weight:600;color:var(--text-secondary)">Sisa 16 hari</span>
+      </div>
+    </section>
+
+    <!-- 4. CARD STATISTIK MINGGUAN -->
+    <section class="lg-surface lg-card">
+      <div class="card-head">
+        <h2 class="card-title">Statistik Mingguan</h2>
+        <span style="font-size:12px;font-weight:600;color:var(--teal-primary)">Rp 2.450.000</span>
+      </div>
+
+      <svg class="chart-svg" viewBox="0 0 320 100" preserveAspectRatio="none">
+        <path d="M 8 72 C 50 42, 95 62, 145 30 C 195 18, 250 48, 312 24 L 312 95 L 8 95 Z" fill="rgba(44,143,126,0.14)" />
+        <path d="M 8 72 C 50 42, 95 62, 145 30 C 195 18, 250 48, 312 24" fill="none" stroke="#2C8F7E" stroke-width="2.6" stroke-linecap="round" />
+        <circle cx="312" cy="24" r="4.5" fill="#2C8F7E" stroke="#FFFFFF" stroke-width="2" />
+      </svg>
+
+      <div class="chart-days">
+        <span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span><span style="color:var(--teal-primary);font-weight:700">Min</span>
+      </div>
+    </section>
+
+    <!-- 5. CARD TRANSAKSI ("Kontrakan" + Ubah & Hapus) -->
+    <section class="lg-surface lg-card tx-item">
+      <div class="tx-row">
+        <div class="tx-left">
+          <div class="lg-surface tx-icon-box">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V9.5z" />
+            </svg>
+          </div>
+          <div>
+            <h3 style="font-size:15.5px;font-weight:600">Kontrakan</h3>
+            <p class="label-muted">Hunian • 14 Nov 2026</p>
+          </div>
+        </div>
+        <span style="font-size:15.5px;font-weight:700">-Rp 1.850.000</span>
+      </div>
+
+      <div class="tx-actions">
+        <button type="button" class="lg-btn lg-btn-teal-glass">Ubah</button>
+        <button type="button" class="lg-btn lg-btn-danger-glass">Hapus</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- 6. BOTTOM BAR 5 MENU -->
+  <div class="bottom-nav-wrap">
+    <nav class="lg-surface bottom-bar" aria-label="Navigasi Utama">
+      <button type="button" class="nav-tab active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+        </svg>
+        <span>Beranda</span>
+      </button>
+
+      <button type="button" class="nav-tab">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="9" />
+          <polyline points="12 7 12 12 15 15" />
+        </svg>
+        <span>Riwayat</span>
+      </button>
+
+      <div class="nav-catat-slot">
+        <button type="button" class="nav-catat-btn" aria-label="Catat Transaksi">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+        </button>
+        <span class="nav-catat-label">Catat</span>
+      </div>
+
+      <button type="button" class="nav-tab">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M16 3h5v5" /><path d="M8 3H3v5" />
+          <path d="M12 22v-8.3a4 4 0 0 0-1.172-2.872L3 3" />
+          <path d="m15 9 6-6" />
+        </svg>
+        <span>Split Bill</span>
+      </button>
+
+      <button type="button" class="nav-tab">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+        <span>Profil</span>
+      </button>
+    </nav>
+  </div>
+</body>
+</html>

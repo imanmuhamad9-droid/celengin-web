@@ -56,7 +56,7 @@ export default function ReportsPage() {
     load();
   }, [router]);
 
-  if (loading || !anchor || !today) return <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950"><SkeletonLoader /></div>;
+  if (loading || !anchor || !today) return <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>;
 
   const range = getRange(period, anchor, payday);
   const prevRange = getRange(period, shiftAnchor(period, anchor, -1, payday), payday);
@@ -108,7 +108,7 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-40 transition-colors">
+    <div className="min-h-screen bg-[var(--bg-main)] pb-40 transition-colors">
       <AppHeader title="Laporan" />
 
       <main className="px-5 mt-4 space-y-5">
@@ -117,14 +117,14 @@ export default function ReportsPage() {
         {/* Pilih periode */}
         <div className="flex gap-2">
           {PERIODS.map((p) => (
-            <button key={p.id} onClick={() => setPeriod(p.id)} className={`flex-1 py-2 rounded-xl text-xs font-bold border-2 transition-all ${period === p.id ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400' : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800'}`}>{p.label}</button>
+            <button key={p.id} onClick={() => setPeriod(p.id)} className={`flex-1 py-2 rounded-xl text-xs font-bold border-2 transition-all ${period === p.id ? 'glass glass-teal' : 'glass text-gray-500 dark:text-gray-400'}`}>{p.label}</button>
           ))}
         </div>
 
-        <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-3 py-2">
-          <button onClick={() => setAnchor(shiftAnchor(period, anchor, -1, payday))} className="p-1.5 bg-gray-50 dark:bg-gray-700 rounded-md text-gray-500 hover:text-teal-600"><ChevronLeft className="w-4 h-4" /></button>
+        <div className="flex items-center justify-between glass rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-3 py-2">
+          <button onClick={() => setAnchor(shiftAnchor(period, anchor, -1, payday))} className="glass p-1.5 rounded-md text-gray-500 hover:text-teal-600"><ChevronLeft className="w-4 h-4" /></button>
           <span className="text-sm font-bold text-gray-800 dark:text-gray-100">{range.label}</span>
-          <button disabled={!canGoNext} onClick={() => setAnchor(shiftAnchor(period, anchor, 1, payday))} className="p-1.5 bg-gray-50 dark:bg-gray-700 rounded-md text-gray-500 hover:text-teal-600 disabled:opacity-30"><ChevronRight className="w-4 h-4" /></button>
+          <button disabled={!canGoNext} onClick={() => setAnchor(shiftAnchor(period, anchor, 1, payday))} className="glass p-1.5 rounded-md text-gray-500 hover:text-teal-600 disabled:opacity-30"><ChevronRight className="w-4 h-4" /></button>
         </div>
 
         {/* Ringkasan */}
@@ -147,19 +147,19 @@ export default function ReportsPage() {
         </div>
 
         {cur.txCount === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-3xl p-10 text-center border border-gray-100 dark:border-gray-700 shadow-sm">
+          <div className="glass rounded-3xl p-10 text-center border border-gray-100 dark:border-gray-700 shadow-sm">
             <p className="text-gray-400 dark:text-gray-500 text-sm">Belum ada transaksi di periode ini.</p>
           </div>
         ) : (
           <>
             {/* Skor kesehatan */}
             {health && (
-              <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors relative">
+              <div className="glass p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors relative">
                 <button onClick={() => setShowHealthInfo(true)} className="absolute top-4 right-4 text-gray-400 hover:text-teal-600 dark:hover:text-teal-400"><Info className="w-4 h-4" /></button>
                 <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100 mb-4">Skor Kesehatan Keuangan</h3>
                 <div className="flex items-center gap-5">
                   <div className="relative w-20 h-20 rounded-full flex items-center justify-center shrink-0" style={{ background: `conic-gradient(${ringColor} ${health.score}%, #e5e7eb 0)` }}>
-                    <div className="absolute w-14 h-14 bg-white dark:bg-gray-800 rounded-full"></div>
+                    <div className="absolute w-14 h-14 glass rounded-full"></div>
                     <span className="relative z-10 font-extrabold text-lg text-gray-800 dark:text-white">{health.score}</span>
                   </div>
                   <div>
@@ -172,7 +172,7 @@ export default function ReportsPage() {
 
             {/* Insight */}
             {insights.length > 0 && (
-              <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
+              <div className="glass p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
                 <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100 mb-3">Insight</h3>
                 <div className="space-y-2">
                   {insights.map((l, i) => (
@@ -186,7 +186,7 @@ export default function ReportsPage() {
             )}
 
             {/* Grafik */}
-            <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
+            <div className="glass p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
               <div className="flex justify-between items-start mb-4">
                 <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100">{period === 'year' ? 'Per Bulan' : 'Per Hari'}</h3>
                 <div className="flex gap-2 text-[10px] font-bold">
@@ -210,7 +210,7 @@ export default function ReportsPage() {
             </div>
 
             {/* Kategori */}
-            <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors space-y-5">
+            <div className="glass p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors space-y-5">
               {cur.expenseCats.length > 0 && (
                 <div>
                   <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-3">Pengeluaran per kategori</p>
@@ -221,7 +221,7 @@ export default function ReportsPage() {
                         <div key={c.name}>
                           <div className="flex items-center justify-between gap-2 mb-1.5">
                             <span className={`truncate text-sm ${i === 0 ? 'text-red-600 dark:text-red-400 font-extrabold' : 'text-gray-700 dark:text-gray-200 font-semibold'}`}>{c.name}</span>
-                            <span className="shrink-0 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold text-white bg-red-500">{Math.round(pct)}%</span>
+                            <span className="shrink-0 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold glass glass-teal">{Math.round(pct)}%</span>
                           </div>
                           <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2 overflow-hidden"><div className="h-2 rounded-full bg-red-500" style={{ width: `${pct}%` }}></div></div>
                           <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mt-1">{formatRupiah(c.amount)}</p>
@@ -256,19 +256,19 @@ export default function ReportsPage() {
         )}
 
         {/* Ekspor */}
-        <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
+        <div className="glass p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
           <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100 mb-1">Ekspor Laporan</h3>
           <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-3">{inPeriod.length} transaksi di {range.label}. CSV bisa dibuka di Excel. PDF berisi ringkasan, kategori, dan seluruh transaksi; di HP akan muncul menu berbagi (pilih Simpan ke File).</p>
           <div className="flex gap-2">
-            <button onClick={handleCsv} className="flex-1 bg-teal-50 dark:bg-teal-900/30 border border-teal-100 dark:border-teal-800 text-teal-700 dark:text-teal-400 text-xs font-bold py-3 rounded-xl flex items-center justify-center gap-1.5 hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-all"><Download className="w-4 h-4" /> Unduh CSV</button>
-            <button onClick={handlePdf} disabled={pdfBusy} className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white text-xs font-bold py-3 rounded-xl flex items-center justify-center gap-1.5 transition-all"><Printer className="w-4 h-4" /> {pdfBusy ? 'Membuat PDF...' : 'Unduh PDF'}</button>
+            <button onClick={handleCsv} className="glass glass-teal flex-1 border text-xs font-bold py-3 rounded-xl flex items-center justify-center gap-1.5 transition-all"><Download className="w-4 h-4" /> Unduh CSV</button>
+            <button onClick={handlePdf} disabled={pdfBusy} className="glass glass-solid-teal flex-1 disabled:opacity-60 text-xs font-bold py-3 rounded-xl flex items-center justify-center gap-1.5 transition-all"><Printer className="w-4 h-4" /> {pdfBusy ? 'Membuat PDF...' : 'Unduh PDF'}</button>
           </div>
         </div>
       </main>
 
       {showHealthInfo && health && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative transition-colors">
+          <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative transition-colors">
             <button onClick={() => setShowHealthInfo(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-2">Apa itu Skor Kesehatan?</h2>
             <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mb-4">Angka 0-100 yang merangkum seberapa sehat keuanganmu di periode ini.</p>

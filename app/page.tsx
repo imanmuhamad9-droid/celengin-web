@@ -67,7 +67,7 @@ export default function LoginPage() {
               </button>
             </div>
           </div>
-          <button type="submit" disabled={loading} className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 rounded-xl transition-all mt-4 disabled:opacity-50">
+          <button type="submit" disabled={loading} className="glass glass-solid-teal w-full font-semibold py-3 rounded-xl transition-all mt-4 disabled:opacity-50">
             {loading ? 'Memproses...' : 'Masuk'}
           </button>
         </form>
@@ -88,7 +88,7 @@ export default function LoginPage() {
                 <Mail className="w-5 h-5 text-gray-400 absolute left-3 top-3" />
                 <input type="email" value={resetEmail} onChange={e => setResetEmail(e.target.value)} required className="w-full pl-10 pr-4 py-3 border rounded-xl text-sm focus:ring-2 focus:ring-teal-500" placeholder="Email terdaftar" />
               </div>
-              <button type="submit" disabled={resetLoading} className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-xl transition-all mt-2 disabled:opacity-50">
+              <button type="submit" disabled={resetLoading} className="glass glass-solid-teal w-full font-bold py-3.5 rounded-xl transition-all mt-2 disabled:opacity-50">
                 {resetLoading ? 'Mengirim...' : 'Kirim Link Reset'}
               </button>
             </form>

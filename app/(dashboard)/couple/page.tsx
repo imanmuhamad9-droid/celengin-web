@@ -306,10 +306,10 @@ export default function SharedSpacePage() {
 
   const filteredGoals = goals.filter(g => filterCategory === 'all' ? true : g.category === filterCategory);
 
-  if (isLoading) return <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950"><SkeletonLoader /></div>;
+  if (isLoading) return <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>;
 
   return (
-    <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-40 transition-colors">
+    <div className="min-h-screen bg-[var(--bg-main)] pb-40 transition-colors">
       <AppHeader title="Kolektif" infoKey="Nabung Bareng" action={<HeaderBtn onClick={handleOpenAdd} />} />
 
       <main className="px-5 mt-4 space-y-5">
@@ -351,18 +351,17 @@ export default function SharedSpacePage() {
             const members = goal.couple_members || [];
             const isCreator = goal.created_by === user.id;
             const isCouple = goal.category === 'couple';
-            const tone = isCouple ? 'pink' : 'blue';
             const ringColor = isCouple ? '#ec4899' : '#3b82f6';
             const coupleFull = isCouple && members.length >= 2;
 
             return (
-              <div key={goal.id} className={`bg-white dark:bg-gray-800 p-5 rounded-3xl border shadow-sm transition-colors ${isCouple ? 'border-pink-100 dark:border-pink-900/30' : 'border-blue-100 dark:border-blue-900/30'}`}>
+              <div key={goal.id} className="glass p-5 rounded-3xl transition-colors">
                 <div className="flex justify-between items-start gap-3 mb-4">
                   <div className="min-w-0">
                     <span className={`inline-block text-[10px] font-bold px-2.5 py-1 rounded-lg ${isCouple ? 'bg-pink-500/10 text-pink-700 dark:text-pink-300' : 'bg-blue-500/10 text-blue-700 dark:text-blue-300'}`}>{isCouple ? 'Pasangan' : 'Teman'}</span>
                     <h3 className="font-extrabold text-gray-900 dark:text-white text-lg mt-1.5 truncate">{goal.title}</h3>
                   </div>
-                  <button onClick={() => openEstimate(goal)} aria-label="Perkiraan menabung" className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center border transition-all active:scale-95 ${isCouple ? 'bg-pink-500/10 border-pink-500/30 text-pink-600' : 'bg-blue-500/10 border-blue-500/30 text-blue-600'}`}><Info className="w-4 h-4" /></button>
+                  <button onClick={() => openEstimate(goal)} aria-label="Perkiraan menabung" className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center border transition-all active:scale-95 ${isCouple ? 'glass glass-teal' : 'glass glass-teal'}`}><Info className="w-4 h-4" /></button>
                 </div>
 
                 <div className="flex items-center gap-4 mb-4">
@@ -405,9 +404,9 @@ export default function SharedSpacePage() {
                 </div>
 
                 <div className={`grid gap-2 ${isCreator && !coupleFull ? 'grid-cols-3' : 'grid-cols-2'}`}>
-                  <Btn variant={tone} onClick={() => { setSelectedGoal(goal); setUpdateAction('in'); setIsUpdateModalOpen(true); }}>Transaksi</Btn>
-                  <Btn variant={tone} onClick={() => fetchHistory(goal.id)}>Riwayat</Btn>
-                  {isCreator && !coupleFull && <Btn variant={tone} onClick={() => { setSelectedGoal(goal); setIsInviteModalOpen(true); }}>Undang</Btn>}
+                  <Btn variant="soft" onClick={() => { setSelectedGoal(goal); setUpdateAction('in'); setIsUpdateModalOpen(true); }}>Transaksi</Btn>
+                  <Btn variant="soft" onClick={() => fetchHistory(goal.id)}>Riwayat</Btn>
+                  {isCreator && !coupleFull && <Btn variant="soft" onClick={() => { setSelectedGoal(goal); setIsInviteModalOpen(true); }}>Undang</Btn>}
                 </div>
 
                 {isCreator && (
@@ -419,7 +418,7 @@ export default function SharedSpacePage() {
             );
           })}
           {filteredGoals.length === 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-3xl p-10 text-center border border-gray-100 dark:border-gray-700 shadow-sm mt-4">
+            <div className="glass rounded-3xl p-10 text-center border border-gray-100 dark:border-gray-700 shadow-sm mt-4">
               <Users className="w-12 h-12 text-gray-200 dark:text-gray-600 mx-auto mb-3" />
               <p className="text-gray-400 dark:text-gray-500 text-sm">Belum ada target barengan di kategori ini.</p>
             </div>
@@ -430,7 +429,7 @@ export default function SharedSpacePage() {
       {/* MODALS */}
       {isHistoryOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative max-h-[80vh] flex flex-col transition-colors">
+          <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative max-h-[80vh] flex flex-col transition-colors">
             <button onClick={() => setIsHistoryOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-center mb-4 text-gray-800 dark:text-white">Riwayat Tabungan</h2>
             <div className="overflow-y-auto space-y-2 flex-1">
@@ -459,13 +458,13 @@ export default function SharedSpacePage() {
 
       {isUpdateModalOpen && selectedGoal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative transition-colors">
+          <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative transition-colors">
             <button onClick={() => setIsUpdateModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-center mb-1 text-gray-800 dark:text-white">Transaksi</h2>
             <p className="text-[11px] text-center text-gray-500 dark:text-gray-400 mb-4 truncate">{selectedGoal.title}</p>
             <div className="flex gap-2 mb-4">
-              <button onClick={() => setUpdateAction('in')} className={`flex-1 py-2 rounded-xl text-xs font-bold border-2 flex items-center justify-center gap-1 transition-all ${updateAction === 'in' ? 'border-green-500 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}><ArrowDownCircle className="w-4 h-4" /> Uang Masuk</button>
-              <button onClick={() => setUpdateAction('out')} className={`flex-1 py-2 rounded-xl text-xs font-bold border-2 flex items-center justify-center gap-1 transition-all ${updateAction === 'out' ? 'border-red-500 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}><ArrowUpCircle className="w-4 h-4" /> Uang Keluar</button>
+              <button onClick={() => setUpdateAction('in')} className={`flex-1 py-2 rounded-xl text-xs font-bold border-2 flex items-center justify-center gap-1 transition-all ${updateAction === 'in' ? 'glass glass-teal' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}><ArrowDownCircle className="w-4 h-4" /> Uang Masuk</button>
+              <button onClick={() => setUpdateAction('out')} className={`flex-1 py-2 rounded-xl text-xs font-bold border-2 flex items-center justify-center gap-1 transition-all ${updateAction === 'out' ? 'glass glass-danger' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}><ArrowUpCircle className="w-4 h-4" /> Uang Keluar</button>
             </div>
             <form onSubmit={handleUpdateAmount} className="space-y-4">
               <input type="text" inputMode="numeric" value={updateAmountDisplay} onChange={handleUpdateAmountChange} required className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm font-bold focus:ring-2 focus:ring-teal-500" placeholder="Nominal (Rp)" />
@@ -478,13 +477,13 @@ export default function SharedSpacePage() {
       {/* MODAL FORM (TAMBAH / EDIT) */}
       {isFormModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative transition-colors max-h-[90vh] overflow-y-auto">
+          <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative transition-colors max-h-[90vh] overflow-y-auto">
             <button onClick={() => setIsFormModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-center mb-4 text-gray-800 dark:text-white">{editingId ? 'Edit Target Bareng' : 'Buat Target Bareng'}</h2>
             <form onSubmit={handleSaveGoal} className="space-y-4">
               <div className="flex gap-2">
-                <button type="button" onClick={() => setGoalCategory('couple')} className={`flex-1 py-2 rounded-[9px] text-xs font-bold border-2 flex items-center justify-center gap-1 transition-all ${goalCategory === 'couple' ? 'btn-accent-line-pink' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}><Heart className="w-4 h-4" /> Pasangan</button>
-                <button type="button" onClick={() => setGoalCategory('friend')} className={`flex-1 py-2 rounded-[9px] text-xs font-bold border-2 flex items-center justify-center gap-1 transition-all ${goalCategory === 'friend' ? 'btn-accent-line-blue' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}><Users className="w-4 h-4" /> Teman</button>
+                <button type="button" onClick={() => setGoalCategory('couple')} className={`flex-1 py-2 rounded-[9px] text-xs font-bold border-2 flex items-center justify-center gap-1 transition-all ${goalCategory === 'couple' ? 'glass glass-teal' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}><Heart className="w-4 h-4" /> Pasangan</button>
+                <button type="button" onClick={() => setGoalCategory('friend')} className={`flex-1 py-2 rounded-[9px] text-xs font-bold border-2 flex items-center justify-center gap-1 transition-all ${goalCategory === 'friend' ? 'glass glass-teal' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}><Users className="w-4 h-4" /> Teman</button>
               </div>
               
               <div>
@@ -522,7 +521,7 @@ export default function SharedSpacePage() {
 
       {isInviteModalOpen && selectedGoal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative transition-colors">
+          <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative transition-colors">
             <button onClick={() => setIsInviteModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-center mb-2 text-gray-800 dark:text-white">Undang Anggota</h2>
             <p className="text-xs text-center text-gray-500 dark:text-gray-400 mb-4">Masukkan email untuk bergabung ke target <span className="font-bold">{selectedGoal.title}</span>.</p>
@@ -544,7 +543,7 @@ export default function SharedSpacePage() {
         const row = 'flex justify-between gap-3 text-xs py-1.5';
         return (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative max-h-[85vh] overflow-y-auto transition-colors">
+            <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative max-h-[85vh] overflow-y-auto transition-colors">
               <button onClick={() => setEstimate(null)} aria-label="Tutup" className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
               <h2 className="text-lg font-extrabold text-center text-gray-800 dark:text-white">Perkiraan Menabung</h2>
               <p className="text-[11px] text-center text-gray-500 dark:text-gray-400 mb-4 truncate">{e.goal.title}</p>

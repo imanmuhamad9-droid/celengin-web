@@ -43,10 +43,10 @@ export default function ChallengeModal({ isOpen, onClose, onSave }: { isOpen: bo
           </div>
 
           <div className="flex gap-2">
-            <button type="button" onClick={() => setType('income')} className={`flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border-2 transition-all ${type === 'income' ? 'border-green-500 bg-green-50 text-green-600' : 'border-gray-100 text-gray-400'}`}>
+            <button type="button" onClick={() => setType('income')} className={`flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border-2 transition-all ${type === 'income' ? 'glass glass-teal' : 'border-gray-100 text-gray-400'}`}>
               <ArrowDownCircle className="w-4 h-4" /> Uang Masuk
             </button>
-            <button type="button" onClick={() => setType('expense')} className={`flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border-2 transition-all ${type === 'expense' ? 'border-red-500 bg-red-50 text-red-600' : 'border-gray-100 text-gray-400'}`}>
+            <button type="button" onClick={() => setType('expense')} className={`flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border-2 transition-all ${type === 'expense' ? 'glass glass-danger' : 'border-gray-100 text-gray-400'}`}>
               <ArrowUpCircle className="w-4 h-4" /> Uang Keluar
             </button>
           </div>
@@ -67,7 +67,7 @@ export default function ChallengeModal({ isOpen, onClose, onSave }: { isOpen: bo
             <button 
               type="button" 
               onClick={() => setIsRoutine(!isRoutine)} 
-              className={`w-12 h-6 rounded-full transition-colors relative ${isRoutine ? 'bg-teal-500' : 'bg-gray-300'}`}
+              className={`w-12 h-6 rounded-full transition-colors relative ${isRoutine ? 'glass glass-teal' : 'glass'}`}
             >
               <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${isRoutine ? 'left-7' : 'left-1'}`}></div>
             </button>
@@ -76,7 +76,7 @@ export default function ChallengeModal({ isOpen, onClose, onSave }: { isOpen: bo
           <button 
             onClick={() => onSave({ title: title || (type === 'income' ? 'Target Masuk' : 'Batas Keluar'), type, target_amount: amountRaw, is_routine: isRoutine })}
             disabled={amountRaw <= 0}
-            className="w-full bg-teal-600 text-white font-bold py-3.5 rounded-xl hover:bg-teal-700 transition-all mt-2 disabled:opacity-50"
+            className="glass glass-solid-teal w-full font-bold py-3.5 rounded-xl transition-all mt-2 disabled:opacity-50"
           >
             Simpan Target
           </button>

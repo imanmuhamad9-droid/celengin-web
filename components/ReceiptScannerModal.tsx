@@ -102,12 +102,12 @@ export default function ReceiptScannerModal({ isOpen, onClose, onSuccess }: { is
                 <input type="text" value={formData.merchant} onChange={(e) => setFormData({...formData, merchant: e.target.value})} className="w-full p-3 border rounded-xl" placeholder="Nama Toko" />
                 <input type="number" value={formData.amount} onChange={(e) => setFormData({...formData, amount: Number(e.target.value)})} className="w-full p-3 border rounded-xl" placeholder="Nominal" />
                 <input type="date" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} className="w-full p-3 border rounded-xl" />
-                <button onClick={handleSave} disabled={loading} className="w-full bg-teal-600 text-white py-3 rounded-xl font-bold">
+                <button onClick={handleSave} disabled={loading} className="glass glass-solid-teal w-full py-3 rounded-xl font-bold">
                   {loading ? 'Menyimpan...' : 'Simpan Transaksi'}
                 </button>
               </div>
             ) : (
-              <button onClick={handleScan} disabled={loading} className="w-full bg-teal-600 text-white py-3 rounded-xl font-bold flex justify-center items-center gap-2">
+              <button onClick={handleScan} disabled={loading} className="glass glass-solid-teal w-full py-3 rounded-xl font-bold flex justify-center items-center gap-2">
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Mulai Scan AI'}
               </button>
             )}

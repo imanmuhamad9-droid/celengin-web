@@ -60,7 +60,7 @@ function AdjRow({ label, adj, onChange }: { label: string; adj: AdjDraft; onChan
       <div className="flex gap-2">
         <div className="flex shrink-0 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-600 h-11">
           {(['percent', 'nominal'] as AdjMode[]).map((m) => (
-            <button key={m} type="button" onClick={() => onChange({ mode: m, display: '', raw: 0 })} className={`px-3 text-xs font-bold ${adj.mode === m ? 'bg-teal-600 text-white' : 'bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300'}`}>{m === 'percent' ? '%' : 'Rp'}</button>
+            <button key={m} type="button" onClick={() => onChange({ mode: m, display: '', raw: 0 })} className={`px-3 text-xs font-bold ${adj.mode === m ? 'glass glass-teal' : 'glass text-gray-500 dark:text-gray-300'}`}>{m === 'percent' ? '%' : 'Rp'}</button>
           ))}
         </div>
         <input inputMode={adj.mode === 'percent' ? 'decimal' : 'numeric'} value={adj.display} onChange={(e) => setValue(e.target.value)} placeholder={adj.mode === 'percent' ? '0' : '0'} className={`${inputCls} flex-1`} />
@@ -223,7 +223,7 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
 
   return (
     <div className="fixed inset-0 bg-black/50 z-[70] flex items-end sm:items-center justify-center">
-      <div className="bg-white dark:bg-gray-800 rounded-t-3xl sm:rounded-3xl w-full max-w-md max-h-[94vh] flex flex-col transition-colors">
+      <div className="glass glass-sheet rounded-t-3xl sm:rounded-3xl w-full max-w-md max-h-[94vh] flex flex-col transition-colors">
         <div className="flex items-center justify-between px-5 pt-5 pb-3 shrink-0">
           <h2 className="text-lg font-bold text-gray-800 dark:text-white">{isG ? 'Catat Bayarin' : 'Tambah Pengeluaran'}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
@@ -234,13 +234,13 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
           <div className="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-xl">
             {isG ? (
               <>
-            <button type="button" onClick={() => setMode('quick')} className={`flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 ${mode === 'quick' ? 'bg-white dark:bg-gray-600 text-teal-700 dark:text-teal-300 shadow-sm' : 'text-gray-500 dark:text-gray-300'}`}><Calculator className="w-4 h-4" /> {isG ? 'Satu barang' : 'Total saja'}</button>
-            <button type="button" onClick={() => setMode('items')} className={`flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 ${mode === 'items' ? 'bg-white dark:bg-gray-600 text-teal-700 dark:text-teal-300 shadow-sm' : 'text-gray-500 dark:text-gray-300'}`}><Receipt className="w-4 h-4" /> {isG ? 'Banyak barang (struk)' : 'Struk per item'}</button>
+            <button type="button" onClick={() => setMode('quick')} className={`flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 ${mode === 'quick' ? 'glass text-teal-700 dark:text-teal-300' : 'text-gray-500 dark:text-gray-300'}`}><Calculator className="w-4 h-4" /> {isG ? 'Satu barang' : 'Total saja'}</button>
+            <button type="button" onClick={() => setMode('items')} className={`flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 ${mode === 'items' ? 'glass text-teal-700 dark:text-teal-300' : 'text-gray-500 dark:text-gray-300'}`}><Receipt className="w-4 h-4" /> {isG ? 'Banyak barang (struk)' : 'Struk per item'}</button>
               </>
             ) : (
               <>
-            <button type="button" onClick={() => setMode('items')} className={`flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 ${mode === 'items' ? 'bg-white dark:bg-gray-600 text-teal-700 dark:text-teal-300 shadow-sm' : 'text-gray-500 dark:text-gray-300'}`}><Receipt className="w-4 h-4" /> {isG ? 'Banyak barang (struk)' : 'Struk per item'}</button>
-            <button type="button" onClick={() => setMode('quick')} className={`flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 ${mode === 'quick' ? 'bg-white dark:bg-gray-600 text-teal-700 dark:text-teal-300 shadow-sm' : 'text-gray-500 dark:text-gray-300'}`}><Calculator className="w-4 h-4" /> {isG ? 'Satu barang' : 'Total saja'}</button>
+            <button type="button" onClick={() => setMode('items')} className={`flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 ${mode === 'items' ? 'glass text-teal-700 dark:text-teal-300' : 'text-gray-500 dark:text-gray-300'}`}><Receipt className="w-4 h-4" /> {isG ? 'Banyak barang (struk)' : 'Struk per item'}</button>
+            <button type="button" onClick={() => setMode('quick')} className={`flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 ${mode === 'quick' ? 'glass text-teal-700 dark:text-teal-300' : 'text-gray-500 dark:text-gray-300'}`}><Calculator className="w-4 h-4" /> {isG ? 'Satu barang' : 'Total saja'}</button>
               </>
             )}
           </div>
@@ -255,7 +255,7 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
                 <label className={labelCls}>Dibayar oleh</label>
                 <div className="flex flex-wrap gap-1.5">
                   {members.map((m) => (
-                    <button type="button" key={m.id} onClick={() => setPaidBy(m.id)} className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border-2 max-w-full truncate ${paidBy === m.id ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400' : 'border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400'}`}>{m.name}</button>
+                    <button type="button" key={m.id} onClick={() => setPaidBy(m.id)} className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border-2 max-w-full truncate ${paidBy === m.id ? 'glass glass-teal' : 'border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400'}`}>{m.name}</button>
                   ))}
                 </div>
               </div>
@@ -310,10 +310,10 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
                         <div>
                           <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-1">Dipakai oleh:</p>
                           <div className="flex flex-wrap gap-1.5">
-                            <button type="button" onClick={() => toggleAll(it.key)} className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border ${allOn ? 'bg-teal-600 border-teal-600 text-white' : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-300'}`}>Semua</button>
+                            <button type="button" onClick={() => toggleAll(it.key)} className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border ${allOn ? 'glass glass-teal' : 'glass text-gray-500 dark:text-gray-300'}`}>Semua</button>
                             {members.map((m) => {
                               const on = it.memberIds.includes(m.id);
-                              return <button type="button" key={m.id} onClick={() => toggleMember(it.key, m.id)} className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border max-w-[120px] truncate ${on ? 'bg-teal-50 dark:bg-teal-900/40 border-teal-500 text-teal-700 dark:text-teal-300' : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-300'}`}>{on ? '✓ ' : ''}{m.name}</button>;
+                              return <button type="button" key={m.id} onClick={() => toggleMember(it.key, m.id)} className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border max-w-[120px] truncate ${on ? 'glass glass-teal' : 'glass text-gray-500 dark:text-gray-300'}`}>{on ? '✓ ' : ''}{m.name}</button>;
                             })}
                           </div>
                         </div>
@@ -328,8 +328,8 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
                   })}
                 </div>
                 <div className="flex gap-2 mt-3">
-                  <button type="button" onClick={() => setItems((p) => [...p, newItem()])} className="flex-1 h-11 rounded-xl border-2 border-dashed border-teal-300 dark:border-teal-700 text-teal-600 dark:text-teal-400 text-xs font-bold flex items-center justify-center gap-1.5"><Plus className="w-4 h-4" /> Tambah item</button>
-                  <button type="button" onClick={assignAllItems} className="h-11 px-3 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[11px] font-bold shrink-0">Bagi rata semua</button>
+                  <button type="button" onClick={() => setItems((p) => [...p, newItem()])} className="glass glass-teal glass-pressable flex-1 h-11 rounded-full border-dashed text-xs font-bold flex items-center justify-center gap-1.5"><Plus className="w-4 h-4" /> Tambah item</button>
+                  <button type="button" onClick={assignAllItems} className="glass h-11 px-3 rounded-xl text-gray-600 dark:text-gray-300 text-[11px] font-bold shrink-0">Bagi rata semua</button>
                 </div>
               </section>
 
@@ -385,18 +385,18 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
               <div className="space-y-3">
                 <div><label className={labelCls}>Total tagihan (Rp)</label><input inputMode="numeric" value={qTotalDisplay} onChange={(e) => { const p = parseRupiahInput(e.target.value); setQTotal(p.raw); setQTotalDisplay(p.display); }} placeholder="0" className={`${inputCls} font-bold`} /></div>
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => setQSplit('equal')} className={`flex-1 py-2 rounded-xl text-xs font-bold border-2 ${qSplit === 'equal' ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}>Bagi rata</button>
-                  <button type="button" onClick={() => setQSplit('custom')} className={`flex-1 py-2 rounded-xl text-xs font-bold border-2 ${qSplit === 'custom' ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}>Atur sendiri</button>
+                  <button type="button" onClick={() => setQSplit('equal')} className={`flex-1 py-2 rounded-xl text-xs font-bold border-2 ${qSplit === 'equal' ? 'glass glass-teal' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}>Bagi rata</button>
+                  <button type="button" onClick={() => setQSplit('custom')} className={`flex-1 py-2 rounded-xl text-xs font-bold border-2 ${qSplit === 'custom' ? 'glass glass-teal' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}>Atur sendiri</button>
                 </div>
                 {isG && members.length > 1 && (
                   <div>
                     <label className={labelCls}>Untuk siapa</label>
                     <div className="flex flex-wrap gap-1.5">
-                      <button type="button" onClick={() => { const all: Record<string, boolean> = {}; members.forEach((m) => { all[m.id] = true; }); setQSelected(all); setQSplit('equal'); }} className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border-2 ${members.every((m) => qSelected[m.id]) ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400' : 'border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400'}`}>Semua (patungan)</button>
+                      <button type="button" onClick={() => { const all: Record<string, boolean> = {}; members.forEach((m) => { all[m.id] = true; }); setQSelected(all); setQSplit('equal'); }} className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border-2 ${members.every((m) => qSelected[m.id]) ? 'glass glass-teal' : 'border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400'}`}>Semua (patungan)</button>
                       {members.map((m) => {
                         const only = members.every((x) => !!qSelected[x.id] === (x.id === m.id));
                         return (
-                          <button type="button" key={m.id} onClick={() => { const one: Record<string, boolean> = {}; members.forEach((x) => { one[x.id] = x.id === m.id; }); setQSelected(one); setQSplit('equal'); }} className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border-2 max-w-full truncate ${only ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400' : 'border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400'}`}>{m.user_id === currentUserId ? 'Aku saja' : `${m.name} saja`}</button>
+                          <button type="button" key={m.id} onClick={() => { const one: Record<string, boolean> = {}; members.forEach((x) => { one[x.id] = x.id === m.id; }); setQSelected(one); setQSplit('equal'); }} className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border-2 max-w-full truncate ${only ? 'glass glass-teal' : 'border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400'}`}>{m.user_id === currentUserId ? 'Aku saja' : `${m.name} saja`}</button>
                         );
                       })}
                     </div>
@@ -409,7 +409,7 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
                     const eq = qSplit === 'equal' && on && qTotal > 0 ? splitEqual(qTotal, ids)[m.id] : 0;
                     return (
                       <div key={m.id} className="flex items-center gap-2">
-                        <button type="button" onClick={() => setQSelected((p) => ({ ...p, [m.id]: !p[m.id] }))} className={`flex-1 min-w-0 text-left px-3 h-10 rounded-xl text-xs font-bold border-2 truncate ${on ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}>{on ? '✓ ' : ''}{m.name}</button>
+                        <button type="button" onClick={() => setQSelected((p) => ({ ...p, [m.id]: !p[m.id] }))} className={`flex-1 min-w-0 text-left px-3 h-10 rounded-xl text-xs font-bold border-2 truncate ${on ? 'glass glass-teal' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}>{on ? '✓ ' : ''}{m.name}</button>
                         {qSplit === 'equal' ? (
                           <span className="w-28 text-right text-[11px] font-bold text-gray-500 dark:text-gray-400 shrink-0">{on && qTotal > 0 ? formatRupiah(eq) : '-'}</span>
                         ) : (
@@ -424,7 +424,7 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
             </section>
           )}
 
-          <button type="submit" disabled={saving} className="w-full border btn-accent hover:brightness-95 font-bold py-3.5 rounded-[9px] transition-all flex items-center justify-center gap-2"><Save className="w-4 h-4" /> {saving ? 'Menyimpan...' : isG ? 'Simpan Catatan' : 'Simpan Pengeluaran'}</button>
+          <button type="submit" disabled={saving} className="glass glass-solid-teal w-full border hover:brightness-95 font-bold py-3.5 rounded-[9px] transition-all flex items-center justify-center gap-2"><Save className="w-4 h-4" /> {saving ? 'Menyimpan...' : isG ? 'Simpan Catatan' : 'Simpan Pengeluaran'}</button>
         </form>
       </div>
     </div>

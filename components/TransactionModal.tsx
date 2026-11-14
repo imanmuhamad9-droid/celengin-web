@@ -226,9 +226,9 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
   return (
     <>
       <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-4 backdrop-blur-sm">
-        <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-md relative max-h-[90vh] flex flex-col overflow-hidden transition-colors">
+        <div className="glass glass-sheet rounded-3xl w-full max-w-md relative max-h-[90vh] flex flex-col overflow-hidden transition-colors">
           
-          <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-white dark:bg-gray-800 z-10 transition-colors">
+          <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center glass z-10 transition-colors">
             <h2 className="text-lg font-bold text-gray-800 dark:text-white">Catat Transaksi</h2>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
           </div>
@@ -237,13 +237,13 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
             
             {canScan && (
             <div className="flex p-1 rounded-2xl bg-teal-500/10 border border-teal-500/20">
-              <button type="button" onClick={() => setInputMode('manual')} className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition-all active:scale-95 ${activeMode === 'manual' ? 'bg-teal-600 text-white shadow-sm' : 'text-gray-600 dark:text-gray-300'}`}>Ketik Manual</button>
-              <button type="button" onClick={() => setInputMode('scan')} className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition-all active:scale-95 ${inputMode === 'scan' ? 'bg-teal-600 text-white shadow-sm' : 'text-gray-600 dark:text-gray-300'}`}>Scan Struk</button>
+              <button type="button" onClick={() => setInputMode('manual')} className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition-all active:scale-95 ${activeMode === 'manual' ? 'glass glass-teal' : 'text-gray-600 dark:text-gray-300'}`}>Ketik Manual</button>
+              <button type="button" onClick={() => setInputMode('scan')} className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition-all active:scale-95 ${inputMode === 'scan' ? 'glass glass-teal' : 'text-gray-600 dark:text-gray-300'}`}>Scan Struk</button>
             </div>
             )}
 
             {inputMode === 'scan' && canScan && (
-              <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm text-center space-y-3 transition-colors">
+              <div className="glass p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm text-center space-y-3 transition-colors">
                 <p className="text-sm font-bold text-gray-800 dark:text-white">Catat pengeluaran dari struk</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Foto atau unggah struk, nominal dan tanggal terisi otomatis. Hasilnya tetap bisa kamu periksa dan ubah sebelum disimpan.</p>
                 {scanning ? (
@@ -284,7 +284,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
             )}
 
             {activeMode === 'manual' && txList.map((tx, index) => (
-              <div key={tx.id} className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm relative transition-colors">
+              <div key={tx.id} className="glass p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm relative transition-colors">
                 {txList.length > 1 && (
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Transaksi {index + 1}</span>
@@ -293,10 +293,10 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
                 )}
 
                 <div className="flex gap-2 mb-3">
-                  <button type="button" onClick={() => updateRow(tx.id, 'type', 'expense')} className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 border-2 transition-all ${tx.type === 'expense' ? 'border-red-500 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}>
+                  <button type="button" onClick={() => updateRow(tx.id, 'type', 'expense')} className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 border-2 transition-all ${tx.type === 'expense' ? 'glass glass-danger' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}>
                     Keluar
                   </button>
-                  <button type="button" onClick={() => updateRow(tx.id, 'type', 'income')} className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 border-2 transition-all ${tx.type === 'income' ? 'border-green-500 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}>
+                  <button type="button" onClick={() => updateRow(tx.id, 'type', 'income')} className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 border-2 transition-all ${tx.type === 'income' ? 'glass glass-teal' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}>
                     Masuk
                   </button>
                 </div>
@@ -318,7 +318,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
                 <div className="mb-3">
                   <div className="flex flex-wrap gap-1.5">
                     {presets.map(p => (
-                      <button key={p.id} type="button" onClick={() => updateRow(tx.id, 'selectedPreset', presetValue(p))} className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all border ${tx.selectedPreset === presetValue(p) ? 'bg-teal-50 dark:bg-teal-900/30 border-teal-500 text-teal-700 dark:text-teal-400' : 'bg-gray-50 dark:bg-gray-700 border-transparent text-gray-600 dark:text-gray-300'}`}>
+                      <button key={p.id} type="button" onClick={() => updateRow(tx.id, 'selectedPreset', presetValue(p))} className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all border ${tx.selectedPreset === presetValue(p) ? 'glass glass-teal' : 'glass border-transparent text-gray-600 dark:text-gray-300'}`}>
                         {p.label}
                       </button>
                     ))}
@@ -358,13 +358,13 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
               </div>
             ))}
 
-            {activeMode === 'manual' && <button type="button" onClick={addRow} className="w-full py-3 border-2 border-dashed border-teal-300 dark:border-teal-700 text-teal-600 dark:text-teal-400 font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-teal-50 dark:hover:bg-gray-800 transition-all text-sm bg-white dark:bg-gray-800">
+            {activeMode === 'manual' && <button type="button" onClick={addRow} className="glass glass-teal w-full py-3 border-2 border-dashed font-bold rounded-xl flex items-center justify-center gap-2 transition-all text-sm">
               <Plus className="w-4 h-4" /> Tambah Transaksi Lain
             </button>}
           </div>
 
-          <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 transition-colors">
-            <button onClick={handleSaveAll} disabled={loading} className="w-full border btn-accent hover:brightness-95 font-bold py-3 rounded-[9px] transition-all flex items-center justify-center gap-2">
+          <div className="p-4 border-t border-gray-100 dark:border-gray-700 glass transition-colors">
+            <button onClick={handleSaveAll} disabled={loading} className="glass glass-solid-teal w-full border hover:brightness-95 font-bold py-3 rounded-[9px] transition-all flex items-center justify-center gap-2">
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               {loading ? 'Menyimpan...' : `Simpan ${txList.length} Transaksi`}
             </button>
@@ -376,12 +376,12 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
       {/* MODAL KELOLA KATEGORI */}
       {isPresetModalOpen && (
         <div className="fixed inset-0 bg-black/60 z-[80] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative transition-colors max-h-[80vh] flex flex-col">
+          <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative transition-colors max-h-[80vh] flex flex-col">
             <button onClick={() => setIsPresetModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4 text-center">Kelola Kategori</h2>
             
             <div className="flex items-center gap-1.5 mb-4 bg-gray-50 dark:bg-gray-700 p-2 rounded-xl border border-gray-100 dark:border-gray-600 w-full">
-              <input type="text" value={newPresetLabel} onChange={(e) => setNewPresetLabel(e.target.value)} className="flex-1 min-w-0 h-10 border border-gray-300 dark:border-gray-500 rounded-lg px-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 transition-all" placeholder="Nama..." />
+              <input type="text" value={newPresetLabel} onChange={(e) => setNewPresetLabel(e.target.value)} className="flex-1 min-w-0 h-10 border border-gray-300 dark:border-gray-500 rounded-lg px-2 text-sm glass text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 transition-all" placeholder="Nama..." />
               <Btn variant="primary" size="md" onClick={handleSavePreset} className="shrink-0">{editingPresetId ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}{editingPresetId ? 'Update' : 'Tambah'}</Btn>
             </div>
 

@@ -74,7 +74,7 @@ export default function ImageCropper({ imageUrl, initialPos, initialZoom, onSave
       <button 
         type="button" 
         onClick={() => { onSave(`${position.x}% ${position.y}%`, zoom); setIsSaved(true); }}
-        className={`w-full mt-3 font-bold py-2 rounded-lg text-xs transition-all ${isSaved ? 'bg-green-500 text-white' : 'bg-teal-600 text-white hover:bg-teal-700'}`}
+        className={`w-full mt-3 font-bold py-2 rounded-lg text-xs transition-all ${isSaved ? 'glass glass-teal' : 'glass glass-teal'}`}
       >
         {isSaved ? 'Posisi Tersimpan!' : 'Terapkan Posisi'}
       </button>
