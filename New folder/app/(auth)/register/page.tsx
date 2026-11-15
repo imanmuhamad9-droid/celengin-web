@@ -150,7 +150,7 @@ export default function RegisterPage() {
           </div>
           {password.length > 0 && <PasswordRequirements password={password} />}
         </div>
-        <button type="submit" disabled={loading || !isPasswordValid || !isNicknameAvailable} className={`${authBtn} mt-2`}>
+        <button type="submit" disabled={loading || !isPasswordValid || !isNicknameAvailable} className={`${authBtn}mt-2`}>
           {loading ? 'Memproses...' : 'Daftar Sekarang'}
         </button>
       </form>

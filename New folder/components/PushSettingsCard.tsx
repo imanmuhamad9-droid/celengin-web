@@ -125,7 +125,7 @@ export default function PushSettingsCard({ showDialog }: { showDialog: ShowDialo
   const iosNeedsInstall = isIos && !standalone;
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
+    <div className="glass p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
       <h3 className="font-bold text-gray-800 dark:text-white mb-1">Aplikasi & Notifikasi</h3>
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Pasang Celengin di layar utama dan dapatkan pengingat tagihan, transaksi rutin, dan ringkasan mingguan.</p>
 
@@ -141,7 +141,7 @@ export default function PushSettingsCard({ showDialog }: { showDialog: ShowDialo
           </div>
         </div>
         {!standalone && installEvent && (
-          <button onClick={handleInstall} className="shrink-0 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 px-3 py-2 rounded-xl flex items-center gap-1 transition-all"><Download className="w-3.5 h-3.5" /> Pasang</button>
+          <button onClick={handleInstall} className="glass glass-teal shrink-0 text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1 transition-all"><Download className="w-3.5 h-3.5" /> Pasang</button>
         )}
       </div>
 
@@ -171,7 +171,7 @@ export default function PushSettingsCard({ showDialog }: { showDialog: ShowDialo
       )}
 
       {subscribed && (
-        <button onClick={sendTest} disabled={busy} className="w-full mt-3 text-xs font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30 border border-teal-100 dark:border-teal-800 py-2.5 rounded-xl flex items-center justify-center gap-1.5 disabled:opacity-50 transition-all">
+        <button onClick={sendTest} disabled={busy} className="glass glass-teal w-full mt-3 text-xs font-bold border py-2.5 rounded-xl flex items-center justify-center gap-1.5 disabled:opacity-50 transition-all">
           <Send className="w-3.5 h-3.5" /> Kirim Tes Notifikasi
         </button>
       )}

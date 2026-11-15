@@ -38,6 +38,10 @@ export interface SplitExpense {
   created_by: string | null;
   expense_date: string;
   split_type: 'equal' | 'custom' | 'items';
+  /** Nama toko / tempat belanja (opsional, butuh sql/06_catatan_toko.sql) */
+  store_name?: string | null;
+  /** Catatan bebas (opsional, butuh sql/06_catatan_toko.sql) */
+  note?: string | null;
   subtotal: number | string | null;
   discount_amount: number | string | null;
   service_amount: number | string | null;

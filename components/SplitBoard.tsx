@@ -1,13 +1,16 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Plus, X, Trash2, UserPlus, ArrowRight, Receipt, Copy, CreditCard, Pencil, Mail, Check, ChevronDown, ChevronUp, UserCheck, MessageCircle, Info } from 'lucide-react';
+import { ArrowLeft, Plus, X, Trash2, UserPlus, ArrowRight, Receipt, Copy, CreditCard, Pencil, Mail, Check, UserCheck, MessageCircle, Info } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { formatRupiah, formatDateID, parseRupiahInput, toLocalDateStr, digitsOnly, noDigits } from '@/lib/utils';
 import { computeNet, simplifyDebts } from '@/lib/splitbill';
 import { pushInviteNow } from '@/lib/notifications';
 import { BANKS, SplitGroup, SplitMember, SplitExpense, SplitSettlement } from '@/lib/splitTypes';
 import SplitExpenseModal from '@/components/SplitExpenseModal';
+import BayarinModal from '@/components/BayarinModal';
+import SplitExpenseList from '@/components/SplitExpenseList';
+import SplitExpenseDetailModal from '@/components/SplitExpenseDetailModal';
 import WaShareSheet, { WaOption } from '@/components/WaShareSheet';
 import { buildExpenseMessage, buildPersonMessage, buildDebtSummaryMessage, buildLedgerMessage, fmtMonth, WaExpense, WaMember } from '@/lib/whatsapp';
 import CustomDialog from '@/components/CustomDialog';
@@ -88,7 +91,8 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
   const [expenses, setExpenses] = useState<SplitExpense[]>([]);
   const [settlements, setSettlements] = useState<SplitSettlement[]>([]);
   const [tab, setTab] = useState<'ringkasan' | 'pengeluaran' | 'anggota'>('ringkasan');
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [detailExp, setDetailExp] = useState<SplitExpense | null>(null);   // popup detail catatan
+  const [editExp, setEditExp] = useState<SplitExpense | null>(null);       // catatan yang sedang diubah (Bayarin)
   const [newMember, setNewMember] = useState('');
 
   // Form grup baru
@@ -457,7 +461,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
   };
 
   // ---------- Tampilan ----------
-  const goBack = () => { if (group) { setGroup(null); setExpandedId(null); loadList(); } else router.push('/dashboard'); };
+  const goBack = () => { if (group) { setGroup(null); setDetailExp(null); loadList(); } else router.push('/dashboard'); };
 
   const BankLine = ({ m }: { m: SplitMember }) => (
     m.account_number ? (
@@ -572,7 +576,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
               </div>
             )}
 
-            <button onClick={() => setIsExpOpen(true)} className="glass glass-solid-teal w-full text-sm font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-all"><Plus className="w-5 h-5" /> {L.addExp}</button>
+            <button onClick={() => { setEditExp(null); setIsExpOpen(true); }} className="glass glass-solid-teal w-full text-sm font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-all"><Plus className="w-5 h-5" /> {L.addExp}</button>
 
             <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
               {(['ringkasan', 'pengeluaran', 'anggota'] as const).map((t) => (
@@ -665,53 +669,15 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                   <p className="text-[11px] text-gray-500 dark:text-gray-400 px-1">{shownExpenses.length} catatan · total {formatRupiah(shownExpenses.reduce((s, e) => s + Number(e.total_amount), 0))}</p>
                 )}
                 {shownExpenses.length === 0 && <p className="text-center text-xs text-gray-400 py-8">{L.noExp}</p>}
-                {shownExpenses.map((x) => {
-                  const open = expandedId === x.id;
-                  const canDelete = x.created_by === userId || isOwner;
-                  const items = (x.split_expense_items || []).slice().sort((a, b) => a.position - b.position);
-                  return (
-                    <div key={x.id} className="glass rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
-                      <button onClick={() => setExpandedId(open ? null : x.id)} className="w-full text-left p-4 flex items-start gap-2">
-                        <div className="min-w-0 flex-1">
-                          <p className="font-bold text-sm text-gray-800 dark:text-gray-100 truncate">{x.title}</p>
-                          <p className="text-[10px] text-gray-500 dark:text-gray-400">{formatDateID(x.expense_date)} · dibayar {nameOf(x.paid_by)}{x.split_type === 'items' ? ` · ${items.length} item` : ''}</p>
-                        </div>
-                        <p className="font-bold text-sm text-gray-800 dark:text-gray-100 shrink-0">{formatRupiah(Number(x.total_amount))}</p>
-                        {open ? <ChevronUp className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" /> : <ChevronDown className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />}
-                      </button>
-                      {open && (
-                        <div className="px-4 pb-4 space-y-3 border-t border-gray-50 dark:border-gray-700 pt-3">
-                          {items.length > 0 && (
-                            <div className="space-y-1.5">
-                              {items.map((it) => (
-                                <div key={it.id} className="text-[11px]">
-                                  <p className="flex justify-between gap-2 text-gray-700 dark:text-gray-200"><span className="truncate">{it.name}{it.qty > 1 ? ` x${it.qty}` : ''}</span><span className="shrink-0 font-medium">{formatRupiah(Number(it.price) * it.qty)}</span></p>
-                                  <p className="text-[10px] text-gray-400 truncate">{(it.split_item_assignees || []).map((a) => nameOf(a.member_id)).join(', ') || '-'}</p>
-                                </div>
-                              ))}
-                              <div className="pt-1.5 border-t border-dashed border-gray-200 dark:border-gray-600 text-[10px] text-gray-500 dark:text-gray-400 space-y-0.5">
-                                <p className="flex justify-between"><span>Subtotal</span><span>{formatRupiah(Number(x.subtotal || 0))}</span></p>
-                                {Number(x.discount_amount) > 0 && <p className="flex justify-between"><span>Diskon</span><span>-{formatRupiah(Number(x.discount_amount))}</span></p>}
-                                {Number(x.service_amount) > 0 && <p className="flex justify-between"><span>Service</span><span>+{formatRupiah(Number(x.service_amount))}</span></p>}
-                                {Number(x.tax_amount) > 0 && <p className="flex justify-between"><span>Pajak</span><span>+{formatRupiah(Number(x.tax_amount))}</span></p>}
-                              </div>
-                            </div>
-                          )}
-                          <div>
-                            <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Bagian tiap orang</p>
-                            <div className="space-y-1">
-                              {(x.split_shares || []).map((s) => (
-                                <p key={s.member_id} className="text-[11px] flex justify-between gap-2 text-gray-700 dark:text-gray-200"><span className="truncate">{nameOf(s.member_id)}</span><span className="font-bold shrink-0">{formatRupiah(Number(s.share_amount))}</span></p>
-                              ))}
-                            </div>
-                          </div>
-                          <button onClick={() => openExpenseWa(x)} className="glass glass-teal w-full text-xs font-bold py-2 rounded-lg flex items-center justify-center gap-1.5"><MessageCircle className="w-3.5 h-3.5" /> Kirim ke WhatsApp</button>
-                          {canDelete && <Btn variant="danger" size="sm" full onClick={() => handleDeleteExpense(x)}>{L.delExp}</Btn>}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                {shownExpenses.length > 0 && (
+                  <SplitExpenseList
+                    expenses={shownExpenses}
+                    nameOf={nameOf}
+                    canDelete={(x) => x.created_by === userId || isOwner}
+                    onSelect={setDetailExp}
+                    onDelete={handleDeleteExpense}
+                  />
+                )}
               </div>
             )}
 
@@ -850,16 +816,41 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
       <WaShareSheet isOpen={waOpen} onClose={() => setWaOpen(false)} title={waTitle} options={waOptions} showDialog={showDialog} />
 
       {group && (
-        <SplitExpenseModal
-          isOpen={isExpOpen}
-          onClose={() => setIsExpOpen(false)}
-          groupId={group.id}
-          members={members}
-          currentUserId={userId}
-          variant={isRunning ? 'gantian' : 'split'}
-          showDialog={showDialog}
-          onSaved={async () => { setTab('pengeluaran'); await loadGroup(group); loadList(); }}
-        />
+        <>
+          <SplitExpenseDetailModal
+            expense={detailExp}
+            nameOf={nameOf}
+            canManage={!!detailExp && (detailExp.created_by === userId || isOwner)}
+            canEdit={isRunning && !!detailExp && (detailExp.created_by === userId || isOwner)}
+            onClose={() => setDetailExp(null)}
+            onEdit={(x) => { setDetailExp(null); setEditExp(x); setIsExpOpen(true); }}
+            onDelete={(x) => { setDetailExp(null); handleDeleteExpense(x); }}
+            onWa={(x) => { setDetailExp(null); openExpenseWa(x); }}
+          />
+          {isRunning ? (
+            <BayarinModal
+              isOpen={isExpOpen}
+              onClose={() => { setIsExpOpen(false); setEditExp(null); }}
+              groupId={group.id}
+              members={members}
+              currentUserId={userId}
+              editing={editExp}
+              showDialog={showDialog}
+              onSaved={async () => { setTab('pengeluaran'); await loadGroup(group); loadList(); }}
+            />
+          ) : (
+            <SplitExpenseModal
+              isOpen={isExpOpen}
+              onClose={() => setIsExpOpen(false)}
+              groupId={group.id}
+              members={members}
+              currentUserId={userId}
+              variant="split"
+              showDialog={showDialog}
+              onSaved={async () => { setTab('pengeluaran'); await loadGroup(group); loadList(); }}
+            />
+          )}
+        </>
       )}
 
       <CustomDialog isOpen={dialog.isOpen} onClose={closeDialog} title={dialog.title} message={dialog.msg} type={dialog.type} onConfirm={dialog.onConfirm} />

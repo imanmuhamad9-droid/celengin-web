@@ -49,17 +49,17 @@ export default function TargetPage() {
     });
   };
 
-  if (loading) return <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950"><SkeletonLoader /></div>;
+  if (loading) return <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>;
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 
   return (
-    <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-40 transition-colors">
+    <div className="min-h-screen bg-[var(--bg-main)] pb-40 transition-colors">
       <AppHeader title="Tantangan" infoKey="Tantangan" action={<HeaderBtn onClick={() => { setSelectedTarget(null); setIsModalOpen(true); }} />} />
 
       <main className="px-5 mt-4 space-y-5">
         {targets.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-3xl p-10 text-center border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
+          <div className="glass rounded-3xl p-10 text-center border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
             <ShieldAlert className="w-12 h-12 text-gray-200 dark:text-gray-600 mx-auto mb-3" />
             <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">Belum ada tantangan yang dibuat.</p>
             <Btn variant="primary" size="md" onClick={() => { setSelectedTarget(null); setIsModalOpen(true); }}>Buat Tantangan Pertama</Btn>
@@ -79,7 +79,7 @@ export default function TargetPage() {
               const expensePercent = target.target_expense > 0 ? Math.min((totalExpense / target.target_expense) * 100, 100) : 0;
 
               return (
-                <div key={target.id} className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-gray-700 relative transition-colors">
+                <div key={target.id} className="glass rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-gray-700 relative transition-colors">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <CalendarDays className="w-4 h-4 text-teal-600 dark:text-teal-400" />

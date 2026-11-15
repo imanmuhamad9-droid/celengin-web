@@ -102,7 +102,7 @@ export default function PhotoCropper({ file, shape, aspect, outWidth, title, onC
 
   return (
     <div className="fixed inset-0 bg-black/70 z-[90] flex items-center justify-center p-4 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-5 relative">
+      <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-5 relative">
         <button onClick={onCancel} aria-label="Tutup" className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
         <h2 className="text-lg font-bold text-center text-gray-800 dark:text-white mb-1">{title}</h2>
         <p className="text-[11px] text-center text-gray-500 dark:text-gray-400 mb-4">Geser foto, lalu atur zoom sampai pas.</p>
@@ -121,16 +121,16 @@ export default function PhotoCropper({ file, shape, aspect, outWidth, title, onC
         </div>
 
         <div className="flex items-center gap-3 mt-4">
-          <button type="button" onClick={() => changeZoom(zoom - 0.25)} aria-label="Perkecil" className="w-9 h-9 shrink-0 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-200 flex items-center justify-center"><Minus className="w-4 h-4" /></button>
+          <button type="button" onClick={() => changeZoom(zoom - 0.25)} aria-label="Perkecil" className="glass w-9 h-9 shrink-0 rounded-xl text-gray-600 dark:text-gray-200 flex items-center justify-center"><Minus className="w-4 h-4" /></button>
           <input type="range" min={1} max={MAX_ZOOM} step={0.05} value={zoom} onChange={(e) => changeZoom(Number(e.target.value))} className="flex-1 accent-teal-600" aria-label="Zoom" />
-          <button type="button" onClick={() => changeZoom(zoom + 0.25)} aria-label="Perbesar" className="w-9 h-9 shrink-0 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-200 flex items-center justify-center"><Plus className="w-4 h-4" /></button>
+          <button type="button" onClick={() => changeZoom(zoom + 0.25)} aria-label="Perbesar" className="glass w-9 h-9 shrink-0 rounded-xl text-gray-600 dark:text-gray-200 flex items-center justify-center"><Plus className="w-4 h-4" /></button>
         </div>
 
         {err && <p className="text-xs text-red-500 text-center mt-3">{err}</p>}
 
         <div className="flex gap-2 mt-4">
           <button onClick={onCancel} disabled={busy} className="flex-1 py-3 rounded-xl border border-gray-200 dark:border-gray-600 text-sm font-bold text-gray-600 dark:text-gray-300">Batal</button>
-          <button onClick={save} disabled={!img || busy} className="flex-1 py-3 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white text-sm font-bold">{busy ? 'Menyimpan...' : 'Simpan'}</button>
+          <button onClick={save} disabled={!img || busy} className="glass glass-solid-teal flex-1 py-3 rounded-xl disabled:opacity-60 text-sm font-bold">{busy ? 'Menyimpan...' : 'Simpan'}</button>
         </div>
       </div>
     </div>

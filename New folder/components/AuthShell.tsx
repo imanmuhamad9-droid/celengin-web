@@ -19,7 +19,7 @@ export default function AuthShell({ title, subtitle, icon, children, footer }: {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-teal-50 via-[#faf8ff] to-white dark:from-gray-900 dark:via-gray-950 dark:to-gray-950 transition-colors">
       <div className="w-full max-w-md">
-        <div className="bg-white dark:bg-gray-800 p-7 sm:p-8 rounded-[2rem] shadow-xl shadow-teal-900/5 border border-gray-100 dark:border-gray-700 transition-colors">
+        <div className="glass p-7 sm:p-8 rounded-[2rem] shadow-xl shadow-teal-900/5 border border-gray-100 dark:border-gray-700 transition-colors">
           <div className="flex flex-col items-center text-center mb-7">
             {icon ?? <img src="/icon.png" alt="Celengin" className="w-16 h-16 mb-4 rounded-2xl shadow-md object-contain" />}
             <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">{title}</h1>

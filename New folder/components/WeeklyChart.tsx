@@ -1,12 +1,14 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { formatRupiah } from '@/lib/utils';
+import GlassCard from './GlassCard';
 
 // Statistik mingguan: kurva halus. Pilihan Keluar/Masuk menentukan kurva yang disorot (area berwarna);
 // kurva satunya tampil sebagai garis putus tipis sebagai pembanding.
 export interface WeekDay { date: string; dayName: string; income: number; expense: number }
 type Mode = 'expense' | 'income';
 
+// Keluar = merah, Masuk = hijau (sesuai makna warna di seluruh aplikasi)
 const COLOR = { expense: '#ef4444', income: '#22c55e' } as const;
 const MODE_KEY = 'celengin:weekly-mode';
 const W = 320, H = 176, BASE = 146, TOP = 84;
@@ -60,15 +62,15 @@ export default function WeeklyChart({ days, rangeLabel }: { days: WeekDay[]; ran
   const dateNum = (s: string) => Number(s.slice(8, 10));
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
+    <GlassCard className="!p-5">
       <div className="flex justify-between items-start mb-3 gap-3">
         <div>
-          <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100">Statistik Mingguan</h3>
-          <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{rangeLabel}</p>
+          <h3 className="font-bold text-sm" style={{ color: 'var(--text-main)' }}>Statistik Mingguan</h3>
+          <p className="text-[10px] text-[color:var(--text-muted)] mt-0.5">{rangeLabel}</p>
         </div>
-        <div className="flex bg-gray-100 dark:bg-gray-700 p-0.5 rounded-xl shrink-0">
+        <div className="glass flex p-0.5 rounded-full shrink-0">
           {(['expense', 'income'] as Mode[]).map((m) => (
-            <button key={m} onClick={() => pick(m)} className={`px-3 h-7 rounded-lg text-[11px] font-bold transition-all ${mode === m ? 'bg-white dark:bg-gray-600 shadow-sm' : 'text-gray-500 dark:text-gray-300'}`} style={mode === m ? { color: COLOR[m] } : undefined}>{m === 'expense' ? 'Keluar' : 'Masuk'}</button>
+            <button key={m} onClick={() => pick(m)} className={`glass-pressable px-3 h-7 rounded-full text-[11px] font-bold ${mode === m ? 'text-[color:var(--teal-primary)]' : 'text-[color:var(--text-muted)]'}`} style={mode === m ? { background: 'rgba(44, 143, 126, 0.14)' } : undefined}>{m === 'expense' ? 'Keluar' : 'Masuk'}</button>
           ))}
         </div>
       </div>
@@ -90,20 +92,20 @@ export default function WeeklyChart({ days, rangeLabel }: { days: WeekDay[]; ran
 
       <div className="flex justify-between mt-1">
         {days.map((x, i) => (
-          <button key={x.date} onClick={() => setSel(i)} className={`flex-1 text-center text-[10px] leading-tight py-1 rounded-lg transition-colors ${i === active ? 'bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 font-bold' : 'text-gray-400 dark:text-gray-500'}`}>
+          <button key={x.date} onClick={() => setSel(i)} className={`flex-1 text-center text-[10px] leading-tight py-1 rounded-lg transition-colors ${i === active ? 'text-[color:var(--teal-primary)] font-bold' : 'text-[color:var(--text-muted)]'}`}>
             {x.dayName}<br />{dateNum(x.date)}
           </button>
         ))}
       </div>
 
       <div className="flex items-center justify-between gap-2 mt-3 text-[11px]">
-        <span className="font-bold text-gray-700 dark:text-gray-200">{d.dayName}, {dateNum(d.date)}</span>
+        <span className="font-bold" style={{ color: 'var(--text-main)' }}>{d.dayName}, {dateNum(d.date)}</span>
         <span className="flex gap-3">
-          <span className="font-bold text-green-600 dark:text-green-400">Masuk {formatRupiah(d.income)}</span>
-          <span className="font-bold text-red-500 dark:text-red-400">Keluar {formatRupiah(d.expense)}</span>
+          <span className="font-bold" style={{ color: 'var(--text-main)' }}>Masuk {formatRupiah(d.income)}</span>
+          <span className="font-bold" style={{ color: 'var(--text-main)' }}>Keluar {formatRupiah(d.expense)}</span>
         </span>
       </div>
-      <p className="text-[10px] text-gray-400 mt-2 flex items-center gap-1.5"><span className="inline-block w-5 border-t-2 border-dashed" style={{ borderColor: oc }} /> Garis putus: {mode === 'expense' ? 'pemasukan' : 'pengeluaran'} sebagai pembanding</p>
-    </div>
+      <p className="text-[10px] text-[color:var(--text-muted)] mt-2 flex items-center gap-1.5"><span className="inline-block w-5 border-t-2 border-dashed" style={{ borderColor: oc }} /> Garis putus: {mode === 'expense' ? 'pemasukan' : 'pengeluaran'} sebagai pembanding</p>
+    </GlassCard>
   );
 }

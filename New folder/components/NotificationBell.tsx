@@ -148,11 +148,11 @@ export default function NotificationBell({ userId, local }: Props) {
       <button
         onClick={openPanel}
         aria-label={badge > 0 ? `Notifikasi, ${badge} belum dibaca` : 'Notifikasi'}
-        className="relative w-9 h-9 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-teal-600 transition-all active:scale-95"
+        className="glass relative w-9 h-9 rounded-full flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-teal-600 transition-all active:scale-95"
       >
         <Bell className="w-5 h-5" />
         {badge > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white dark:border-gray-900">
+          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full glass glass-danger text-[10px] font-bold flex items-center justify-center">
             {badge > 9 ? '9+' : badge}
           </span>
         )}
@@ -167,11 +167,11 @@ export default function NotificationBell({ userId, local }: Props) {
                 <h3 className="font-bold text-base text-gray-800 dark:text-gray-100">Notifikasi</h3>
                 <div className="flex items-center gap-2">
                   {canMarkAll && (
-                    <button onClick={handleMarkAll} className="flex items-center gap-1 text-[11px] font-bold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-900/30 px-3 py-1.5 rounded-full">
+                    <button onClick={handleMarkAll} className="glass glass-teal flex items-center gap-1 text-[11px] font-bold px-3 py-1.5 rounded-full">
                       <Check className="w-3.5 h-3.5" /> Tandai dibaca
                     </button>
                   )}
-                  <button onClick={() => setOpen(false)} aria-label="Tutup" className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 flex items-center justify-center"><X className="w-4 h-4" /></button>
+                  <button onClick={() => setOpen(false)} aria-label="Tutup" className="glass w-8 h-8 rounded-full text-gray-500 dark:text-gray-400 flex items-center justify-center"><X className="w-4 h-4" /></button>
                 </div>
               </div>
 
@@ -198,7 +198,7 @@ export default function NotificationBell({ userId, local }: Props) {
                       className={`relative cursor-pointer rounded-2xl p-3 border transition-colors ${unread ? 'bg-teal-50/60 dark:bg-teal-900/20 border-teal-200 dark:border-teal-800' : 'bg-gray-50 dark:bg-gray-800/60 border-transparent'}`}
                     >
                       <div className="flex items-start gap-3 pr-6">
-                        <div className="w-9 h-9 shrink-0 rounded-xl bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm"><KindIcon kind={n.kind} /></div>
+                        <div className="w-9 h-9 shrink-0 rounded-xl glass flex items-center justify-center shadow-sm"><KindIcon kind={n.kind} /></div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
                             {unread && <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0" />}
@@ -212,14 +212,14 @@ export default function NotificationBell({ userId, local }: Props) {
                               <button
                                 onClick={() => respond(n, true)}
                                 disabled={busyId === n.id}
-                                className="flex-1 bg-teal-600 text-white text-xs font-bold py-2 rounded-xl active:scale-95 transition-transform disabled:opacity-60"
+                                className="glass glass-solid-teal flex-1 text-xs font-bold py-2 rounded-xl active:scale-95 transition-transform disabled:opacity-60"
                               >
                                 {busyId === n.id ? 'Memproses...' : 'Terima'}
                               </button>
                               <button
                                 onClick={() => respond(n, false)}
                                 disabled={busyId === n.id}
-                                className="flex-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-xs font-bold py-2 rounded-xl active:scale-95 transition-transform disabled:opacity-60"
+                                className="glass flex-1 border text-gray-600 dark:text-gray-300 text-xs font-bold py-2 rounded-xl active:scale-95 transition-transform disabled:opacity-60"
                               >
                                 Tolak
                               </button>

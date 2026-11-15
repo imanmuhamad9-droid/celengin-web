@@ -150,7 +150,7 @@ export default function BillsPage() {
     });
   };
 
-  if (loading || !today) return <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950"><SkeletonLoader /></div>;
+  if (loading || !today) return <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>;
 
   const enriched = bills.map((b) => ({ ...b, daysLeft: diffDays(today, b.due_date) }));
   const active = enriched.filter((b) => b.is_active);
@@ -166,7 +166,7 @@ export default function BillsPage() {
       : b.daysLeft <= (b.remind_days_before ?? 3) ? { t: `H-${b.daysLeft}`, c: 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400' }
       : { t: `${b.daysLeft} hari lagi`, c: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400' };
     return (
-      <div key={b.id} className={`bg-white dark:bg-gray-800 p-4 rounded-3xl border shadow-sm transition-colors ${b.is_active && b.daysLeft < 0 ? 'border-red-100 dark:border-red-900/40' : 'border-gray-100 dark:border-gray-700'} ${b.is_active ? '' : 'opacity-60'}`}>
+      <div key={b.id} className={`glass p-4 rounded-3xl border shadow-sm transition-colors ${b.is_active && b.daysLeft < 0 ? 'border-red-100 dark:border-red-900/40' : 'border-gray-100 dark:border-gray-700'} ${b.is_active ? '' : 'opacity-60'}`}>
         <div className="flex justify-between items-start gap-2">
           <div className="min-w-0">
             <p className="font-bold text-gray-800 dark:text-gray-100 truncate">{b.name}</p>
@@ -197,7 +197,7 @@ export default function BillsPage() {
     );
 
   return (
-    <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-40 transition-colors">
+    <div className="min-h-screen bg-[var(--bg-main)] pb-40 transition-colors">
       <AppHeader title="Tagihan" action={<HeaderBtn onClick={openAdd} label="Tambah" />} />
 
       <main className="px-5 mt-4 space-y-5">
@@ -221,7 +221,7 @@ export default function BillsPage() {
         <Section title="Dijeda / Selesai" list={paused} />
 
         {bills.length === 0 && !missingTable && (
-          <div className="bg-white dark:bg-gray-800 rounded-3xl p-10 text-center border border-gray-100 dark:border-gray-700 shadow-sm">
+          <div className="glass rounded-3xl p-10 text-center border border-gray-100 dark:border-gray-700 shadow-sm">
             <Receipt className="w-12 h-12 text-gray-200 dark:text-gray-600 mx-auto mb-3" />
             <p className="text-gray-400 dark:text-gray-500 text-sm">Belum ada tagihan. Tambahkan listrik, internet, atau langganan kamu.</p>
           </div>
@@ -230,7 +230,7 @@ export default function BillsPage() {
 
       {isFormOpen && (
         <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative transition-colors max-h-[90vh] overflow-y-auto">
+          <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative transition-colors max-h-[90vh] overflow-y-auto">
             <button onClick={() => setIsFormOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-center mb-4 text-gray-800 dark:text-white">{editingId ? 'Edit Tagihan' : 'Tambah Tagihan'}</h2>
             <form onSubmit={handleSave} className="space-y-4">
@@ -246,7 +246,7 @@ export default function BillsPage() {
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Kategori saat dibayar</label>
                 <div className="flex flex-wrap gap-1.5">
                   {categories.map((c) => (
-                    <button key={c} type="button" onClick={() => setCategory(c)} className={`px-2 py-1 rounded-lg text-xs font-medium transition-all border ${category === c ? 'bg-teal-50 dark:bg-teal-900/30 border-teal-500 text-teal-700 dark:text-teal-400' : 'bg-gray-50 dark:bg-gray-700 border-transparent text-gray-600 dark:text-gray-300'}`}>{c}</button>
+                    <button key={c} type="button" onClick={() => setCategory(c)} className={`px-2 py-1 rounded-lg text-xs font-medium transition-all border ${category === c ? 'glass glass-teal' : 'glass border-transparent text-gray-600 dark:text-gray-300'}`}>{c}</button>
                   ))}
                 </div>
               </div>
@@ -270,7 +270,7 @@ export default function BillsPage() {
                   <Toggle checked={isActive} onChange={setIsActive} label="Tagihan aktif" />
                 </div>
               )}
-              <button type="submit" disabled={saving} className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-xl mt-2 transition-all disabled:opacity-50">{saving ? 'Menyimpan...' : editingId ? 'Simpan Perubahan' : 'Simpan Tagihan'}</button>
+              <button type="submit" disabled={saving} className="glass glass-solid-teal w-full font-bold py-3.5 rounded-xl mt-2 transition-all disabled:opacity-50">{saving ? 'Menyimpan...' : editingId ? 'Simpan Perubahan' : 'Simpan Tagihan'}</button>
             </form>
           </div>
         </div>

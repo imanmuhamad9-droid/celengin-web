@@ -154,10 +154,10 @@ export default function DreamPlannerPage() {
     return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   };
 
-  if (isLoading) return <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950"><SkeletonLoader /></div>;
+  if (isLoading) return <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>;
 
   return (
-    <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-40 transition-colors">
+    <div className="min-h-screen bg-[var(--bg-main)] pb-40 transition-colors">
       <AppHeader title="Impian" action={<HeaderBtn onClick={() => setIsModalOpen(true)} />} />
 
       <main className="max-w-md mx-auto px-5 mt-4 space-y-4">
@@ -190,7 +190,7 @@ export default function DreamPlannerPage() {
             const done = remainingAmount <= 0;
 
             return (
-              <div key={goal.id} className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-teal-100 dark:border-teal-900/30 shadow-sm transition-colors">
+              <div key={goal.id} className="glass p-5 rounded-3xl border border-teal-100 dark:border-teal-900/30 shadow-sm transition-colors">
                 <div className="flex justify-between items-start gap-3 mb-4">
                   <div className="min-w-0">
                     {daysLeft !== null && (
@@ -198,7 +198,7 @@ export default function DreamPlannerPage() {
                     )}
                     <h3 className="font-extrabold text-gray-900 dark:text-white text-lg mt-1.5 truncate">{goal.title}</h3>
                   </div>
-                  <button onClick={() => openEstimate(goal)} aria-label="Perkiraan menabung" className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center border transition-all active:scale-95 bg-teal-500/10 border-teal-500/30 text-teal-600"><Info className="w-4 h-4" /></button>
+                  <button onClick={() => openEstimate(goal)} aria-label="Perkiraan menabung" className="glass glass-teal shrink-0 w-9 h-9 rounded-full flex items-center justify-center border transition-all active:scale-95"><Info className="w-4 h-4" /></button>
                 </div>
 
                 <div className="flex items-center gap-4 mb-4">
@@ -224,7 +224,7 @@ export default function DreamPlannerPage() {
             );
           })}
           {goals.length === 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-3xl p-10 text-center border border-gray-100 dark:border-gray-700 shadow-sm mt-4">
+            <div className="glass rounded-3xl p-10 text-center border border-gray-100 dark:border-gray-700 shadow-sm mt-4">
               <Target className="w-12 h-12 text-gray-200 dark:text-gray-600 mx-auto mb-3" />
               <p className="text-gray-400 dark:text-gray-500 text-sm">Belum ada impian yang direncanakan.<br/>Yuk buat target pertamamu!</p>
             </div>
@@ -244,7 +244,7 @@ export default function DreamPlannerPage() {
         const row = 'flex justify-between gap-3 text-xs py-1.5';
         return (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative max-h-[85vh] overflow-y-auto transition-colors">
+            <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative max-h-[85vh] overflow-y-auto transition-colors">
               <button onClick={() => setEstimate(null)} aria-label="Tutup" className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
               <h2 className="text-lg font-extrabold text-center text-gray-800 dark:text-white">Perkiraan Menabung</h2>
               <p className="text-[11px] text-center text-gray-500 dark:text-gray-400 mb-4 truncate">{g.title}</p>
@@ -305,7 +305,7 @@ export default function DreamPlannerPage() {
 
       {isDetailOpen && selectedGoal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative max-h-[80vh] flex flex-col transition-colors">
+          <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative max-h-[80vh] flex flex-col transition-colors">
             <button onClick={() => setIsDetailOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-1 text-center">{selectedGoal.title}</h2>
             <p className="text-xs text-center text-gray-500 dark:text-gray-400 mb-4">Riwayat Tabungan</p>
@@ -330,7 +330,7 @@ export default function DreamPlannerPage() {
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative transition-colors">
+          <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative transition-colors">
             <button onClick={() => setIsModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-center mb-4 text-gray-800 dark:text-white">Tambah Impian</h2>
             <form onSubmit={handleAddGoal} className="space-y-4">
@@ -343,7 +343,7 @@ export default function DreamPlannerPage() {
                 <input type="text" inputMode="numeric" placeholder="Nominal (Rp)" value={targetDisplay} onChange={handleTargetChange} required className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm font-bold" />
               </div>
               <DateField label="Kalender (target tercapai, opsional)" placeholder="Kalender" value={targetDate} onChange={setTargetDate} />
-              <button type="submit" className="w-full bg-teal-600 text-white font-bold py-3 rounded-xl mt-2">Simpan</button>
+              <button type="submit" className="glass glass-solid-teal w-full font-bold py-3 rounded-xl mt-2">Simpan</button>
             </form>
           </div>
         </div>

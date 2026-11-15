@@ -129,7 +129,7 @@ export default function TargetSetupModal({ isOpen, onClose, onSuccess, showDialo
 
   return (
     <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-4 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-5 relative max-h-[90vh] overflow-y-auto transition-colors">
+      <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-5 relative max-h-[90vh] overflow-y-auto transition-colors">
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
         <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4 text-center">Atur Target</h2>
 
@@ -141,7 +141,7 @@ export default function TargetSetupModal({ isOpen, onClose, onSuccess, showDialo
               {['day', 'week', 'month', 'year', 'custom'].map(type => (
                 <button 
                   key={type} type="button" onClick={() => handlePeriodChange(type)}
-                  className={`py-1.5 rounded-lg text-[9px] font-bold capitalize transition-all border ${periodType === type ? 'bg-teal-600 text-white border-teal-600' : 'bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 border-gray-200 dark:border-gray-600'}`}
+                  className={`py-1.5 rounded-lg text-[9px] font-bold capitalize transition-all border ${periodType === type ? 'glass glass-teal' : 'glass text-gray-500 dark:text-gray-300'}`}
                 >
                   {type === 'day' ? 'Harian' : type === 'week' ? 'Minggu' : type === 'month' ? 'Bulan' : type === 'year' ? 'Tahun' : 'Custom'}
                 </button>
@@ -188,7 +188,7 @@ export default function TargetSetupModal({ isOpen, onClose, onSuccess, showDialo
             </div>
           </div>
 
-          <button type="submit" disabled={loading} className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-all mt-2 disabled:opacity-50">
+          <button type="submit" disabled={loading} className="glass glass-solid-teal w-full font-bold py-3 rounded-xl transition-all mt-2 disabled:opacity-50">
             {loading ? 'Menyimpan...' : 'Simpan Target'}
           </button>
         </form>

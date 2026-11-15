@@ -191,7 +191,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
     setCurMonth(toLocalDateStr(new Date()).slice(0, 7));
   }, []);
 
-  if (loading) return <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950"><SkeletonLoader /></div>;
+  if (loading) return <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>;
 
   const isOwner = !!group && group.user_id === userId;
   const memberById = (id: string) => members.find((m) => m.id === id);
@@ -461,7 +461,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
 
   const BankLine = ({ m }: { m: SplitMember }) => (
     m.account_number ? (
-      <div className="mt-2 flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-600 rounded-lg p-2">
+      <div className="mt-2 flex items-center gap-2 glass border border-gray-100 dark:border-gray-600 rounded-lg p-2">
         <CreditCard className="w-4 h-4 text-gray-400 shrink-0" />
         <div className="min-w-0 flex-1">
           <p className="text-[10px] font-bold text-gray-700 dark:text-gray-200 truncate">{m.bank_name || 'Rekening'}</p>
@@ -475,7 +475,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
   );
 
   return (
-    <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-40 transition-colors">
+    <div className="min-h-screen bg-[var(--bg-main)] pb-40 transition-colors">
       <AppHeader
         z="z-40"
         title={group ? group.name : 'Split Bill'}
@@ -502,13 +502,13 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
               <div className="space-y-2">
                 <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Undangan Masuk</p>
                 {invites.map((inv) => (
-                  <div key={inv.memberId} className="bg-white dark:bg-gray-800 border border-teal-200 dark:border-teal-800 p-4 rounded-2xl">
+                  <div key={inv.memberId} className="glass border border-teal-200 dark:border-teal-800 p-4 rounded-2xl">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="min-w-0"><p className="text-[11px] text-gray-500 dark:text-gray-400">{L.inviteLabel}</p><p className="font-bold text-sm text-gray-800 dark:text-white truncate">{inv.group.name}</p></div>
                     </div>
                     <div className="flex gap-2">
-                      <button onClick={() => respondInvite(inv, true)} className="flex-1 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2.5 rounded-lg flex items-center justify-center gap-1"><Check className="w-4 h-4" /> Terima</button>
-                      <button onClick={() => respondInvite(inv, false)} className="flex-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 text-xs font-bold py-2.5 rounded-lg flex items-center justify-center gap-1"><X className="w-4 h-4" /> Tolak</button>
+                      <button onClick={() => respondInvite(inv, true)} className="glass glass-solid-teal flex-1 text-xs font-bold py-2.5 rounded-lg flex items-center justify-center gap-1"><Check className="w-4 h-4" /> Terima</button>
+                      <button onClick={() => respondInvite(inv, false)} className="glass flex-1 border text-gray-600 dark:text-gray-300 text-xs font-bold py-2.5 rounded-lg flex items-center justify-center gap-1"><X className="w-4 h-4" /> Tolak</button>
                     </div>
                   </div>
                 ))}
@@ -516,12 +516,12 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
             )}
 
             {cards.length === 0 && invites.length === 0 ? (
-              <div className="bg-white dark:bg-gray-800 rounded-3xl p-10 text-center border border-gray-100 dark:border-gray-700 shadow-sm">
+              <div className="glass rounded-3xl p-10 text-center border border-gray-100 dark:border-gray-700 shadow-sm">
                 <Receipt className="w-12 h-12 text-gray-200 dark:text-gray-600 mx-auto mb-3" />
                 <p className="text-gray-400 dark:text-gray-500 text-sm">{L.empty}</p>
               </div>
             ) : cards.map((c) => (
-              <button key={c.id} onClick={() => { setTab('ringkasan'); loadGroup(c); }} className="w-full text-left bg-white dark:bg-gray-800 p-4 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center gap-3 transition-colors active:scale-[0.99]">
+              <button key={c.id} onClick={() => { setTab('ringkasan'); loadGroup(c); }} className="glass w-full text-left p-4 rounded-3xl border flex items-center gap-3 transition-colors active:scale-[0.99]">
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-gray-800 dark:text-gray-100 truncate">{c.name}</p>
                   <p className="text-[11px] text-gray-500 dark:text-gray-400">{c.memberCount} orang · total {formatRupiah(c.total)}</p>
@@ -555,12 +555,12 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                 <div className="mt-3 space-y-2">
                   {debts.length > 0 && (myDebts.length > 0 ? myDebts : debts.slice(0, 1)).length === 1 && (
                     <div className="flex gap-2">
-                      <button onClick={() => handleSettle(myDebts.length > 0 ? myDebts[0] : debts[0])} className="flex-1 h-10 rounded-xl bg-white text-teal-700 text-xs font-bold active:scale-95 transition-transform">Lunas</button>
-                      <button onClick={() => handlePartial(myDebts.length > 0 ? myDebts[0] : debts[0])} className="flex-1 h-10 rounded-xl border border-teal-400 text-white text-xs font-bold active:scale-95 transition-transform">Bayar sebagian</button>
+                      <button onClick={() => handleSettle(myDebts.length > 0 ? myDebts[0] : debts[0])} className="glass-on-color glass-on-color-strong glass-pressable flex-1 h-10 rounded-full text-xs font-bold">Lunas</button>
+                      <button onClick={() => handlePartial(myDebts.length > 0 ? myDebts[0] : debts[0])} className="glass-on-color glass-pressable flex-1 h-10 rounded-full text-xs font-bold">Bayar sebagian</button>
                     </div>
                   )}
                   {expenses.length > 0 && (
-                    <button onClick={openSummaryWa} className="w-full h-10 rounded-xl border border-teal-400 text-white text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"><MessageCircle className="w-4 h-4" /> Kirim ke WA</button>
+                    <button onClick={openSummaryWa} className="glass-on-color glass-pressable w-full h-10 rounded-full text-xs font-bold flex items-center justify-center gap-1.5"><MessageCircle className="w-4 h-4" /> Kirim ke WA</button>
                   )}
                 </div>
               </div>
@@ -572,21 +572,21 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
               </div>
             )}
 
-            <button onClick={() => setIsExpOpen(true)} className="w-full bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-all"><Plus className="w-5 h-5" /> {L.addExp}</button>
+            <button onClick={() => setIsExpOpen(true)} className="glass glass-solid-teal w-full text-sm font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-all"><Plus className="w-5 h-5" /> {L.addExp}</button>
 
             <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
               {(['ringkasan', 'pengeluaran', 'anggota'] as const).map((t) => (
-                <button key={t} onClick={() => setTab(t)} className={`flex-1 py-2 rounded-lg text-xs font-bold capitalize transition-all ${tab === t ? 'bg-white dark:bg-gray-700 text-teal-700 dark:text-teal-400 shadow-sm' : 'text-gray-500 dark:text-gray-400'}`}>{L.tabs[t]}</button>
+                <button key={t} onClick={() => setTab(t)} className={`flex-1 py-2 rounded-lg text-xs font-bold capitalize transition-all ${tab === t ? 'glass text-teal-700 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'}`}>{L.tabs[t]}</button>
               ))}
             </div>
 
             {/* --- Ringkasan --- */}
             {tab === 'ringkasan' && (
               <>
-                <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                <div className="glass p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm">
                   <div className="flex items-center justify-between gap-2 mb-3">
                     <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100">Siapa bayar siapa</h3>
-                    {expenses.length > 0 && <button onClick={openSummaryWa} className="shrink-0 flex items-center gap-1 text-[11px] font-bold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-900/30 px-3 py-1.5 rounded-full"><MessageCircle className="w-3.5 h-3.5" /> Kirim ke WA</button>}
+                    {expenses.length > 0 && <button onClick={openSummaryWa} className="glass glass-teal shrink-0 flex items-center gap-1 text-[11px] font-bold px-3 py-1.5 rounded-full"><MessageCircle className="w-3.5 h-3.5" /> Kirim ke WA</button>}
                   </div>
                   {debts.length === 0 ? (
                     <p className="text-xs text-gray-400 text-center py-3">{expenses.length === 0 ? L.noExp : 'Semua sudah lunas 🎉'}</p>
@@ -603,8 +603,8 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                                 <p className="font-bold text-red-500 dark:text-red-400 text-base">{formatRupiah(d.amount)}</p>
                               </div>
                               <div className="flex flex-col gap-1.5 shrink-0">
-                                <button onClick={() => handleSettle(d)} className="bg-teal-600 hover:bg-teal-700 text-white text-[11px] font-bold px-3 py-2 rounded-lg">Lunas</button>
-                                {isRunning && <button onClick={() => handlePartial(d)} className="bg-white dark:bg-gray-700 border border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-300 text-[10px] font-bold px-3 py-1.5 rounded-lg">Bayar sebagian</button>}
+                                <button onClick={() => handleSettle(d)} className="glass glass-teal text-[11px] font-bold px-3 py-2 rounded-lg">Lunas</button>
+                                {isRunning && <button onClick={() => handlePartial(d)} className="glass glass-teal border text-[10px] font-bold px-3 py-1.5 rounded-lg">Bayar sebagian</button>}
                               </div>
                             </div>
                             {receiver && <BankLine m={receiver} />}
@@ -615,7 +615,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                   )}
                 </div>
 
-                <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                <div className="glass p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm">
                   <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100 mb-3">Saldo tiap orang</h3>
                   <div className="space-y-2">
                     {members.map((m) => {
@@ -633,7 +633,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                 </div>
 
                 {settlements.length > 0 && (
-                  <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                  <div className="glass p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm">
                     <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100 mb-3">Riwayat pembayaran</h3>
                     <div className="space-y-3">
                       {settlements.map((st) => (
@@ -657,7 +657,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                 {isRunning && monthList.length > 0 && (
                   <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
                     {['all', ...monthList].map((ym) => (
-                      <button key={ym} onClick={() => setMonthFilter(ym)} className={`shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-bold border-2 ${monthFilter === ym ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300' : 'border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400'}`}>{ym === 'all' ? 'Semua' : fmtMonth(ym)}</button>
+                      <button key={ym} onClick={() => setMonthFilter(ym)} className={`shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-bold border-2 ${monthFilter === ym ? 'glass glass-teal' : 'border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400'}`}>{ym === 'all' ? 'Semua' : fmtMonth(ym)}</button>
                     ))}
                   </div>
                 )}
@@ -670,7 +670,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                   const canDelete = x.created_by === userId || isOwner;
                   const items = (x.split_expense_items || []).slice().sort((a, b) => a.position - b.position);
                   return (
-                    <div key={x.id} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+                    <div key={x.id} className="glass rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
                       <button onClick={() => setExpandedId(open ? null : x.id)} className="w-full text-left p-4 flex items-start gap-2">
                         <div className="min-w-0 flex-1">
                           <p className="font-bold text-sm text-gray-800 dark:text-gray-100 truncate">{x.title}</p>
@@ -705,7 +705,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                               ))}
                             </div>
                           </div>
-                          <button onClick={() => openExpenseWa(x)} className="w-full text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-900/30 text-xs font-bold py-2 rounded-lg flex items-center justify-center gap-1.5"><MessageCircle className="w-3.5 h-3.5" /> Kirim ke WhatsApp</button>
+                          <button onClick={() => openExpenseWa(x)} className="glass glass-teal w-full text-xs font-bold py-2 rounded-lg flex items-center justify-center gap-1.5"><MessageCircle className="w-3.5 h-3.5" /> Kirim ke WhatsApp</button>
                           {canDelete && <Btn variant="danger" size="sm" full onClick={() => handleDeleteExpense(x)}>{L.delExp}</Btn>}
                         </div>
                       )}
@@ -719,7 +719,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
             {tab === 'anggota' && (
               <div className="space-y-3">
                 {members.map((m) => (
-                  <div key={m.id} className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                  <div key={m.id} className="glass p-4 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
                     <div className="flex items-center gap-2">
                       <div className="min-w-0 flex-1">
                         <p className="font-bold text-sm text-gray-800 dark:text-gray-100 truncate">{m.name}{!isRunning && isMine(m) ? ' (kamu)' : ''}</p>
@@ -740,13 +740,13 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
 
                 {!isOwner && <p className="text-[11px] text-gray-400 text-center px-2">Hanya pembuat {L.entity} ini yang bisa mengeluarkan anggota.</p>}
 
-                <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-3">
+                <div className="glass p-4 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-3">
                   <p className="text-xs font-bold text-gray-800 dark:text-gray-100">Tambah teman</p>
                   <div className="flex gap-2">
                     <input value={newMember} onChange={(e) => setNewMember(noDigits(e.target.value))} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddMember(); } }} placeholder="Nama teman (tanpa akun)" className={inputCls} />
-                    <button onClick={handleAddMember} className="bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 w-11 h-11 rounded-xl shrink-0 flex items-center justify-center" aria-label="Tambah"><Plus className="w-5 h-5" /></button>
+                    <button onClick={handleAddMember} className="glass glass-teal w-11 h-11 rounded-xl shrink-0 flex items-center justify-center" aria-label="Tambah"><Plus className="w-5 h-5" /></button>
                   </div>
-                  <button onClick={() => setIsInviteOpen(true)} className="w-full h-11 rounded-xl border-2 border-dashed border-teal-300 dark:border-teal-700 text-teal-600 dark:text-teal-400 text-xs font-bold flex items-center justify-center gap-1.5"><UserPlus className="w-4 h-4" /> Undang pengguna Celengin (lewat email)</button>
+                  <button onClick={() => setIsInviteOpen(true)} className="glass glass-teal glass-pressable w-full h-11 rounded-full border-dashed text-xs font-bold flex items-center justify-center gap-1.5"><UserPlus className="w-4 h-4" /> Undang pengguna Celengin (lewat email)</button>
                 </div>
               </div>
             )}
@@ -757,7 +757,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
       {/* ===== MODAL GRUP BARU ===== */}
       {isGroupOpen && (
         <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative max-h-[90vh] overflow-y-auto transition-colors">
+          <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative max-h-[90vh] overflow-y-auto transition-colors">
             <button onClick={() => setIsGroupOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-center mb-4 text-gray-800 dark:text-white">{L.modalTitle}</h2>
             <form onSubmit={handleCreateGroup} className="space-y-4">
@@ -776,16 +776,16 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                   ))}
                 </div>
                 <div className="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-xl mb-2">
-                  <button type="button" onClick={() => { setGInviteMode(false); setGMemberInput(''); }} className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold ${!gInviteMode ? 'bg-white dark:bg-gray-600 text-teal-700 dark:text-teal-300 shadow-sm' : 'text-gray-500 dark:text-gray-300'}`}>Nama saja</button>
-                  <button type="button" onClick={() => { setGInviteMode(true); setGMemberInput(''); }} className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold ${gInviteMode ? 'bg-white dark:bg-gray-600 text-teal-700 dark:text-teal-300 shadow-sm' : 'text-gray-500 dark:text-gray-300'}`}>Undang pengguna (email)</button>
+                  <button type="button" onClick={() => { setGInviteMode(false); setGMemberInput(''); }} className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold ${!gInviteMode ? 'glass text-teal-700 dark:text-teal-300' : 'text-gray-500 dark:text-gray-300'}`}>Nama saja</button>
+                  <button type="button" onClick={() => { setGInviteMode(true); setGMemberInput(''); }} className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold ${gInviteMode ? 'glass text-teal-700 dark:text-teal-300' : 'text-gray-500 dark:text-gray-300'}`}>Undang pengguna (email)</button>
                 </div>
                 <div className="flex gap-2">
                   <input type={gInviteMode ? 'email' : 'text'} value={gMemberInput} onChange={(e) => setGMemberInput(gInviteMode ? e.target.value : noDigits(e.target.value))} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addGroupMemberChip(); } }} placeholder={gInviteMode ? 'email@contoh.com' : 'Nama teman'} className={inputCls} />
-                  <button type="button" onClick={() => addGroupMemberChip()} disabled={gAdding} className="bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 w-11 h-11 rounded-xl shrink-0 flex items-center justify-center disabled:opacity-50"><Plus className="w-5 h-5" /></button>
+                  <button type="button" onClick={() => addGroupMemberChip()} disabled={gAdding} className="glass glass-teal w-11 h-11 rounded-xl shrink-0 flex items-center justify-center disabled:opacity-50"><Plus className="w-5 h-5" /></button>
                 </div>
                 <p className="text-[10px] text-gray-400 mt-1.5">{gInviteMode ? `Pengguna yang diundang melihat ${L.entity} ini dari akunnya setelah menerima.` : 'Teman tidak perlu punya akun, cukup ditulis namanya.'} Bisa ditambah lagi nanti di tab Anggota.</p>
               </div>
-              <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-xl transition-all">{isRunning ? 'Buat Bayarin' : 'Buat Grup'}</button>
+              <button type="submit" className="glass glass-solid-teal w-full font-bold py-3.5 rounded-xl transition-all">{isRunning ? 'Buat Bayarin' : 'Buat Grup'}</button>
             </form>
           </div>
         </div>
@@ -794,7 +794,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
       {/* ===== MODAL REKENING ===== */}
       {bankMember && (
         <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative transition-colors">
+          <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative transition-colors">
             <button onClick={() => setBankMember(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-center mb-1 text-gray-800 dark:text-white">Info Rekening</h2>
             <p className="text-xs text-center text-gray-500 dark:text-gray-400 mb-4 truncate">{bankMember.name}</p>
@@ -807,7 +807,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
               <input value={bankHolder} onChange={(e) => setBankHolder(noDigits(e.target.value))} placeholder="Nama pemilik rekening" className={inputCls} />
               <input type="tel" inputMode="tel" value={bankPhone} onChange={(e) => setBankPhone(digitsOnly(e.target.value))} placeholder="Nomor WhatsApp (opsional), cth 0812..." className={inputCls} />
               <p className="text-[10px] text-gray-400">Rekening dipakai agar yang berutang langsung tahu harus transfer ke mana. Nomor WhatsApp membuat tombol Kirim ke WhatsApp langsung membuka chat orang ini.</p>
-              <button type="submit" className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-xl transition-all">Simpan</button>
+              <button type="submit" className="glass glass-solid-teal w-full font-bold py-3.5 rounded-xl transition-all">Simpan</button>
             </form>
           </div>
         </div>
@@ -816,13 +816,13 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
       {/* ===== MODAL UNDANG ===== */}
       {isInviteOpen && (
         <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative transition-colors">
+          <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative transition-colors">
             <button onClick={() => setIsInviteOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-center mb-1 text-gray-800 dark:text-white">Undang Pengguna</h2>
             <p className="text-xs text-center text-gray-500 dark:text-gray-400 mb-4">Masukkan email akun Celengin temanmu. Dia akan melihat {L.entity} ini di menu {L.menu}-nya.</p>
             <form onSubmit={handleInvite} className="space-y-3">
               <div className="relative"><Mail className="w-4 h-4 text-gray-400 absolute left-3 top-3.5" /><input type="email" required value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="email@contoh.com" className={`${inputCls} pl-9`} /></div>
-              <button type="submit" disabled={inviteBusy} className="w-full bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl transition-all">{inviteBusy ? 'Mengundang...' : 'Kirim Undangan'}</button>
+              <button type="submit" disabled={inviteBusy} className="glass glass-solid-teal w-full disabled:opacity-60 font-bold py-3.5 rounded-xl transition-all">{inviteBusy ? 'Mengundang...' : 'Kirim Undangan'}</button>
             </form>
           </div>
         </div>
@@ -831,7 +831,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
       {/* ===== MODAL CATAT PEMBAYARAN (Gantian) ===== */}
       {settleLine && (
         <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative transition-colors">
+          <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative transition-colors">
             <button onClick={() => setSettleLine(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-center mb-1 text-gray-800 dark:text-white">Catat Pembayaran</h2>
             <p className="text-xs text-center text-gray-500 dark:text-gray-400 mb-4"><strong>{nameOf(settleLine.from)}</strong> membayar ke <strong>{nameOf(settleLine.to)}</strong>. Masih harus dibayar {formatRupiah(settleLine.amount)}.</p>
@@ -841,7 +841,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                 <input inputMode="numeric" value={settleDisplay} onChange={(e) => { const v = parseRupiahInput(e.target.value); setSettleRaw(v.raw); setSettleDisplay(v.display); }} placeholder="0" className={`${inputCls} font-bold`} />
               </div>
               <p className="text-[10px] text-gray-400">Dibayar sebagian? Ubah nominalnya. Sisanya tetap tercatat dan terbawa ke hitungan berikutnya.</p>
-              <button type="submit" disabled={settleBusy} className="w-full bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl transition-all">{settleBusy ? 'Menyimpan...' : 'Simpan Pembayaran'}</button>
+              <button type="submit" disabled={settleBusy} className="glass glass-solid-teal w-full disabled:opacity-60 font-bold py-3.5 rounded-xl transition-all">{settleBusy ? 'Menyimpan...' : 'Simpan Pembayaran'}</button>
             </form>
           </div>
         </div>

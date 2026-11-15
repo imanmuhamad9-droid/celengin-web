@@ -136,7 +136,7 @@ export default function RecurringRulesModal({ isOpen, onClose, showDialog, legac
 
   return (
     <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative max-h-[80vh] flex flex-col transition-colors">
+      <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative max-h-[80vh] flex flex-col transition-colors">
         <button onClick={onClose} aria-label="Tutup" className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><XCircle className="w-5 h-5" /></button>
 
         {editing ? (

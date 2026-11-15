@@ -50,12 +50,12 @@ export default function EditChallengeModal({ isOpen, onClose, onSave, type, curr
               <p className="text-sm font-bold text-gray-800">Berulang Mingguan?</p>
               <p className="text-[10px] text-gray-500">Target otomatis reset tiap minggu.</p>
             </div>
-            <button type="button" onClick={() => setRoutine(!routine)} className={`w-12 h-6 rounded-full transition-colors relative shrink-0 ${routine ? 'bg-teal-500' : 'bg-gray-300'}`}>
+            <button type="button" onClick={() => setRoutine(!routine)} className={`w-12 h-6 rounded-full transition-colors relative shrink-0 ${routine ? 'glass glass-teal' : 'glass'}`}>
               <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${routine ? 'left-7' : 'left-1'}`}></div>
             </button>
           </div>
 
-          <button onClick={() => { onSave(amountRaw, routine); onClose(); }} className={`w-full text-white font-bold py-3.5 rounded-xl transition-all ${type === 'income' ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'}`}>
+          <button onClick={() => { onSave(amountRaw, routine); onClose(); }} className={`w-full text-white font-bold py-3.5 rounded-xl transition-all ${type === 'income' ? 'glass glass-teal' : 'glass glass-danger'}`}>
             Simpan Target
           </button>
         </div>

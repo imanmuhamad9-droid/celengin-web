@@ -104,15 +104,15 @@ export default function MonthCalendar({ transactions, bills, todayStr, onOpenHis
   const diff = monthIn - monthOut;
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
+    <div className="glass p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
       <div className="flex justify-between items-center mb-3 gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100">Kalender</h3>
         </div>
         <div className="flex items-center gap-1">
-          <button onClick={() => go(-1)} aria-label="Bulan sebelumnya" className="p-1 bg-gray-50 dark:bg-gray-700 rounded-md text-gray-500 hover:text-teal-600"><ChevronLeft className="w-4 h-4" /></button>
+          <button onClick={() => go(-1)} aria-label="Bulan sebelumnya" className="glass p-1 rounded-md text-gray-500 hover:text-teal-600"><ChevronLeft className="w-4 h-4" /></button>
           <span className="text-[11px] font-bold text-gray-600 dark:text-gray-300 w-28 text-center capitalize">{monthLabel}</span>
-          <button onClick={() => go(1)} aria-label="Bulan berikutnya" className="p-1 bg-gray-50 dark:bg-gray-700 rounded-md text-gray-500 hover:text-teal-600"><ChevronRight className="w-4 h-4" /></button>
+          <button onClick={() => go(1)} aria-label="Bulan berikutnya" className="glass p-1 rounded-md text-gray-500 hover:text-teal-600"><ChevronRight className="w-4 h-4" /></button>
         </div>
       </div>
 
@@ -150,7 +150,7 @@ export default function MonthCalendar({ transactions, bills, todayStr, onOpenHis
                   key={ds}
                   onClick={() => setSel(ds)}
                   aria-label={`${d} ${monthLabel}${hol ? `, ${hol.name}` : ''}`}
-                  className={`aspect-square rounded-lg flex flex-col items-center justify-center gap-0.5 border-2 transition-colors ${quiet ? 'bg-green-50 dark:bg-green-900/20' : 'bg-gray-50 dark:bg-gray-700/40'} ${isSel ? 'border-gray-800 dark:border-gray-100' : isToday ? 'border-teal-500' : 'border-transparent'}`}
+                  className={`aspect-square rounded-lg flex flex-col items-center justify-center gap-0.5 border-2 transition-colors ${quiet ? 'glass glass-teal' : 'glass'} ${isSel ? 'border-gray-800 dark:border-gray-100' : isToday ? 'border-teal-500' : 'border-transparent'}`}
                 >
                   <span className={`text-[11px] font-bold leading-none ${numCls}`}>{d}</span>
                   <span className="flex items-center justify-center gap-[3px] h-2.5">
@@ -202,7 +202,7 @@ export default function MonthCalendar({ transactions, bills, todayStr, onOpenHis
               )}
 
               <div className="flex gap-2 mt-3">
-                <button onClick={() => onAddOnDate(selInMonth)} className="flex-1 h-9 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold flex items-center justify-center gap-1.5"><Plus className="w-4 h-4" /> Catat di tanggal ini</button>
+                <button onClick={() => onAddOnDate(selInMonth)} className="glass glass-solid-teal flex-1 h-9 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"><Plus className="w-4 h-4" /> Catat di tanggal ini</button>
                 <button onClick={() => onOpenHistory(selInMonth)} className="flex-1 h-9 rounded-xl border border-gray-200 dark:border-gray-600 text-xs font-bold text-gray-700 dark:text-gray-200">Buka di riwayat</button>
               </div>
             </div>

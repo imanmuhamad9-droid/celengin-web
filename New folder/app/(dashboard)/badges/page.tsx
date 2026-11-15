@@ -49,7 +49,7 @@ export default function BadgesPage() {
     load();
   }, [router]);
 
-  if (loading) return <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950"><SkeletonLoader /></div>;
+  if (loading) return <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>;
 
   const earnedMap: Record<string, string> = {};
   earned.forEach((e) => { earnedMap[e.badge_key] = e.earned_at; });
@@ -61,7 +61,7 @@ export default function BadgesPage() {
   const sorted = [...BADGES].sort((a, b) => Number(!!earnedMap[b.key]) - Number(!!earnedMap[a.key]));
 
   return (
-    <div className="min-h-screen bg-[#faf8ff] dark:bg-gray-950 pb-40 transition-colors">
+    <div className="min-h-screen bg-[var(--bg-main)] pb-40 transition-colors">
       <AppHeader title="Pencapaian" />
 
       <main className="px-5 mt-4 space-y-5">
@@ -101,7 +101,7 @@ export default function BadgesPage() {
             const val = Math.min(progress[b.key] || 0, b.target);
             const pct = (val / b.target) * 100;
             return (
-              <div key={b.key} className={`bg-white dark:bg-gray-800 p-4 rounded-3xl border shadow-sm transition-colors relative ${got ? 'border-teal-200 dark:border-teal-800' : 'border-gray-100 dark:border-gray-700'}`}>
+              <div key={b.key} className={`glass p-4 rounded-3xl border shadow-sm transition-colors relative ${got ? 'border-teal-200 dark:border-teal-800' : 'border-gray-100 dark:border-gray-700'}`}>
                 {got && <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-teal-500 text-white flex items-center justify-center"><Check className="w-3 h-3" /></span>}
                 <div className={`text-4xl mb-2 transition-all ${got ? '' : 'grayscale opacity-50'}`}>{b.emoji}</div>
                 <p className={`font-bold text-sm ${got ? 'text-gray-800 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>{b.title}</p>
