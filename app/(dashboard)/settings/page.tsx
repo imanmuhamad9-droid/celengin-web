@@ -13,9 +13,12 @@ import BottomNav from '@/components/BottomNav';
 import PushSettingsCard from '@/components/PushSettingsCard';
 import RecurringRulesModal from '@/components/RecurringRulesModal';
 import { cycleFor, normalizePayday } from '@/lib/cycle';
+import { EXTRA_MENUS, ExtraMenuKey, saveExtraMenus, useExtraMenus } from '@/lib/menuSettings';
+import { Toggle } from '@/components/ui';
+import { Menu as MenuIcon } from 'lucide-react';
 import { toLocalDateStr, formatRupiah } from '@/lib/utils';
 
-type View = 'hub' | 'profil' | 'keamanan' | 'gajian' | 'saldo' | 'kartu' | 'tampilan' | 'notif';
+type View = 'hub' | 'profil' | 'keamanan' | 'gajian' | 'saldo' | 'kartu' | 'tampilan' | 'notif' | 'menu';
 
 const TITLES: Record<View, string> = {
   hub: 'Pengaturan',
@@ -26,6 +29,7 @@ const TITLES: Record<View, string> = {
   kartu: 'Kartu Saldo',
   tampilan: 'Tampilan',
   notif: 'Notifikasi',
+  menu: 'Menu Tambahan',
 };
 
 const CARD = 'glass p-5 rounded-3xl border transition-colors';
@@ -58,6 +62,7 @@ function Group({ label, children }: { label: string; children: React.ReactNode }
 
 export default function SettingsPage() {
   const [view, setView] = useState<View>('hub');
+  const extraMenus = useExtraMenus();
   const [isRoutineOpen, setIsRoutineOpen] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -336,6 +341,13 @@ export default function SettingsPage() {
     </>
   );
 
+  // Menu tambahan: simpan ke perangkat, lalu ke profil (ikut perangkat lain)
+  const toggleExtraMenu = async (key: ExtraMenuKey, on: boolean) => {
+    const next = on ? [...extraMenus.filter((k) => k !== key), key] : extraMenus.filter((k) => k !== key);
+    const { data: { session } } = await supabase.auth.getSession();
+    await saveExtraMenus(session?.user.id ?? null, next);
+  };
+
   return (
     <div className="min-h-screen bg-[var(--bg-main)] pb-40 transition-colors">
       <AppHeader title={TITLES[view]} onBack={view !== 'hub' ? () => go('hub') : undefined} />
@@ -370,6 +382,7 @@ export default function SettingsPage() {
 
             <Group label="Aplikasi">
               <Row icon={<Palette className="w-5 h-5" />} title="Tampilan" sub={themeLabel} onClick={() => go('tampilan')} />
+              <Row icon={<MenuIcon className="w-5 h-5" />} title="Menu Tambahan" sub={extraMenus.length > 0 ? `${extraMenus.length} menu di hamburger` : 'Belum ada, tombol Catat tampil biasa'} onClick={() => go('menu')} />
               <Row icon={<Bell className="w-5 h-5" />} title="Notifikasi" sub="Pengingat di HP kamu" onClick={() => go('notif')} />
               <Row icon={<Trophy className="w-5 h-5" />} title="Pencapaian" sub="Badge bonus buat kamu" onClick={() => router.push('/badges')} />
             </Group>
@@ -532,6 +545,30 @@ export default function SettingsPage() {
               </div>
             </div>
 
+          </>
+        )}
+
+        {/* ===== MENU TAMBAHAN ===== */}
+        {view === 'menu' && (
+          <>
+            <div className={CARD}>
+              <p className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-1">Menu di hamburger</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                Menu yang kamu nyalakan muncul di tombol hamburger, menggantikan tombol Catat. Catat tetap ada di dalam hamburger. Kalau semuanya dimatikan, hamburger hilang dan tombol Catat kembali seperti biasa.
+              </p>
+            </div>
+            <div className="glass rounded-3xl divide-y divide-gray-100 dark:divide-gray-700 overflow-hidden">
+              {EXTRA_MENUS.map((m) => (
+                <div key={m.key} className="flex items-center gap-3 px-4 py-3.5">
+                  <span className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 glass glass-teal"><m.Icon className="w-5 h-5" /></span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-sm font-bold text-gray-800 dark:text-gray-100">{m.label}</span>
+                    <span className="block text-xs text-gray-500 dark:text-gray-400 truncate">{m.desc}</span>
+                  </span>
+                  <Toggle checked={extraMenus.includes(m.key)} onChange={(v) => toggleExtraMenu(m.key, v)} label={m.label} onText="On" offText="Off" />
+                </div>
+              ))}
+            </div>
           </>
         )}
 

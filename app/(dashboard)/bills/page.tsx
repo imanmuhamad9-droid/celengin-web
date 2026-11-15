@@ -9,8 +9,9 @@ import { listWallets, Wallet } from '@/lib/wallets';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import AppHeader from '@/components/AppHeader';
+import { useCatatAction } from '@/lib/catatAction';
 import SubTabs, { RIWAYAT_TABS } from '@/components/SubTabs';
-import { Btn, HeaderBtn, RowActions, Toggle } from '@/components/ui';
+import { Btn, RowActions, Toggle } from '@/components/ui';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import DateField from '@/components/DateField';
 import FrequencyPicker from '@/components/FrequencyPicker';
@@ -150,6 +151,8 @@ export default function BillsPage() {
     });
   };
 
+  useCatatAction('Tagihan', 'Tambah tagihan', openAdd);
+
   if (loading || !today) return <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>;
 
   const enriched = bills.map((b) => ({ ...b, daysLeft: diffDays(today, b.due_date) }));
@@ -198,7 +201,7 @@ export default function BillsPage() {
 
   return (
     <div className="min-h-screen bg-[var(--bg-main)] pb-40 transition-colors">
-      <AppHeader title="Tagihan" action={<HeaderBtn onClick={openAdd} label="Tambah" />} />
+      <AppHeader title="Tagihan" />
 
       <main className="px-5 mt-4 space-y-5">
         <SubTabs items={RIWAYAT_TABS} />

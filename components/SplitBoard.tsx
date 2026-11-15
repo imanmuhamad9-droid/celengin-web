@@ -16,8 +16,9 @@ import { buildExpenseMessage, buildPersonMessage, buildDebtSummaryMessage, build
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import AppHeader from '@/components/AppHeader';
+import { useCatatAction } from '@/lib/catatAction';
 import SubTabs, { SPLIT_TABS } from '@/components/SubTabs';
-import { Btn, HeaderBtn } from '@/components/ui';
+import { Btn } from '@/components/ui';
 import SkeletonLoader from '@/components/SkeletonLoader';
 
 interface GroupCard extends SplitGroup { memberCount: number; total: number }
@@ -194,6 +195,13 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
     try { setIntroHidden(localStorage.getItem(INTRO_KEY) === '1'); } catch (_) { setIntroHidden(false); }
     setCurMonth(toLocalDateStr(new Date()).slice(0, 7));
   }, []);
+
+  // Gelembung Catat mengikuti posisi: daftar -> buat grup/buku; di dalam grup -> catat pengeluaran
+  useCatatAction(
+    group ? (isRunning ? 'Catatan' : 'Pengeluaran') : (isRunning ? 'Bayarin' : 'Grup'),
+    group ? (isRunning ? 'Catat Bayarin' : 'Tambah pengeluaran') : (isRunning ? 'Buat Bayarin baru' : 'Buat grup patungan'),
+    () => { if (group) { setEditExp(null); setIsExpOpen(true); } else openNewGroup(); },
+  );
 
   if (loading) return <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>;
 
@@ -485,9 +493,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
         title={group ? group.name : 'Split Bill'}
         infoKey={group ? undefined : (isRunning ? 'Bayarin' : 'Patungan')}
         onBack={group ? goBack : undefined}
-        action={group
-          ? (isOwner ? <Btn variant="danger" size="sm" onClick={handleDeleteGroup}>Hapus</Btn> : undefined)
-          : <HeaderBtn onClick={openNewGroup} />}
+        action={group && isOwner ? <Btn variant="danger" size="sm" onClick={handleDeleteGroup}>Hapus</Btn> : undefined}
       />
 
       <main className="px-5 mt-4 space-y-4">

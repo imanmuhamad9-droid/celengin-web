@@ -1,9 +1,11 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Plus } from 'lucide-react';
+import { Menu, Plus, X } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { NOTIF_EVENT, emitNotifChanged, fetchUnreadCount } from '@/lib/notifications';
+import { EXTRA_MENUS, syncExtraMenusFromProfile, useExtraMenus } from '@/lib/menuSettings';
+import { useCatatEntry } from '@/lib/catatAction';
 import TransactionModal from './TransactionModal';
 import CustomDialog from './CustomDialog';
 
@@ -45,6 +47,22 @@ export default function BottomNav() {
   const [dialog, setDialog] = useState({ isOpen: false, title: '', msg: '', type: 'info' as 'info' | 'success' | 'danger', onConfirm: undefined as (() => void) | undefined });
   const showDialog = (title: string, msg: string, type: 'info' | 'success' | 'danger', onConfirm?: () => void) => setDialog({ isOpen: true, title, msg, type, onConfirm });
   const closeDialog = () => setDialog((prev) => ({ ...prev, isOpen: false }));
+
+  // Hamburger: muncul menggantikan gelembung Catat bila ada menu tambahan yang dinyalakan (Pengaturan > Menu Tambahan).
+  // Panel terbuka hanya untuk halaman tempat ia dibuka, jadi otomatis tertutup saat pindah halaman.
+  const extras = useExtraMenus();
+  const entry = useCatatEntry();
+  const [openPath, setOpenPath] = useState<string | null>(null);
+  const menuOpen = openPath === pathname;
+  const runCatat = () => { if (entry) entry.run(); else setIsModalOpen(true); };
+
+  useEffect(() => { syncExtraMenusFromProfile(); }, []);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpenPath(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [menuOpen]);
 
   // ---- Titik merah notifikasi: realtime + polling 60 detik + saat kembali ke aplikasi ----
   // announce = true -> umumkan ke lonceng di Home supaya daftarnya ikut dimuat ulang
@@ -143,22 +161,66 @@ export default function BottomNav() {
 
   return (
     <>
+      {!isModalOpen && menuOpen && extras.length > 0 && (
+        <div className="fixed inset-0 z-[55]" onClick={() => setOpenPath(null)} aria-hidden="true" />
+      )}
+
       {!isModalOpen && (
         <nav
           aria-label="Menu utama"
           style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 14px)' }}
           className="fixed left-1/2 -translate-x-1/2 z-[56] w-[calc(100%-24px)] max-w-[400px]"
         >
-          {/* Catat: gelembung tersendiri, melayang di atas menu Laporan (ujung kanan bar) */}
+          {/* Gelembung di atas ujung kanan bar: Catat (mengikuti halaman) atau, bila ada menu tambahan, hamburger */}
           <div className="absolute right-0 bottom-[calc(100%+10px)]">
-            <button
-              onClick={() => setIsModalOpen(true)}
-              aria-label="Catat transaksi"
-              className="glass glass-solid-teal glass-pressable h-11 px-5 rounded-full flex items-center justify-center gap-1.5"
-            >
-              <Plus className="w-4 h-4" strokeWidth={2.6} />
-              <span className="text-xs font-extrabold leading-none">Catat</span>
-            </button>
+            {extras.length > 0 ? (
+              <button
+                onClick={() => setOpenPath(menuOpen ? null : pathname)}
+                aria-label="Menu"
+                aria-expanded={menuOpen}
+                aria-haspopup="menu"
+                className="glass glass-solid-teal glass-pressable w-11 h-11 rounded-full flex items-center justify-center"
+              >
+                {menuOpen ? <X className="w-5 h-5" strokeWidth={2.6} /> : <Menu className="w-5 h-5" strokeWidth={2.6} />}
+              </button>
+            ) : (
+              <button
+                onClick={runCatat}
+                aria-label={entry?.long || 'Catat transaksi'}
+                className="glass glass-solid-teal glass-pressable h-11 px-5 rounded-full flex items-center justify-center gap-1.5"
+              >
+                <Plus className="w-4 h-4" strokeWidth={2.6} />
+                <span className="text-xs font-extrabold leading-none">{entry?.label || 'Catat'}</span>
+              </button>
+            )}
+
+            {extras.length > 0 && menuOpen && (
+              <div role="menu" className="absolute right-0 bottom-[calc(100%+8px)] w-56 glass glass-sheet rounded-3xl p-2 space-y-1">
+                <button
+                  role="menuitem"
+                  onClick={() => { setOpenPath(null); runCatat(); }}
+                  className="glass glass-solid-teal glass-pressable w-full h-11 rounded-full flex items-center gap-2 px-4 text-sm font-bold"
+                >
+                  <Plus className="w-4 h-4 shrink-0" strokeWidth={2.6} />
+                  <span className="truncate">{entry?.long || 'Catat transaksi'}</span>
+                </button>
+                {EXTRA_MENUS.filter((m) => extras.includes(m.key)).map((m) => {
+                  const on = pathname === m.href || pathname.startsWith(m.href + '/');
+                  return (
+                    <button
+                      key={m.key}
+                      role="menuitem"
+                      onClick={() => { setOpenPath(null); if (!on) router.push(m.href); }}
+                      className={`glass-pressable w-full h-11 rounded-full flex items-center gap-2.5 px-4 text-sm font-bold ${on ? 'text-[color:var(--teal-primary)]' : ''}`}
+                      style={on ? { background: 'rgba(44, 143, 126, 0.14)' } : { color: 'var(--text-main)' }}
+                    >
+                      <m.Icon className="w-4 h-4 shrink-0" />
+                      <span className="truncate">{m.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <div className="glass rounded-full px-2 py-1.5">

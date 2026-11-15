@@ -3,12 +3,13 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import { ShieldAlert, ChevronDown, ChevronUp, ArrowDownCircle, ArrowUpCircle, Info, CalendarDays } from 'lucide-react';
-import { Btn, HeaderBtn, RowActions } from '@/components/ui';
+import { Btn, RowActions } from '@/components/ui';
 import { formatRupiah } from '@/lib/utils';
 import TargetSetupModal from '@/components/TargetSetupModal';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import AppHeader from '@/components/AppHeader';
+import { useCatatAction } from '@/lib/catatAction';
 import SkeletonLoader from '@/components/SkeletonLoader';
 
 export default function TargetPage() {
@@ -49,13 +50,15 @@ export default function TargetPage() {
     });
   };
 
+  useCatatAction('Tantangan', 'Buat tantangan', () => { setSelectedTarget(null); setIsModalOpen(true); });
+
   if (loading) return <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>;
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 
   return (
     <div className="min-h-screen bg-[var(--bg-main)] pb-40 transition-colors">
-      <AppHeader title="Tantangan" infoKey="Tantangan" action={<HeaderBtn onClick={() => { setSelectedTarget(null); setIsModalOpen(true); }} />} />
+      <AppHeader title="Tantangan" infoKey="Tantangan" />
 
       <main className="px-5 mt-4 space-y-5">
         {targets.length === 0 ? (

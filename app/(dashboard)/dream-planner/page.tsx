@@ -9,7 +9,8 @@ import UpdateGoalModal from '@/components/UpdateGoalModal';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import AppHeader from '@/components/AppHeader';
-import { Btn, HeaderBtn, RowActions } from '@/components/ui';
+import { useCatatAction } from '@/lib/catatAction';
+import { Btn, RowActions } from '@/components/ui';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import DateField from '@/components/DateField';
 
@@ -154,11 +155,14 @@ export default function DreamPlannerPage() {
     return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   };
 
+  useCatatAction('Impian', 'Buat impian', () => setIsModalOpen(true));
+
   if (isLoading) return <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>;
+
 
   return (
     <div className="min-h-screen bg-[var(--bg-main)] pb-40 transition-colors">
-      <AppHeader title="Impian" action={<HeaderBtn onClick={() => setIsModalOpen(true)} />} />
+      <AppHeader title="Impian" />
 
       <main className="max-w-md mx-auto px-5 mt-4 space-y-4">
 

@@ -8,9 +8,10 @@ import { formatRupiah, digitsOnly, noDigits } from '@/lib/utils';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import AppHeader from '@/components/AppHeader';
+import { useCatatAction } from '@/lib/catatAction';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import DateField from '@/components/DateField';
-import { Btn, HeaderBtn, RowActions } from '@/components/ui';
+import { Btn, RowActions } from '@/components/ui';
 import SegmentedControl from '@/components/SegmentedControl';
 import { toLocalDateStr } from '@/lib/utils';
 
@@ -306,11 +307,14 @@ export default function SharedSpacePage() {
 
   const filteredGoals = goals.filter(g => filterCategory === 'all' ? true : g.category === filterCategory);
 
+  useCatatAction('Target', 'Buat target bareng', handleOpenAdd);
+
   if (isLoading) return <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>;
+
 
   return (
     <div className="min-h-screen bg-[var(--bg-main)] pb-40 transition-colors">
-      <AppHeader title="Kolektif" infoKey="Nabung Bareng" action={<HeaderBtn onClick={handleOpenAdd} />} />
+      <AppHeader title="Kolektif" infoKey="Nabung Bareng" />
 
       <main className="px-5 mt-4 space-y-5">
         <SegmentedControl
