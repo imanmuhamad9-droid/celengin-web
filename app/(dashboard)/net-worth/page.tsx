@@ -57,6 +57,7 @@ export default function NetWorthPage() {
   const [auto, setAuto] = useState<NwAuto>({ saldo: 0, darurat: 0, impian: 0 });
   const [items, setItems] = useState<NetItem[]>([]);
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
+  const [curMonth, setCurMonth] = useState('');      // YYYY-MM bulan berjalan, diisi saat data dimuat (bukan saat render)
   const [form, setForm] = useState<{ item: NetItem | null } | null>(null);
 
   const [dialog, setDialog] = useState({ isOpen: false, title: '', msg: '', type: 'info' as 'info' | 'success' | 'danger', onConfirm: undefined as (() => void) | undefined });
@@ -68,6 +69,7 @@ export default function NetWorthPage() {
     if (!session) { router.push('/login'); return; }
     const uid = session.user.id;
     setUserId(uid);
+    setCurMonth(monthKey(toLocalDateStr(new Date())));
 
     // Aset otomatis (tabel yang belum ada dianggap kosong)
     const { data: tx } = await supabase.from('transactions').select('type,amount');
@@ -90,11 +92,9 @@ export default function NetWorthPage() {
   useEffect(() => { void load(); }, [load]);
 
   const totals = netWorthTotals(auto, include, items);
-  const curMonth = monthKey(toLocalDateStr(new Date()));
-
   // Simpan angka bulan ini (hanya bila berubah) supaya grafik terisi seiring waktu
   useEffect(() => {
-    if (loading || !tableOk || !userId) return;
+    if (loading || !tableOk || !userId || !curMonth) return;
     const existing = snapshots.find((s) => s.month === curMonth);
     if (existing && Number(existing.assets) === totals.assets && Number(existing.debts) === totals.debts) return;
     const row = { user_id: userId, month: curMonth, assets: totals.assets, debts: totals.debts, net: totals.net, updated_at: new Date().toISOString() };

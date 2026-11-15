@@ -23,11 +23,11 @@ const dayDiff = (a: string, b: string) => Math.round((new Date(b + 'T00:00:00').
 
 export default function BudgetsPage() {
   const router = useRouter();
-  const today = toLocalDateStr(new Date());
+  const [today, setToday] = useState('');          // diisi saat data dimuat (bukan saat render)
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState('');
   const [payday, setPayday] = useState(1);
-  const [viewDate, setViewDate] = useState(today);   // tanggal di dalam siklus yang sedang dilihat
+  const [viewDate, setViewDate] = useState('');       // tanggal di dalam siklus yang dilihat; kosong = siklus berjalan
   const [tableOk, setTableOk] = useState(true);
   const [budgets, setBudgets] = useState<BudgetRow[]>([]);
   const [expenses, setExpenses] = useState<ExpenseRow[]>([]);
@@ -42,10 +42,12 @@ export default function BudgetsPage() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { router.push('/login'); return; }
     setUserId(session.user.id);
+    const now = toLocalDateStr(new Date());
+    setToday(now);
     const { data: prof } = await supabase.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
     const pd = normalizePayday((prof as { payday?: unknown } | null)?.payday);
     setPayday(pd);
-    const cyc = cycleFor(date, pd);
+    const cyc = cycleFor(date || now, pd);
 
     const { data: bud, error } = await supabase.from('budgets').select('*').order('created_at', { ascending: true });
     setTableOk(!error);
@@ -63,7 +65,8 @@ export default function BudgetsPage() {
 
   if (loading) return <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>;
 
-  const cycle: Cycle = cycleFor(viewDate, payday);
+  const shownDate = viewDate || today;
+  const cycle: Cycle = cycleFor(shownDate, payday);
   const isCurrent = cycle.start <= today && today <= cycle.end;
   const usage = budgetUsage(budgets, expenses);
   const daysLeft = isCurrent ? Math.max(1, dayDiff(today, cycle.end) + 1) : 0;
@@ -83,7 +86,7 @@ export default function BudgetsPage() {
     });
   };
 
-  const goCycle = (dir: 1 | -1) => setViewDate(shiftCycle(viewDate, dir, payday).start);
+  const goCycle = (dir: 1 | -1) => setViewDate(shiftCycle(shownDate, dir, payday).start);
 
   return (
     <div className="min-h-screen bg-[var(--bg-main)] pb-40 transition-colors">
