@@ -3,6 +3,38 @@
 export type MenuInfo = { heading: string; body: string; points?: string[] };
 
 export const MENU_INFO: Record<string, MenuInfo> = {
+  Dompet: {
+    heading: 'Dompet: untuk apa menu ini?',
+    body: 'Uangmu biasanya tersebar di beberapa tempat: tunai, rekening bank, e-wallet. Di sini kamu lihat saldo tiap dompet dan total semuanya, dan bisa memindahkan uang antar dompet.',
+    points: [
+      'Saat Catat, pilih dompet mana yang dipakai. Kalau tidak dipilih, masuk ke dompet utama.',
+      'Transfer antar dompet tidak dihitung sebagai pemasukan atau pengeluaran.',
+    ],
+  },
+  'Dana Darurat': {
+    heading: 'Dana Darurat: untuk apa menu ini?',
+    body: 'Uang cadangan untuk keadaan mendadak seperti sakit, kehilangan pekerjaan, atau motor rusak. Targetnya dihitung otomatis dari rata-rata pengeluaranmu dikali jumlah bulan yang kamu pilih.',
+    points: [
+      'Setor dan tarik dicatat di sini saja, tidak mengubah Uang Sisa di Home.',
+      'Patokan umum: 3 bulan untuk lajang, 6 bulan atau lebih kalau punya tanggungan.',
+    ],
+  },
+  Anggaran: {
+    heading: 'Anggaran: untuk apa menu ini?',
+    body: 'Pasang batas pengeluaran per kategori untuk satu siklus (mengikuti tanggal gajianmu). Pengeluaran yang kamu Catat dengan kategori yang sama otomatis menghitung sisanya.',
+    points: [
+      'Peringatan muncul saat sebuah kategori sudah terpakai 80%.',
+      'Beda dengan Tantangan yang membatasi total pengeluaran, Anggaran membatasi per kategori.',
+    ],
+  },
+  'Kekayaan Bersih': {
+    heading: 'Kekayaan Bersih: untuk apa menu ini?',
+    body: 'Gambaran besar posisi keuanganmu: semua aset dikurangi semua utang. Saldo dompet, Dana Darurat, dan tabungan Impian dihitung otomatis; investasi, emas, dan utang kamu tambahkan sendiri.',
+    points: [
+      'Matikan salah satu hitungan otomatis kalau uangnya sudah terhitung di tempat lain.',
+      'Angka tiap bulan disimpan otomatis, jadi grafiknya terisi seiring waktu.',
+    ],
+  },
   Riwayat: {
     heading: 'Riwayat: untuk apa menu ini?',
     body: 'Semua uang masuk dan keluar yang pernah kamu catat ada di sini. Cari, saring, ubah, atau hapus kalau ada yang salah.',

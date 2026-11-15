@@ -195,7 +195,7 @@ export default function BottomNav() {
             )}
 
             {extras.length > 0 && menuOpen && (
-              <div role="menu" className="absolute right-0 bottom-[calc(100%+8px)] w-56 glass glass-sheet rounded-3xl p-2 space-y-1">
+              <div role="menu" className="absolute right-0 bottom-[calc(100%+8px)] w-60 max-h-[60vh] overflow-y-auto glass glass-sheet rounded-3xl p-2 space-y-1">
                 <button
                   role="menuitem"
                   onClick={() => { setOpenPath(null); runCatat(); }}

@@ -3,23 +3,29 @@
 // Gagal di profil (kolom belum ada) = diabaikan; pengaturan tetap jalan di perangkat ini.
 import { useSyncExternalStore } from 'react';
 import type { ComponentType } from 'react';
-import { History, Receipt, Trophy } from 'lucide-react';
+import { History, Landmark, PieChart, Receipt, ShieldCheck, Trophy, Wallet } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 
-export type ExtraMenuKey = 'riwayat' | 'tagihan' | 'pencapaian';
+export type ExtraMenuKey = 'riwayat' | 'tagihan' | 'pencapaian' | 'dompet' | 'darurat' | 'anggaran' | 'kekayaan';
 
 export interface ExtraMenuDef {
   key: ExtraMenuKey;
   label: string;
   desc: string;
   href: string;
+  /** menu = halaman yang sudah ada, fitur = fitur keuangan tambahan */
+  group: 'menu' | 'fitur';
   Icon: ComponentType<{ className?: string }>;
 }
 
 export const EXTRA_MENUS: ExtraMenuDef[] = [
-  { key: 'riwayat', label: 'Riwayat', desc: 'Semua transaksi', href: '/transactions', Icon: History },
-  { key: 'tagihan', label: 'Tagihan', desc: 'Pengingat tagihan dan rutin', href: '/bills', Icon: Receipt },
-  { key: 'pencapaian', label: 'Pencapaian', desc: 'Badge bonus buat kamu', href: '/badges', Icon: Trophy },
+  { key: 'riwayat', label: 'Riwayat', desc: 'Semua transaksi', href: '/transactions', group: 'menu', Icon: History },
+  { key: 'tagihan', label: 'Tagihan', desc: 'Pengingat tagihan dan rutin', href: '/bills', group: 'menu', Icon: Receipt },
+  { key: 'pencapaian', label: 'Pencapaian', desc: 'Badge bonus buat kamu', href: '/badges', group: 'menu', Icon: Trophy },
+  { key: 'dompet', label: 'Dompet', desc: 'Saldo tiap rekening dan e-wallet. On juga memunculkan pilihan dompet saat Catat.', href: '/wallets', group: 'fitur', Icon: Wallet },
+  { key: 'darurat', label: 'Dana Darurat', desc: 'Target otomatis dari pengeluaranmu dan progres menabungnya', href: '/emergency-fund', group: 'fitur', Icon: ShieldCheck },
+  { key: 'anggaran', label: 'Anggaran', desc: 'Batas bulanan per kategori pengeluaran', href: '/budgets', group: 'fitur', Icon: PieChart },
+  { key: 'kekayaan', label: 'Kekayaan Bersih', desc: 'Aset dikurangi utang, dengan grafik per bulan', href: '/net-worth', group: 'fitur', Icon: Landmark },
 ];
 
 const LS_KEY = 'celengin:extra-menus';

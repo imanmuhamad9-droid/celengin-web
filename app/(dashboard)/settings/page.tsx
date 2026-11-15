@@ -557,18 +557,20 @@ export default function SettingsPage() {
                 Menu yang kamu nyalakan muncul di tombol hamburger, menggantikan tombol Catat. Catat tetap ada di dalam hamburger. Kalau semuanya dimatikan, hamburger hilang dan tombol Catat kembali seperti biasa.
               </p>
             </div>
-            <div className="glass rounded-3xl divide-y divide-gray-100 dark:divide-gray-700 overflow-hidden">
-              {EXTRA_MENUS.map((m) => (
-                <div key={m.key} className="flex items-center gap-3 px-4 py-3.5">
-                  <span className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 glass glass-teal"><m.Icon className="w-5 h-5" /></span>
-                  <span className="flex-1 min-w-0">
-                    <span className="block text-sm font-bold text-gray-800 dark:text-gray-100">{m.label}</span>
-                    <span className="block text-xs text-gray-500 dark:text-gray-400 truncate">{m.desc}</span>
-                  </span>
-                  <Toggle checked={extraMenus.includes(m.key)} onChange={(v) => toggleExtraMenu(m.key, v)} label={m.label} onText="On" offText="Off" />
-                </div>
-              ))}
-            </div>
+            {(['menu', 'fitur'] as const).map((g) => (
+              <Group key={g} label={g === 'menu' ? 'Menu' : 'Fitur keuangan'}>
+                {EXTRA_MENUS.filter((m) => m.group === g).map((m) => (
+                  <div key={m.key} className="flex items-center gap-3 px-4 py-3.5">
+                    <span className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 glass glass-teal"><m.Icon className="w-5 h-5" /></span>
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-sm font-bold text-gray-800 dark:text-gray-100">{m.label}</span>
+                      <span className="block text-xs text-gray-500 dark:text-gray-400 leading-snug">{m.desc}</span>
+                    </span>
+                    <Toggle checked={extraMenus.includes(m.key)} onChange={(v) => toggleExtraMenu(m.key, v)} label={m.label} onText="On" offText="Off" />
+                  </div>
+                ))}
+              </Group>
+            ))}
           </>
         )}
 
