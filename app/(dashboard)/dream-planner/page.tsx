@@ -343,10 +343,10 @@ export default function DreamPlannerPage() {
                 <input type="text" placeholder="Cth: Liburan ke Bali" value={title} onChange={e => setTitle(e.target.value)} required className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm" />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Nominal</label>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Target (Rp)</label>
                 <input type="text" inputMode="numeric" placeholder="Nominal (Rp)" value={targetDisplay} onChange={handleTargetChange} required className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm font-bold" />
               </div>
-              <DateField label="Kalender (target tercapai, opsional)" placeholder="Kalender" value={targetDate} onChange={setTargetDate} />
+              <DateField label="Kalender (tanggal target akan tercapai)" placeholder="Kalender" value={targetDate} onChange={setTargetDate} />
               <button type="submit" className="glass glass-solid-teal w-full font-bold py-3 rounded-xl mt-2">Simpan</button>
             </form>
           </div>

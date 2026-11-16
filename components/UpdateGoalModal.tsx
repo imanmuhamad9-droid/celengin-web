@@ -37,7 +37,7 @@ export default function UpdateGoalModal({ isOpen, onClose, onSave, goal }: Props
 
         <h3 className="text-xl font-extrabold text-center text-gray-900 dark:text-white">Update Tabungan</h3>
         <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-1 mb-5">
-          Untuk target: <span className="font-bold text-teal-700 dark:text-teal-400">{goal.title}</span>
+          Untuk Impian: <span className="font-bold text-teal-700 dark:text-teal-400">{goal.title}</span>
         </p>
 
         <div className="grid grid-cols-2 gap-3 mb-5">
@@ -57,7 +57,6 @@ export default function UpdateGoalModal({ isOpen, onClose, onSave, goal }: Props
           <input
             type="text"
             inputMode="numeric"
-            pattern="[0-9]*"
             enterKeyHint="done"
             autoComplete="off"
             autoFocus
