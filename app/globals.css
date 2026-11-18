@@ -157,6 +157,20 @@ html.dark {
   --text-muted: #9AA6B5;
 }
 
+/* =====================================================================
+   TEMA LATAR (Pengaturan -> Tema Latar)
+   Halaman memakai --page-bg. Saat tema aktif (html[data-bg]), latar halaman
+   transparan supaya gambar <AppBackground /> di layout terlihat di semua menu.
+   ===================================================================== */
+:root {
+  --page-bg: var(--bg-main);
+  --bar-bg: color-mix(in srgb, var(--bg-main) 85%, transparent);
+}
+html[data-bg] {
+  --page-bg: transparent;
+  --bar-bg: color-mix(in srgb, var(--bg-main) 45%, transparent);
+}
+
 /* Permukaan kaca dasar: dipakai card, tombol, bar, dan segmented control */
 .glass {
   background: var(--glass-bg);

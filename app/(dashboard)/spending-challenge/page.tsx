@@ -52,12 +52,12 @@ export default function TargetPage() {
 
   useCatatAction('Tantangan', 'Buat tantangan', () => { setSelectedTarget(null); setIsModalOpen(true); });
 
-  if (loading) return <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>;
+  if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] pb-40 transition-colors">
+    <div className="min-h-screen bg-[var(--page-bg)] pb-40 transition-colors">
       <AppHeader title="Tantangan" infoKey="Tantangan" />
 
       <main className="px-5 mt-4 space-y-5">

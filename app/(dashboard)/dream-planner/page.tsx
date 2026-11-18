@@ -157,11 +157,11 @@ export default function DreamPlannerPage() {
 
   useCatatAction('Impian', 'Buat impian', () => setIsModalOpen(true));
 
-  if (isLoading) return <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>;
+  if (isLoading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
 
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] pb-40 transition-colors">
+    <div className="min-h-screen bg-[var(--page-bg)] pb-40 transition-colors">
       <AppHeader title="Impian" />
 
       <main className="max-w-md mx-auto px-5 mt-4 space-y-4">

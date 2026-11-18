@@ -203,7 +203,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
     () => { if (group) { setEditExp(null); setIsExpOpen(true); } else openNewGroup(); },
   );
 
-  if (loading) return <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>;
+  if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
 
   const isOwner = !!group && group.user_id === userId;
   const memberById = (id: string) => members.find((m) => m.id === id);
@@ -487,7 +487,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
   );
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] pb-40 transition-colors">
+    <div className="min-h-screen bg-[var(--page-bg)] pb-40 transition-colors">
       <AppHeader
         z="z-40"
         title={group ? group.name : 'Split Bill'}

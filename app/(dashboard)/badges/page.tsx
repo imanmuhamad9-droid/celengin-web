@@ -49,7 +49,7 @@ export default function BadgesPage() {
     load();
   }, [router]);
 
-  if (loading) return <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>;
+  if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
 
   const earnedMap: Record<string, string> = {};
   earned.forEach((e) => { earnedMap[e.badge_key] = e.earned_at; });
@@ -61,7 +61,7 @@ export default function BadgesPage() {
   const sorted = [...BADGES].sort((a, b) => Number(!!earnedMap[b.key]) - Number(!!earnedMap[a.key]));
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] pb-40 transition-colors">
+    <div className="min-h-screen bg-[var(--page-bg)] pb-40 transition-colors">
       <AppHeader title="Pencapaian" />
 
       <main className="px-5 mt-4 space-y-5">

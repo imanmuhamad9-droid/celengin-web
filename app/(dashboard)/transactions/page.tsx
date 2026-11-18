@@ -106,10 +106,10 @@ function TransactionsContent() {
   const totalPages = Math.ceil(filteredTx.length / itemsPerPage);
   const paginatedTx = filteredTx.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  if (isLoading) return <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>;
+  if (isLoading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] pb-40 transition-colors">
+    <div className="min-h-screen bg-[var(--page-bg)] pb-40 transition-colors">
       <AppHeader title="Riwayat" />
 
       <main className="max-w-md mx-auto px-4 mt-3 space-y-4">
@@ -171,7 +171,7 @@ function TransactionsContent() {
 
 export default function TransactionsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>}>
       <TransactionsContent />
     </Suspense>
   );

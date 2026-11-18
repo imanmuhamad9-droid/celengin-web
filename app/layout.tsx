@@ -4,6 +4,7 @@ import "./globals.css";
 import PwaRegister from "@/components/PwaRegister";
 import MoneyRain from "@/components/MoneyRain";
 import AutoRefresh from "@/components/AutoRefresh";
+import AppBackground from "@/components/AppBackground";
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"] });
 
@@ -50,6 +51,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 if (accent === 'silver' || accent === 'abu' || accent === 'biru') document.documentElement.setAttribute('data-accent', accent);
                 let btn = localStorage.getItem('ui-btn');
                 if (btn === 'soft') document.documentElement.setAttribute('data-btn', 'soft');
+                let bg = JSON.parse(localStorage.getItem('celengin:bg') || 'null');
+                if (bg && bg.theme && bg.theme !== 'none' && (bg.theme !== 'custom' || localStorage.getItem('celengin:bg-custom'))) document.documentElement.setAttribute('data-bg', bg.theme);
               } catch (_) {}
             `,
           }}
@@ -59,7 +62,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <PwaRegister />
         <AutoRefresh />
         <MoneyRain />
-        <div className="mx-auto max-w-md min-h-screen shadow-2xl relative transition-colors duration-300 bg-[var(--bg-main)]">
+        <div className="mx-auto max-w-md min-h-screen shadow-2xl relative isolate transition-colors duration-300 bg-[var(--bg-main)]">
+          <AppBackground />
           {children}
         </div>
       </body>

@@ -67,7 +67,7 @@ export default function AppHeader({ title, onBack, topRight, action, z = 'z-50',
       {/* Bar menempel di atas saat scroll; latar blur supaya konten yang lewat di bawahnya tetap rapi */}
       <header
         className={`sticky top-0 ${z} px-4 pt-[calc(env(safe-area-inset-top,0px)+10px)] pb-2`}
-        style={{ background: 'color-mix(in srgb, var(--bg-main) 85%, transparent)', WebkitBackdropFilter: 'blur(14px)', backdropFilter: 'blur(14px)' }}
+        style={{ background: 'var(--bar-bg)', WebkitBackdropFilter: 'blur(14px)', backdropFilter: 'blur(14px)' }}
       >
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">

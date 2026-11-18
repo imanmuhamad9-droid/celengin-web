@@ -106,7 +106,7 @@ export default function NetWorthPage() {
 
   useCatatAction('Aset', 'Tambah aset atau utang', () => setForm({ item: null }));
 
-  if (loading) return <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>;
+  if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
 
   const points = [
     ...snapshots.filter((s) => s.month !== curMonth).slice(-5).map((s) => ({ label: monthShort(s.month), value: Number(s.net) || 0 })),
@@ -146,7 +146,7 @@ export default function NetWorthPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] pb-40 transition-colors">
+    <div className="min-h-screen bg-[var(--page-bg)] pb-40 transition-colors">
       <AppHeader title="Kekayaan Bersih" />
 
       <main className="max-w-md mx-auto px-4 mt-3 space-y-4">

@@ -309,11 +309,11 @@ export default function SharedSpacePage() {
 
   useCatatAction('Target', 'Buat target bareng', handleOpenAdd);
 
-  if (isLoading) return <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>;
+  if (isLoading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
 
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] pb-40 transition-colors">
+    <div className="min-h-screen bg-[var(--page-bg)] pb-40 transition-colors">
       <AppHeader title="Kolektif" infoKey="Nabung Bareng" />
 
       <main className="px-5 mt-4 space-y-5">

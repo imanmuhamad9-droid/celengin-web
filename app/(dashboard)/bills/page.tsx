@@ -153,7 +153,7 @@ export default function BillsPage() {
 
   useCatatAction('Tagihan', 'Tambah tagihan', openAdd);
 
-  if (loading || !today) return <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>;
+  if (loading || !today) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
 
   const enriched = bills.map((b) => ({ ...b, daysLeft: diffDays(today, b.due_date) }));
   const active = enriched.filter((b) => b.is_active);
@@ -200,7 +200,7 @@ export default function BillsPage() {
     );
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] pb-40 transition-colors">
+    <div className="min-h-screen bg-[var(--page-bg)] pb-40 transition-colors">
       <AppHeader title="Tagihan" />
 
       <main className="px-5 mt-4 space-y-5">

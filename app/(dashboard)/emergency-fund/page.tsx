@@ -70,7 +70,7 @@ export default function EmergencyFundPage() {
 
   useCatatAction('Dana', 'Setor dana darurat', () => setEntryType('in'));
 
-  if (loading) return <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>;
+  if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
 
   const saved = entries.reduce((s, e) => s + (e.type === 'in' ? 1 : -1) * (Number(e.amount) || 0), 0);
   const st = emergencyStatus(avg, months, saved);
@@ -92,7 +92,7 @@ export default function EmergencyFundPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] pb-40 transition-colors">
+    <div className="min-h-screen bg-[var(--page-bg)] pb-40 transition-colors">
       <AppHeader title="Dana Darurat" />
 
       <main className="max-w-md mx-auto px-4 mt-3 space-y-4">

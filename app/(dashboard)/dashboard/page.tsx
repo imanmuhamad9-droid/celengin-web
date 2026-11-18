@@ -368,11 +368,11 @@ const currentMonth = calendarMonth;
   const mostExpensiveDay = daysArray.reduce((prev, current) => (prev.expense > current.expense) ? prev : current, daysArray[0]);
 
   if (isLoading || !currentMonthStr) return (
-    <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>
+    <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>
   );
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] pb-40 transition-colors">
+    <div className="min-h-screen bg-[var(--page-bg)] pb-40 transition-colors">
       <AppHeader
         topRight={<NotificationBell userId={user?.id ?? null} local={localNotifs} />}
         onAvatarClick={() => setIsProfileModalOpen(true)}

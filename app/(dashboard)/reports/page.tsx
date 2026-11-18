@@ -56,7 +56,7 @@ export default function ReportsPage() {
     load();
   }, [router]);
 
-  if (loading || !anchor || !today) return <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>;
+  if (loading || !anchor || !today) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
 
   const range = getRange(period, anchor, payday);
   const prevRange = getRange(period, shiftAnchor(period, anchor, -1, payday), payday);
@@ -108,7 +108,7 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] pb-40 transition-colors">
+    <div className="min-h-screen bg-[var(--page-bg)] pb-40 transition-colors">
       <AppHeader title="Laporan" />
 
       <main className="px-5 mt-4 space-y-5">

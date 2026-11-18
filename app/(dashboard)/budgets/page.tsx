@@ -63,7 +63,7 @@ export default function BudgetsPage() {
 
   useCatatAction('Anggaran', 'Buat anggaran', () => setForm({ budget: null, category: '' }));
 
-  if (loading) return <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>;
+  if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
 
   const shownDate = viewDate || today;
   const cycle: Cycle = cycleFor(shownDate, payday);
@@ -89,7 +89,7 @@ export default function BudgetsPage() {
   const goCycle = (dir: 1 | -1) => setViewDate(shiftCycle(shownDate, dir, payday).start);
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] pb-40 transition-colors">
+    <div className="min-h-screen bg-[var(--page-bg)] pb-40 transition-colors">
       <AppHeader title="Anggaran" />
 
       <main className="max-w-md mx-auto px-4 mt-3 space-y-4">

@@ -15,10 +15,14 @@ import RecurringRulesModal from '@/components/RecurringRulesModal';
 import { cycleFor, normalizePayday } from '@/lib/cycle';
 import { EXTRA_MENUS, ExtraMenuKey, saveExtraMenus, useExtraMenus } from '@/lib/menuSettings';
 import { Toggle } from '@/components/ui';
+import { BgLayer } from '@/components/AppBackground';
+import BgArt from '@/components/BgArt';
+import { BG_THEMES, BG_DEFAULT, BRIGHT_MIN, BRIGHT_MAX, DARK_MIN, DARK_MAX, BgThemeKey, bgPref, useBgSettings, useCustomBg, useIsDark, saveCustomBg, blobToDataUrl } from '@/lib/appBackground';
+import { Check, Plus, RotateCcw, Sparkles } from 'lucide-react';
 import { Menu as MenuIcon } from 'lucide-react';
 import { toLocalDateStr, formatRupiah } from '@/lib/utils';
 
-type View = 'hub' | 'profil' | 'keamanan' | 'gajian' | 'saldo' | 'kartu' | 'tampilan' | 'notif' | 'menu';
+type View = 'hub' | 'profil' | 'keamanan' | 'gajian' | 'saldo' | 'kartu' | 'tampilan' | 'latar' | 'notif' | 'menu';
 
 const TITLES: Record<View, string> = {
   hub: 'Pengaturan',
@@ -28,6 +32,7 @@ const TITLES: Record<View, string> = {
   saldo: 'Batas Saldo Aman',
   kartu: 'Kartu Saldo',
   tampilan: 'Tampilan',
+  latar: 'Tema Latar',
   notif: 'Notifikasi',
   menu: 'Menu Tambahan',
 };
@@ -57,6 +62,29 @@ function Group({ label, children }: { label: string; children: React.ReactNode }
       <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2 px-1">{label}</p>
       <div className="glass rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700 overflow-hidden transition-colors">{children}</div>
     </div>
+  );
+}
+
+function BgOption({ label, active, onClick, children }: { label: string; active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button type="button" onClick={onClick} aria-pressed={active} className="flex flex-col items-center gap-1.5 active:scale-95 transition-transform">
+      <span className={`relative block w-full aspect-[3/4] rounded-2xl overflow-hidden border-2 transition-colors ${active ? 'border-[var(--teal-primary)]' : 'border-gray-200 dark:border-gray-600'}`}>
+        {children}
+        {active && <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-[var(--teal-primary)] text-white flex items-center justify-center shadow"><Check className="w-3 h-3" strokeWidth={3} /></span>}
+      </span>
+      <span className={`text-[11px] font-bold leading-tight text-center ${active ? 'text-[color:var(--teal-primary)]' : 'text-gray-600 dark:text-gray-300'}`}>{label}</span>
+    </button>
+  );
+}
+
+function BgSlider({ label, value, min, max, disabled, onChange }: { label: string; value: number; min: number; max: number; disabled?: boolean; onChange: (v: number) => void }) {
+  return (
+    <label className={`block mb-4 ${disabled ? 'opacity-40' : ''}`}>
+      <span className="flex justify-between text-xs font-bold text-gray-700 dark:text-gray-200 mb-1.5">
+        <span>{label}</span><span className="text-[color:var(--teal-primary)]">{value}%</span>
+      </span>
+      <input type="range" min={min} max={max} step={1} value={value} disabled={disabled} onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-teal-600" aria-label={label} />
+    </label>
   );
 }
 
@@ -96,7 +124,13 @@ export default function SettingsPage() {
 
   // Profil
   const [isUploading, setIsUploading] = useState(false);
-  const [cropJob, setCropJob] = useState<{ file: File; kind: 'avatar' | 'cover' } | null>(null);
+  const [cropJob, setCropJob] = useState<{ file: File; kind: 'avatar' | 'cover' | 'bg' } | null>(null);
+
+  // Tema latar (disimpan di perangkat, lihat lib/appBackground.ts)
+  const bg = useBgSettings();
+  const customBg = useCustomBg();
+  const isDark = useIsDark();
+  const bgInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [newNickname, setNewNickname] = useState('');
@@ -199,7 +233,7 @@ export default function SettingsPage() {
   };
 
   // Pilih foto (profil / sampul) -> layar atur zoom dulu, baru diunggah saat Simpan
-  const handlePickPhoto = (e: React.ChangeEvent<HTMLInputElement>, kind: 'avatar' | 'cover') => {
+  const handlePickPhoto = (e: React.ChangeEvent<HTMLInputElement>, kind: 'avatar' | 'cover' | 'bg') => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
@@ -210,6 +244,15 @@ export default function SettingsPage() {
   const uploadCropped = async (blob: Blob) => {
     if (!cropJob) return;
     const kind = cropJob.kind;
+    // Latar sendiri disimpan di perangkat (tidak diunggah), jadi langsung tampil & tetap jalan offline
+    if (kind === 'bg') {
+      const dataUrl = await blobToDataUrl(blob);
+      setCropJob(null);
+      if (!saveCustomBg(dataUrl)) { showDialog('Gagal', 'Memori perangkat penuh. Coba foto lain atau kosongkan data browser.', 'danger'); return; }
+      bgPref.set({ ...bg, theme: 'custom' });
+      return;
+    }
+    if (kind !== 'avatar' && kind !== 'cover') return;
     setIsUploading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -331,9 +374,17 @@ export default function SettingsPage() {
 
   const isPasswordValid = newPassword.length >= 8 && /[A-Z]/.test(newPassword) && /[0-9]/.test(newPassword) && /[^A-Za-z0-9]/.test(newPassword);
 
-  if (loading) return <div className="min-h-screen bg-[var(--bg-main)]"><SkeletonLoader /></div>;
+  if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
 
   const themeLabel = theme === 'light' ? 'Terang' : theme === 'dark' ? 'Gelap' : 'Ikuti sistem';
+
+  const bgActive = bg.theme !== 'none' && !(bg.theme === 'custom' && !customBg);
+  const bgLabel = !bgActive ? 'Polos' : bg.theme === 'custom' ? 'Foto sendiri' : BG_THEMES.find((t) => t.key === bg.theme)?.label ?? 'Polos';
+  const setBgTheme = (t: BgThemeKey) => bgPref.set({ ...bg, theme: t });
+  const removeCustomBg = () => showDialog('Hapus foto latar?', 'Latar kembali polos. Kamu bisa upload foto lain kapan saja.', 'danger', () => {
+    saveCustomBg(null);
+    if (bg.theme === 'custom') bgPref.set({ ...bg, theme: 'none' });
+  });
   const SaveBar = ({ label }: { label: string }) => (
     <>
       {msg && <p className="text-center text-sm font-bold text-teal-600 dark:text-teal-400">{msg}</p>}
@@ -349,7 +400,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] pb-40 transition-colors">
+    <div className="min-h-screen bg-[var(--page-bg)] pb-40 transition-colors">
       <AppHeader title={TITLES[view]} onBack={view !== 'hub' ? () => go('hub') : undefined} />
 
       <main className="max-w-md mx-auto p-5 mt-2 space-y-5">
@@ -382,6 +433,7 @@ export default function SettingsPage() {
 
             <Group label="Aplikasi">
               <Row icon={<Palette className="w-5 h-5" />} title="Tampilan" sub={themeLabel} onClick={() => go('tampilan')} />
+              <Row icon={<Sparkles className="w-5 h-5" />} title="Tema Latar" sub={bgLabel} onClick={() => go('latar')} />
               <Row icon={<MenuIcon className="w-5 h-5" />} title="Menu Tambahan" sub={extraMenus.length > 0 ? `${extraMenus.length} menu di hamburger` : 'Belum ada, tombol Catat tampil biasa'} onClick={() => go('menu')} />
               <Row icon={<Bell className="w-5 h-5" />} title="Notifikasi" sub="Pengingat di HP kamu" onClick={() => go('notif')} />
               <Row icon={<Trophy className="w-5 h-5" />} title="Pencapaian" sub="Badge bonus buat kamu" onClick={() => router.push('/badges')} />
@@ -548,6 +600,64 @@ export default function SettingsPage() {
           </>
         )}
 
+        {/* ===== TEMA LATAR ===== */}
+        {view === 'latar' && (
+          <>
+            {/* Pratinjau: latar + contoh kartu kaca, memakai lapisan yang sama dengan layar penuh */}
+            <div className="relative mx-auto w-full max-w-[220px] aspect-[9/16] rounded-[28px] overflow-hidden border-4 border-white/70 dark:border-gray-700 shadow-lg bg-[var(--bg-main)]">
+              <BgLayer settings={bg} customUrl={customBg} dark={isDark} />
+              <div className="absolute inset-x-3 top-4 space-y-2.5">
+                <div className="glass rounded-2xl p-3">
+                  <p className="text-[9px] text-gray-500 dark:text-gray-400">Total Saldo Kamu</p>
+                  <p className="text-base font-extrabold text-gray-900 dark:text-white">{formatRupiah(1250000)}</p>
+                </div>
+                <div className="glass rounded-2xl p-3 space-y-1.5">
+                  <div className="h-2 w-2/3 rounded-full bg-gray-400/40" />
+                  <div className="h-2 w-1/2 rounded-full bg-gray-400/30" />
+                  <div className="h-2 w-3/4 rounded-full bg-gray-400/30" />
+                </div>
+              </div>
+              <p className="absolute bottom-3 inset-x-0 text-center text-[10px] font-bold text-gray-700 dark:text-gray-200"><span className="glass rounded-full px-2.5 py-1">{bgLabel}</span></p>
+            </div>
+
+            <div className={CARD}>
+              <p className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-1">Pilih tema</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Latar tampil di semua menu dan ikut mode terang/gelap. Tersimpan otomatis di perangkat ini.</p>
+              <div className="grid grid-cols-3 gap-2.5">
+                <BgOption label="Polos" active={bg.theme === 'none'} onClick={() => setBgTheme('none')}>
+                  <div className="absolute inset-0 bg-[var(--bg-main)]" />
+                </BgOption>
+                {BG_THEMES.map((t) => (
+                  <BgOption key={t.key} label={t.label} active={bg.theme === t.key} onClick={() => setBgTheme(t.key)}>
+                    <BgArt theme={t.key} dark={isDark} />
+                  </BgOption>
+                ))}
+                <BgOption label={customBg ? 'Foto sendiri' : 'Upload sendiri'} active={bg.theme === 'custom'} onClick={() => (customBg ? setBgTheme('custom') : bgInputRef.current?.click())}>
+                  {customBg
+                    ? <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url("${customBg}")` }} />
+                    : <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-[color:var(--teal-primary)] border-2 border-dashed border-[var(--teal-tint-border)] rounded-2xl"><Plus className="w-6 h-6" /></div>}
+                </BgOption>
+              </div>
+              <input type="file" accept="image/*" className="hidden" ref={bgInputRef} onChange={(e) => handlePickPhoto(e, 'bg')} />
+              {customBg && (
+                <div className="flex gap-2 mt-3">
+                  <button onClick={() => bgInputRef.current?.click()} className={BTN_SOFT}><Upload className="w-4 h-4" /> Ganti foto</button>
+                  <button onClick={removeCustomBg} className={BTN_DANGER_SOFT}><Trash2 className="w-4 h-4" /> Hapus foto</button>
+                </div>
+              )}
+            </div>
+
+            <div className={CARD}>
+              <p className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-1">Atur latar</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Geser sampai tulisan di atas latar nyaman dibaca.</p>
+              <BgSlider label="Kecerahan" value={bg.brightness} min={BRIGHT_MIN} max={BRIGHT_MAX} disabled={!bgActive} onChange={(v) => bgPref.set({ ...bg, brightness: v })} />
+              <BgSlider label="Kegelapan" value={bg.darkness} min={DARK_MIN} max={DARK_MAX} disabled={!bgActive} onChange={(v) => bgPref.set({ ...bg, darkness: v })} />
+              <button onClick={() => bgPref.set({ ...bg, brightness: BG_DEFAULT.brightness, darkness: BG_DEFAULT.darkness })} disabled={!bgActive || (bg.brightness === BG_DEFAULT.brightness && bg.darkness === BG_DEFAULT.darkness)} className={`${BTN_SOFT} w-full mt-1 disabled:opacity-40`}><RotateCcw className="w-4 h-4" /> Kembalikan bawaan</button>
+              {!bgActive && <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-2 text-center">Pilih tema dulu untuk mengatur kecerahan dan kegelapan.</p>}
+            </div>
+          </>
+        )}
+
         {/* ===== MENU TAMBAHAN ===== */}
         {view === 'menu' && (
           <>
@@ -582,9 +692,9 @@ export default function SettingsPage() {
         <PhotoCropper
           file={cropJob.file}
           shape={cropJob.kind === 'avatar' ? 'circle' : 'rect'}
-          aspect={cropJob.kind === 'avatar' ? 1 : 320 / 150}
-          outWidth={cropJob.kind === 'avatar' ? 512 : 960}
-          title={cropJob.kind === 'avatar' ? 'Atur foto profil' : 'Atur foto sampul'}
+          aspect={cropJob.kind === 'avatar' ? 1 : cropJob.kind === 'bg' ? 3 / 5 : 320 / 150}
+          outWidth={cropJob.kind === 'avatar' ? 512 : cropJob.kind === 'bg' ? 900 : 960}
+          title={cropJob.kind === 'avatar' ? 'Atur foto profil' : cropJob.kind === 'bg' ? 'Atur foto latar' : 'Atur foto sampul'}
           onCancel={() => setCropJob(null)}
           onConfirm={uploadCropped}
         />
