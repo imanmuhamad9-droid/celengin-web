@@ -4,7 +4,8 @@ import type { Transaction } from '@/lib/types';
 import { errMsg } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, XCircle, ChevronLeft, ChevronRight, Bookmark, X } from 'lucide-react';
+import { addSavedFilter, applyFilter, filterLabel, isFilterActive, loadSavedFilters, persistSavedFilters, removeSavedFilter, type SavedFilter, type TxFilter } from '@/lib/txFilter';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import AppHeader from '@/components/AppHeader';
@@ -30,6 +31,8 @@ function TransactionsContent() {
   const [endDate, setEndDate] = useState('');
 
   const [currentPage, setCurrentPage] = useState(1);
+  const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([]);
+  useEffect(() => { setSavedFilters(loadSavedFilters()); }, []);
   const itemsPerPage = 7;
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -91,18 +94,12 @@ function TransactionsContent() {
     });
   };
 
-  const filteredTx = transactions.filter(tx => {
-    const matchSearch = tx.merchant_name?.toLowerCase().includes(search.toLowerCase());
-    const matchType = filterType === 'all' ? true : tx.type === filterType;
-    const matchCategory = filterCategory === 'all' ? true : tx.merchant_name === filterCategory;
-    
-    let matchDate = true;
-    if (startDate && endDate) matchDate = tx.transaction_date >= startDate && tx.transaction_date <= endDate;
-    else if (startDate) matchDate = tx.transaction_date >= startDate;
-    else if (endDate) matchDate = tx.transaction_date <= endDate;
+  const currentFilter: TxFilter = { search, type: filterType, category: filterCategory, start: startDate, end: endDate };
+  const filteredTx = applyFilter(transactions, currentFilter);
 
-    return matchSearch && matchType && matchCategory && matchDate;
-  });
+  const applySaved = (f: SavedFilter) => { setSearch(f.search); setFilterType(f.type); setFilterCategory(f.category); setStartDate(f.start); setEndDate(f.end); };
+  const saveCurrent = () => { const next = addSavedFilter(savedFilters, currentFilter); setSavedFilters(next); persistSavedFilters(next); };
+  const deleteSaved = (id: string) => { const next = removeSavedFilter(savedFilters, id); setSavedFilters(next); persistSavedFilters(next); };
 
   const totalPages = Math.ceil(filteredTx.length / itemsPerPage);
   const paginatedTx = filteredTx.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -120,7 +117,7 @@ function TransactionsContent() {
 
         <div className="relative">
           <Search className="w-5 h-5 absolute left-3.5 top-3.5 z-10 text-[color:var(--text-muted)]" />
-          <input type="text" placeholder="Cari catatan..." value={search} onChange={(e) => setSearch(e.target.value)} className="glass w-full pl-10 pr-4 py-3 rounded-full text-sm outline-none focus:ring-2 focus:ring-[color:var(--teal-primary)]" style={{ color: 'var(--text-main)' }} />
+          <input type="text" placeholder="Cari catatan, kategori, atau nominal..." value={search} onChange={(e) => setSearch(e.target.value)} className="glass w-full pl-10 pr-4 py-3 rounded-full text-sm outline-none focus:ring-2 focus:ring-[color:var(--teal-primary)]" style={{ color: 'var(--text-main)' }} />
         </div>
 
         <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
@@ -138,6 +135,20 @@ function TransactionsContent() {
           <DateField compact label="Sampai" placeholder="Semua tanggal" value={endDate} min={startDate || undefined} onChange={setEndDate} className="flex-1" />
           {(startDate || endDate) && <GlassButton variant="danger" size="icon" onClick={() => { setStartDate(''); setEndDate(''); router.push('/transactions'); }} aria-label="Hapus filter tanggal"><XCircle className="w-5 h-5" /></GlassButton>}
         </div>
+
+        {(savedFilters.length > 0 || isFilterActive(currentFilter)) && (
+          <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar" aria-label="Filter tersimpan">
+            {isFilterActive(currentFilter) && !savedFilters.some((f) => filterLabel(f) === filterLabel(currentFilter)) && (
+              <button onClick={saveCurrent} className="glass glass-teal shrink-0 text-xs font-bold rounded-full px-3 py-2 flex items-center gap-1.5 border"><Bookmark className="w-3.5 h-3.5" /> Simpan filter ini</button>
+            )}
+            {savedFilters.map((f) => (
+              <span key={f.id} className="glass shrink-0 text-xs font-semibold rounded-full pl-3 pr-1 py-1 flex items-center gap-1">
+                <button onClick={() => applySaved(f)} className="py-1" style={{ color: 'var(--text-main)' }}>{filterLabel(f)}</button>
+                <button onClick={() => deleteSaved(f.id)} aria-label={`Hapus filter ${filterLabel(f)}`} className="w-6 h-6 rounded-full flex items-center justify-center text-[color:var(--text-muted)]"><X className="w-3.5 h-3.5" /></button>
+              </span>
+            ))}
+          </div>
+        )}
 
         <GlassCard className="!py-2">
           {paginatedTx.length === 0 ? (
