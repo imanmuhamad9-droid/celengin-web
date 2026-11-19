@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { saveTransactions, type NewTransaction } from '@/lib/offlineQueue';
 import type { Preset } from '@/lib/types';
 import { supabase } from '@/lib/supabaseClient';
 import { X, Plus, Settings2, Camera, ImageUp, Loader2, Save, Check } from 'lucide-react';
@@ -162,8 +163,10 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
       if (!session) return;
 
       // Transaksi berstatus "Rutin" otomatis dibuatkan aturan berulang (dicatat sendiri oleh sistem)
+      // Transaksi rutin membuat aturan berulang di server, jadi butuh internet
+      if (navigator.onLine === false && txList.some((t) => t.isRoutine)) throw new Error('Transaksi rutin butuh internet. Matikan opsi Rutin, atau coba lagi saat online.');
       const createdRuleIds: string[] = [];
-      const payloads = [];
+      const payloads: NewTransaction[] = [];
       for (const tx of txList) {
         let ruleId: string | null = null;
         if (tx.isRoutine) {
@@ -192,13 +195,18 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
         });
       }
 
-      const { error } = await supabase.from('transactions').insert(payloads);
-      if (error) {
+      const saved = await saveTransactions(payloads);
+      if (!saved.ok) {
         if (createdRuleIds.length > 0) await supabase.from('recurring_rules').delete().in('id', createdRuleIds);
-        throw error;
+        throw saved.error;
       }
       
       const routineCount = createdRuleIds.length;
+      if (saved.queued) {
+        showDialog('Tersimpan di Perangkat', `${txList.length} transaksi disimpan di perangkat dan akan dikirim otomatis saat kamu online lagi.`, 'info');
+        onSuccess(); onClose();
+        return;
+      }
       showDialog('Berhasil', routineCount > 0 ? `${txList.length} transaksi tersimpan. ${routineCount} transaksi rutin akan tercatat otomatis sesuai jadwal.` : `${txList.length} transaksi berhasil disimpan!`, 'success');
       const hasIn = txList.some((t) => t.type === 'income');
       const hasOut = txList.some((t) => t.type === 'expense');
