@@ -5,6 +5,7 @@ import * as webpush from 'web-push';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { computeNet, simplifyDebts } from '@/lib/splitbill';
 import { parsePushPrefs, wantsPush, type PushKind, type PushPrefs } from '@/lib/pushPrefs';
+import { activeMonth, dueDateOf, groupStatus, type InstGroup, type InstItem, type InstPayment } from '@/lib/installments';
 import { addDays, dayOfWeek, diffDays, nextOccurrence, todayInJakarta, Frequency } from '@/lib/recurring';
 
 type PushMsg = { title: string; body: string; url: string; tag: string };
@@ -207,6 +208,14 @@ export async function GET(request: Request) {
     ;
 
   const bills = billsData as BillRow[] | null;
+
+  // Cicilan: tabel belum ada / kosong = tidak ada pengingat (error diabaikan)
+  const [{ data: instGroups }, { data: instItems }, { data: instPays }] = await Promise.all([
+    admin.from('installment_groups').select('*').in('user_id', userIds),
+    admin.from('installments').select('*').in('user_id', userIds),
+    admin.from('installment_payments').select('*').in('user_id', userIds),
+  ]);
+  const curMonth = today.slice(0, 7);
   const isMonday = dayOfWeek(today) === 1;
 
   // Preferensi notifikasi per user (kunci kosong = aktif). Bila kolom belum ada, semua tetap dikirim.
@@ -231,6 +240,29 @@ export async function GET(request: Request) {
     } else if (dueBills.length > 1) {
       const total = dueBills.reduce((s, b) => s + Number(b.amount), 0);
       msgs.push({ title: '🧾 Pengingat Tagihan', body: `${dueBills.length} tagihan segera jatuh tempo, total ${rp(total)}.`, url: '/bills', tag: 'bills', kind: 'bills' });
+    }
+
+    // a1. Cicilan: bucket yang masih punya sisa dan jatuh tempo <= 3 hari lagi (atau sudah lewat bulan ini)
+    const dueInst = ((instGroups || []) as (InstGroup & { user_id: string })[])
+      .filter((g) => g.user_id === uid)
+      .map((g) => {
+        const plan = groupStatus(g,
+          ((instItems || []) as InstItem[]).filter((i) => i.group_id === g.id),
+          ((instPays || []) as InstPayment[]).filter((p) => p.group_id === g.id),
+          activeMonth(g, curMonth),
+        );
+        return { g, payable: plan.remaining, due: dueDateOf(g, activeMonth(g, curMonth)) };
+      })
+      .filter((x) => x.payable > 0 && diffDays(today, x.due) <= 3)
+      .sort((a, b) => a.due.localeCompare(b.due));
+    if (dueInst.length === 1) {
+      const { g, payable, due } = dueInst[0];
+      const d = diffDays(today, due);
+      const when = d < 0 ? `telat ${-d} hari` : d === 0 ? 'jatuh tempo HARI INI' : d === 1 ? 'jatuh tempo besok' : `jatuh tempo ${d} hari lagi`;
+      msgs.push({ title: '💳 Pengingat Cicilan', body: `${g.name}: sisa ${rp(payable)} ${when}.`, url: '/installments', tag: 'installments', kind: 'installments' });
+    } else if (dueInst.length > 1) {
+      const total = dueInst.reduce((s, x) => s + x.payable, 0);
+      msgs.push({ title: '💳 Pengingat Cicilan', body: `${dueInst.length} cicilan segera jatuh tempo, total ${rp(total)}.`, url: '/installments', tag: 'installments', kind: 'installments' });
     }
 
     // b. Transaksi rutin yang baru tercatat otomatis

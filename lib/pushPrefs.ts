@@ -3,6 +3,7 @@
 
 export const PUSH_KINDS = [
   { key: 'bills', label: 'Pengingat tagihan', desc: 'Tagihan yang segera jatuh tempo atau terlambat' },
+  { key: 'installments', label: 'Pengingat cicilan', desc: 'Cicilan bucket yang segera jatuh tempo atau terlambat' },
   { key: 'routine', label: 'Transaksi rutin', desc: 'Pemberitahuan saat transaksi rutin tercatat otomatis' },
   { key: 'daily', label: 'Ingatkan catat harian', desc: 'Jika hari ini belum ada transaksi yang dicatat' },
   { key: 'weekly', label: 'Ringkasan mingguan', desc: 'Setiap Senin: total masuk dan keluar minggu lalu' },

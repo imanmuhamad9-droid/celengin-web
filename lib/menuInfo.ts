@@ -35,6 +35,15 @@ export const MENU_INFO: Record<string, MenuInfo> = {
       'Angka tiap bulan disimpan otomatis, jadi grafiknya terisi seiring waktu.',
     ],
   },
+  Cicilan: {
+    heading: 'Cicilan: untuk apa menu ini?',
+    body: 'Catat semua cicilan yang punya tenor: kartu kredit, paylater, KTA, dan sejenisnya. Kelompokkan per bank atau merek, isi tiap barangnya, lalu kamu tahu berapa yang harus dibayar bulan ini dan bulan-bulan berikutnya.',
+    points: [
+      'Bayar sebagian pun boleh: sisanya otomatis ditambahkan ke tagihan bulan depan.',
+      'Bunga cicilan bisa diisi, atau biarkan 0% kalau tanpa bunga.',
+      'Kamu diingatkan lewat notifikasi saat jatuh tempo sebuah bucket sudah dekat.',
+    ],
+  },
   Riwayat: {
     heading: 'Riwayat: untuk apa menu ini?',
     body: 'Semua uang masuk dan keluar yang pernah kamu catat ada di sini. Cari, saring, ubah, atau hapus kalau ada yang salah.',
