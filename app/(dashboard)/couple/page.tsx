@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { pushInviteNow } from '@/lib/notifications';
 import { useRouter } from 'next/navigation';
 import { Heart, X, Mail, ArrowDownCircle, ArrowUpCircle, Users, Info, CreditCard } from 'lucide-react';
-import { formatRupiah, digitsOnly, noDigits } from '@/lib/utils';
+import { formatRupiah, digitsOnly, noDigits, errMsg } from '@/lib/utils';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import AppHeader from '@/components/AppHeader';
@@ -247,9 +247,9 @@ export default function SharedSpacePage() {
   const handleUpdateAmount = async (e: React.FormEvent) => {
     e.preventDefault();
     if (updateAmountRaw <= 0 || !selectedGoal || !user) return;
-    const newAmount = updateAction === 'in' ? Number(selectedGoal.current_amount) + updateAmountRaw : Math.max(0, Number(selectedGoal.current_amount) - updateAmountRaw);
-    await supabase.from('couple_goals').update({ current_amount: newAmount }).eq('id', selectedGoal.id);
-    await supabase.from('couple_transactions').insert({ goal_id: selectedGoal.id, user_id: user?.id, amount: updateAmountRaw, type: updateAction });
+    // Saldo dan riwayat diubah dalam satu transaksi database (sql/05_atomik_dan_preferensi.sql)
+    const { error } = await supabase.rpc('couple_deposit', { p_goal_id: selectedGoal.id, p_amount: updateAmountRaw, p_type: updateAction });
+    if (error) return showDialog('Gagal', errMsg(error, 'Setoran gagal disimpan. Coba lagi.'), 'danger');
     setIsUpdateModalOpen(false); setUpdateAmountDisplay(''); setUpdateAmountRaw(0); fetchSharedData();
   };
 

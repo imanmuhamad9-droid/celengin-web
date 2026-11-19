@@ -4,7 +4,7 @@ import type { DreamGoal, GoalTx, Transaction, Profile } from '@/lib/types';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import { Target, X, ArrowDownCircle, ArrowUpCircle, Info, TrendingUp } from 'lucide-react';
-import { formatRupiah, formatDateID, toLocalDateStr } from '@/lib/utils';
+import { formatRupiah, formatDateID, toLocalDateStr, errMsg } from '@/lib/utils';
 import { cycleFor, shiftCycle, normalizePayday } from '@/lib/cycle';
 import UpdateGoalModal from '@/components/UpdateGoalModal';
 import CustomDialog from '@/components/CustomDialog';
@@ -136,13 +136,10 @@ export default function DreamPlannerPage() {
 
   const handleUpdateGoalAmount = async (amount: number, action: 'add' | 'subtract') => {
     if (!selectedGoal) return;
-    let newAmount = Number(selectedGoal.current_amount);
-    if (action === 'add') newAmount += amount; else newAmount = Math.max(0, newAmount - amount);
-    await supabase.from('dream_goals').update({ current_amount: newAmount }).eq('id', selectedGoal.id);
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      await supabase.from('goal_transactions').insert({ goal_id: selectedGoal.id, user_id: session.user.id, amount: amount, type: action === 'add' ? 'in' : 'out' });
-    }
+    // Saldo dan riwayat diubah dalam satu transaksi database (sql/05_atomik_dan_preferensi.sql)
+    const { data, error } = await supabase.rpc('dream_deposit', { p_goal_id: selectedGoal.id, p_amount: amount, p_type: action === 'add' ? 'in' : 'out' });
+    if (error) { setDialog({ isOpen: true, title: 'Gagal', msg: errMsg(error, 'Setoran gagal disimpan. Coba lagi.'), type: 'danger', onConfirm: undefined }); return; }
+    const newAmount = Number(data);
     fetchGoals(); fetchHistory(selectedGoal.id); setSelectedGoal({ ...selectedGoal, current_amount: newAmount });
   };
 
