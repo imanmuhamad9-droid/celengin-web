@@ -1,5 +1,6 @@
 'use client';
 import { StickyNote, Trash2 } from 'lucide-react';
+import type { Transaction } from '@/lib/types';
 import { formatRupiah } from '@/lib/utils';
 
 const dateLabel = (ymd: string) => new Date(ymd + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
@@ -8,14 +9,14 @@ const dateLabel = (ymd: string) => new Date(ymd + 'T00:00:00').toLocaleDateStrin
 // Tiap baris: keterangan transaksi + catatan kecil di bawahnya; nominal di kanan
 // (keluar merah tanpa tanda minus, masuk hijau dengan +). Dipakai di Home dan Riwayat.
 export default function TxList({ transactions, onSelect, onDelete }: {
-  transactions: any[];
+  transactions: Transaction[];
   /** Dipanggil saat baris diketuk (buka detail / edit) */
-  onSelect?: (tx: any) => void;
+  onSelect?: (tx: Transaction) => void;
   /** Bila diisi, tiap baris diberi tombol hapus kecil di kanan */
-  onDelete?: (tx: any) => void;
+  onDelete?: (tx: Transaction) => void;
 }) {
   // Kelompokkan berurutan per tanggal (data sudah terurut dari yang terbaru)
-  const groups: { date: string; items: any[] }[] = [];
+  const groups: { date: string; items: Transaction[] }[] = [];
   for (const tx of transactions) {
     const last = groups[groups.length - 1];
     if (last && last.date === tx.transaction_date) last.items.push(tx);

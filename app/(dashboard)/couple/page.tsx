@@ -1,9 +1,10 @@
 'use client';
 import { useEffect, useState } from 'react';
+import type { RecurringRule, CoupleGoal, CoupleGoalView, CoupleMember, CoupleInvite, CoupleTx, GoalEstimate } from '@/lib/types';
 import { supabase } from '@/lib/supabaseClient';
 import { pushInviteNow } from '@/lib/notifications';
 import { useRouter } from 'next/navigation';
-import { Heart, X, Check, Mail, ArrowDownCircle, ArrowUpCircle, Users, Info, CreditCard } from 'lucide-react';
+import { Heart, X, Mail, ArrowDownCircle, ArrowUpCircle, Users, Info, CreditCard } from 'lucide-react';
 import { formatRupiah, digitsOnly, noDigits } from '@/lib/utils';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
@@ -47,7 +48,7 @@ function ProgressRing({ percent, color, size = 96 }: { percent: number; color: s
 }
 
 // Ubah satu aturan rutin jadi nilai per bulan
-const perMonth = (r: any): number => {
+const perMonth = (r: Pick<RecurringRule, 'amount' | 'frequency'>): number => {
   const a = Number(r.amount) || 0;
   switch (r.frequency) {
     case 'daily': return a * 30.4;
@@ -58,9 +59,9 @@ const perMonth = (r: any): number => {
 };
 
 export default function SharedSpacePage() {
-  const [user, setUser] = useState<any>(null);
-  const [goals, setGoals] = useState<any[]>([]);
-  const [pendingInvites, setPendingInvites] = useState<any[]>([]);
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
+  const [goals, setGoals] = useState<CoupleGoalView[]>([]);
+  const [pendingInvites, setPendingInvites] = useState<CoupleInvite[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const [filterCategory, setFilterCategory] = useState<'all' | 'couple' | 'friend'>('all');
@@ -80,11 +81,11 @@ export default function SharedSpacePage() {
 
   // Kemampuan menabung dari transaksi rutin milik sendiri (perkiraan)
   const [capacity, setCapacity] = useState<{ income: number; expense: number; hasRules: boolean }>({ income: 0, expense: 0, hasRules: false });
-  const [estimate, setEstimate] = useState<any | null>(null);
+  const [estimate, setEstimate] = useState<GoalEstimate | null>(null);
 
   // State Modal Update Dana
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-  const [selectedGoal, setSelectedGoal] = useState<any>(null);
+  const [selectedGoal, setSelectedGoal] = useState<CoupleGoalView | null>(null);
   const [updateAmountDisplay, setUpdateAmountDisplay] = useState('');
   const [updateAmountRaw, setUpdateAmountRaw] = useState(0);
   const [updateAction, setUpdateAction] = useState<'in' | 'out'>('in');
@@ -96,7 +97,7 @@ export default function SharedSpacePage() {
 
   // State Riwayat
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [historyData, setHistoryData] = useState<any[]>([]);
+  const [historyData, setHistoryData] = useState<CoupleTx[]>([]);
 
   // Custom Dialog
   const [dialog, setDialog] = useState({ isOpen: false, title: '', msg: '', type: 'info' as 'info'|'success'|'danger', onConfirm: undefined as (()=>void)|undefined });
@@ -114,11 +115,11 @@ export default function SharedSpacePage() {
     if (invites) setPendingInvites(invites);
 
     const { data: acceptedMembers } = await supabase.from('couple_members').select('goal_id').eq('user_id', session.user.id).eq('status', 'accepted');
-    const goalIds = acceptedMembers?.map((m: any) => m.goal_id) || [];
+    const goalIds = ((acceptedMembers || []) as { goal_id: string }[]).map((m) => m.goal_id);
 
     const { data: myGoals } = await supabase.from('couple_goals').select('*').eq('created_by', session.user.id);
 
-    let joinedGoals = [];
+    let joinedGoals: CoupleGoal[] = [];
     if (goalIds.length > 0) {
       const { data } = await supabase.from('couple_goals').select('*').in('id', goalIds);
       if (data) joinedGoals = data;
@@ -127,10 +128,10 @@ export default function SharedSpacePage() {
     const allGoals = [...(myGoals || []), ...(joinedGoals || [])];
     const uniqueGoals = Array.from(new Set(allGoals.map(g => g.id))).map(id => allGoals.find(g => g.id === id)).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-    const finalGoals = [];
+    const finalGoals: CoupleGoalView[] = [];
     for (const goal of uniqueGoals) {
       const { data: members } = await supabase.from('couple_members').select('id, user_id, status').eq('goal_id', goal.id).eq('status', 'accepted');
-      const membersWithProfile = [];
+      const membersWithProfile: CoupleMember[] = [];
       if (members) {
         for (const m of members) {
           const { data: profile } = await supabase.from('profiles').select('nickname, full_name').eq('id', m.user_id).maybeSingle();
@@ -144,8 +145,8 @@ export default function SharedSpacePage() {
     // Perkiraan kemampuan menabung: pemasukan rutin dikurangi pengeluaran rutin (hanya aturan milik sendiri)
     const { data: rules } = await supabase.from('recurring_rules').select('amount, type, frequency, is_active').eq('is_active', true);
     if (rules) {
-      const income = rules.filter((r: any) => r.type === 'income').reduce((a: number, r: any) => a + perMonth(r), 0);
-      const expense = rules.filter((r: any) => r.type !== 'income').reduce((a: number, r: any) => a + perMonth(r), 0);
+      const income = (rules as RecurringRule[]).filter((r) => r.type === 'income').reduce((a: number, r) => a + perMonth(r), 0);
+      const expense = (rules as RecurringRule[]).filter((r) => r.type !== 'income').reduce((a: number, r) => a + perMonth(r), 0);
       setCapacity({ income, expense, hasRules: rules.length > 0 });
     }
     setIsLoading(false);
@@ -156,7 +157,7 @@ export default function SharedSpacePage() {
   const fetchHistory = async (goalId: string) => {
     const { data: txs } = await supabase.from('couple_transactions').select('*').eq('goal_id', goalId).order('created_at', { ascending: false });
     if (txs) {
-      const historyWithProfile = [];
+      const historyWithProfile: CoupleTx[] = [];
       for (const tx of txs) {
         const { data: profile } = await supabase.from('profiles').select('nickname, full_name').eq('id', tx.user_id).maybeSingle();
         historyWithProfile.push({ ...tx, profiles: profile });
@@ -189,7 +190,7 @@ export default function SharedSpacePage() {
   };
 
   // Buka Modal Form untuk Edit
-  const handleOpenEdit = (goal: any) => {
+  const handleOpenEdit = (goal: CoupleGoalView) => {
     setEditingId(goal.id);
     setTitle(goal.title);
     setTargetRaw(goal.target_amount);
@@ -204,7 +205,7 @@ export default function SharedSpacePage() {
 
   const handleSaveGoal = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || targetRaw <= 0) return;
+    if (!title || targetRaw <= 0 || !user) return;
 
     const payload = {
       title,
@@ -224,9 +225,9 @@ export default function SharedSpacePage() {
       showDialog('Berhasil', 'Target berhasil diperbarui!', 'success');
     } else {
       // Mode Tambah
-      const { data, error } = await supabase.from('couple_goals').insert({ ...payload, created_by: user.id }).select().single();
+      const { data, error } = await supabase.from('couple_goals').insert({ ...payload, created_by: user?.id }).select().single();
       if (error) return showDialog('Gagal', /target_date/.test(error.message) ? 'Kolom tanggal target belum ada. Jalankan sql/11_target_tanggal.sql di Supabase, lalu coba lagi.' : error.message, 'danger');
-      await supabase.from('couple_members').insert({ goal_id: data.id, user_id: user.id, status: 'accepted' });
+      await supabase.from('couple_members').insert({ goal_id: data.id, user_id: user?.id, status: 'accepted' });
       showDialog('Berhasil', 'Target berhasil dibuat!', 'success');
     }
     
@@ -245,15 +246,16 @@ export default function SharedSpacePage() {
 
   const handleUpdateAmount = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (updateAmountRaw <= 0 || !selectedGoal) return;
+    if (updateAmountRaw <= 0 || !selectedGoal || !user) return;
     const newAmount = updateAction === 'in' ? Number(selectedGoal.current_amount) + updateAmountRaw : Math.max(0, Number(selectedGoal.current_amount) - updateAmountRaw);
     await supabase.from('couple_goals').update({ current_amount: newAmount }).eq('id', selectedGoal.id);
-    await supabase.from('couple_transactions').insert({ goal_id: selectedGoal.id, user_id: user.id, amount: updateAmountRaw, type: updateAction });
+    await supabase.from('couple_transactions').insert({ goal_id: selectedGoal.id, user_id: user?.id, amount: updateAmountRaw, type: updateAction });
     setIsUpdateModalOpen(false); setUpdateAmountDisplay(''); setUpdateAmountRaw(0); fetchSharedData();
   };
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedGoal) return;
     setInviteLoading(true);
     // Target Pasangan hanya untuk dua orang: kamu dan satu orang lain (undangan yang masih menunggu juga dihitung)
     if (selectedGoal.category === 'couple') {
@@ -279,7 +281,7 @@ export default function SharedSpacePage() {
   };
 
   const handleRemoveMember = async (memberId: string, memberName: string) => {
-    if (memberName === user.email) return; 
+    if (memberName === user?.email) return; 
     showDialog('Keluarkan Anggota?', `Yakin keluarkan ${memberName}?`, 'danger', async () => {
       await supabase.from('couple_members').delete().eq('id', memberId);
       fetchSharedData();
@@ -292,7 +294,7 @@ export default function SharedSpacePage() {
   };
 
   // Hitung perkiraan tabungan untuk satu target. new Date() hanya dipakai di sini (dipanggil saat ketuk), bukan saat render.
-  const openEstimate = (goal: any) => {
+  const openEstimate = (goal: CoupleGoalView) => {
     const remaining = Math.max(0, Number(goal.target_amount) - Number(goal.current_amount));
     const n = Math.max((goal.couple_members || []).length, goal.category === 'couple' ? 2 : 1);
     const surplus = Math.max(0, capacity.income - capacity.expense);
@@ -353,7 +355,7 @@ export default function SharedSpacePage() {
             const percentage = Math.min((Number(goal.current_amount) / Number(goal.target_amount)) * 100, 100);
             const remaining = Math.max(0, Number(goal.target_amount) - Number(goal.current_amount));
             const members = goal.couple_members || [];
-            const isCreator = goal.created_by === user.id;
+            const isCreator = goal.created_by === user?.id;
             const isCouple = goal.category === 'couple';
             const ringColor = isCouple ? '#ec4899' : '#3b82f6';
             const coupleFull = isCouple && members.length >= 2;
@@ -388,19 +390,19 @@ export default function SharedSpacePage() {
                         <p className="text-[11px] text-gray-600 dark:text-gray-300 font-mono truncate">{goal.account_number} <span className="text-[9px] font-sans">a/n {goal.account_holder}</span></p>
                       </div>
                     </div>
-                    <Btn variant="soft" size="sm" onClick={() => copyToClipboard(goal.account_number)}>Salin</Btn>
+                    <Btn variant="soft" size="sm" onClick={() => copyToClipboard(goal.account_number ?? '')}>Salin</Btn>
                   </div>
                 )}
 
                 <div className="mb-4">
                   <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-1.5">Anggota {isCouple ? '(maks. 2 orang)' : `(${members.length})`}</p>
                   <div className="space-y-1.5">
-                    {members.map((m: any) => {
+                    {members.map((m) => {
                       const displayName = m.profiles?.nickname || m.profiles?.full_name || 'User';
                       return (
                         <div key={m.user_id} className="flex items-center justify-between gap-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 pl-3 pr-1.5 py-1.5 rounded-xl">
-                          <span className="text-xs text-gray-800 dark:text-gray-200 font-semibold truncate">{displayName}{m.user_id === user.id ? ' (kamu)' : ''}</span>
-                          {isCreator && m.user_id !== user.id && <Btn variant="danger" size="sm" className="!min-h-[30px] !px-2.5" onClick={() => handleRemoveMember(m.id, displayName)}>Keluarkan</Btn>}
+                          <span className="text-xs text-gray-800 dark:text-gray-200 font-semibold truncate">{displayName}{m.user_id === user?.id ? ' (kamu)' : ''}</span>
+                          {isCreator && m.user_id !== user?.id && <Btn variant="danger" size="sm" className="!min-h-[30px] !px-2.5" onClick={() => handleRemoveMember(m.id, displayName)}>Keluarkan</Btn>}
                         </div>
                       );
                     })}

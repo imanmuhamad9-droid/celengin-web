@@ -7,7 +7,7 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   onSave: (amount: number, action: 'add' | 'subtract') => void | Promise<void>;
-  goal: any;
+  goal: { title: string; current_amount: number } | null;
 }
 
 export default function UpdateGoalModal({ isOpen, onClose, onSave, goal }: Props) {

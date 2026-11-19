@@ -1,8 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
+import type { Target, Transaction } from '@/lib/types';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { ShieldAlert, ChevronDown, ChevronUp, ArrowDownCircle, ArrowUpCircle, Info, CalendarDays } from 'lucide-react';
+import { ShieldAlert, ArrowDownCircle, ArrowUpCircle, CalendarDays } from 'lucide-react';
 import { Btn, RowActions } from '@/components/ui';
 import { formatRupiah } from '@/lib/utils';
 import TargetSetupModal from '@/components/TargetSetupModal';
@@ -13,13 +14,13 @@ import { useCatatAction } from '@/lib/catatAction';
 import SkeletonLoader from '@/components/SkeletonLoader';
 
 export default function TargetPage() {
-  const [targets, setTargets] = useState<any[]>([]);
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const [targets, setTargets] = useState<Target[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [showInfo, setShowInfo] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedTarget, setSelectedTarget] = useState<any>(null);
+  const [selectedTarget, setSelectedTarget] = useState<Target | null>(null);
 
   const [dialog, setDialog] = useState({ isOpen: false, title: '', msg: '', type: 'info' as 'info'|'success'|'danger', onConfirm: undefined as (()=>void)|undefined });
   const showDialog = (title: string, msg: string, type: 'info'|'success'|'danger', onConfirm?: () => void) => setDialog({ isOpen: true, title, msg, type, onConfirm });

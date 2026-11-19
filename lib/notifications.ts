@@ -67,7 +67,7 @@ export async function pushInviteNow(targetUserId: string) {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
       body: JSON.stringify({ targetUserId }),
     });
-  } catch (_) { /* push hanya tambahan */ }
+  } catch { /* push hanya tambahan */ }
 }
 
 /** Waktu relatif singkat, mis. "baru saja", "5 mnt", "2 jam", "3 hari". Dipanggil hanya di sisi klien. */

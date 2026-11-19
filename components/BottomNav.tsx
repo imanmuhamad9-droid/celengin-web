@@ -94,7 +94,7 @@ export default function BottomNav() {
             fetchUnreadCount().then((n) => { lastUnread.current = n; setUnread(n); emitNotifChanged(n); });
           })
           .subscribe();
-      } catch (_) { /* realtime belum aktif: polling tetap jalan */ }
+      } catch { /* realtime belum aktif: polling tetap jalan */ }
     })();
 
     const onVisible = () => { if (document.visibilityState === 'visible') refreshUnread(true); };

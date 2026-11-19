@@ -1,9 +1,9 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Plus, X, Trash2, UserPlus, ArrowRight, Receipt, Copy, CreditCard, Pencil, Mail, Check, UserCheck, MessageCircle, Info } from 'lucide-react';
+import { Plus, X, UserPlus, ArrowRight, Receipt, Copy, CreditCard, Mail, Check, UserCheck, MessageCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
-import { formatRupiah, formatDateID, parseRupiahInput, toLocalDateStr, digitsOnly, noDigits } from '@/lib/utils';
+import { formatRupiah, parseRupiahInput, toLocalDateStr, digitsOnly, noDigits } from '@/lib/utils';
 import { computeNet, simplifyDebts } from '@/lib/splitbill';
 import { pushInviteNow } from '@/lib/notifications';
 import { BANKS, SplitGroup, SplitMember, SplitExpense, SplitSettlement } from '@/lib/splitTypes';
@@ -192,7 +192,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
 
   useEffect(() => { loadList(); }, []);
   useEffect(() => {
-    try { setIntroHidden(localStorage.getItem(INTRO_KEY) === '1'); } catch (_) { setIntroHidden(false); }
+    try { setIntroHidden(localStorage.getItem(INTRO_KEY) === '1'); } catch { setIntroHidden(false); }
     setCurMonth(toLocalDateStr(new Date()).slice(0, 7));
   }, []);
 
@@ -229,8 +229,8 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
   const monthTotal = curMonth ? expenses.filter((e) => e.expense_date.startsWith(curMonth)).reduce((s, e) => s + Number(e.total_amount), 0) : 0;
   const monthList = Array.from(new Set(expenses.map((e) => e.expense_date.slice(0, 7)))).sort().reverse();
   const shownExpenses = isRunning && monthFilter !== 'all' ? expenses.filter((e) => e.expense_date.startsWith(monthFilter)) : expenses;
-  const hideIntro = () => { setIntroHidden(true); try { localStorage.setItem(INTRO_KEY, '1'); } catch (_) { /* abaikan */ } };
-  const showIntro = () => { setIntroHidden(false); try { localStorage.removeItem(INTRO_KEY); } catch (_) { /* abaikan */ } };
+  const hideIntro = () => { setIntroHidden(true); try { localStorage.setItem(INTRO_KEY, '1'); } catch { /* abaikan */ } };
+  const showIntro = () => { setIntroHidden(false); try { localStorage.removeItem(INTRO_KEY); } catch { /* abaikan */ } };
 
   // ---------- Grup ----------
   const openNewGroup = () => { setGName(''); setGEmoji(isRunning ? '🤝' : '🍽️'); setGMembers([]); setGMemberInput(''); setGInviteMode(false); setIsGroupOpen(true); };

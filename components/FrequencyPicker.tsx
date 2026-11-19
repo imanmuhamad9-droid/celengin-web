@@ -8,10 +8,10 @@ const DEFAULT_OPTIONS = [
 ];
 
 // Pilihan frekuensi berulang (chip kecil). Gaya sama dengan tombol tipe Masuk/Keluar.
-export default function FrequencyPicker({ value, onChange, options = DEFAULT_OPTIONS }: {
-  value: string;
-  onChange: (v: any) => void;
-  options?: { value: string; label: string }[];
+export default function FrequencyPicker<T extends string = string>({ value, onChange, options = DEFAULT_OPTIONS as { value: T; label: string }[] }: {
+  value: T;
+  onChange: (v: T) => void;
+  options?: { value: T; label: string }[];
 }) {
   return (
     <div className="flex gap-1.5">

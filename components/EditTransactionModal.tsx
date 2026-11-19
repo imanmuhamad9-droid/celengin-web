@@ -1,17 +1,18 @@
 'use client';
 import { useState, useEffect } from 'react';
+import type { RecurringRule, Preset, Transaction } from '@/lib/types';
 import { supabase } from '@/lib/supabaseClient';
 import DateField from '@/components/DateField';
 import { Toggle } from '@/components/ui';
 import { X, ArrowDownCircle, ArrowUpCircle, Check, Repeat, Save } from 'lucide-react';
-import { formatDateID } from '@/lib/utils';
+import { formatDateID, errMsg } from '@/lib/utils';
 import { Frequency, describeFrequency } from '@/lib/recurring';
 import { createRecurringRule } from '@/lib/recurringClient';
 import { listWallets, Wallet } from '@/lib/wallets';
 import FrequencyPicker from '@/components/FrequencyPicker';
 import WalletChips from '@/components/WalletChips';
 
-export default function EditTransactionModal({ isOpen, onClose, onSuccess, showDialog, txData }: { isOpen: boolean, onClose: () => void, onSuccess: () => void, showDialog: (title: string, msg: string, type: 'info'|'success'|'danger', onConfirm?: () => void) => void, txData: any }) {
+export default function EditTransactionModal({ isOpen, onClose, onSuccess, showDialog, txData }: { isOpen: boolean, onClose: () => void, onSuccess: () => void, showDialog: (title: string, msg: string, type: 'info'|'success'|'danger', onConfirm?: () => void) => void, txData: Transaction | null }) {
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [amountDisplay, setAmountDisplay] = useState('');
   const [amountRaw, setAmountRaw] = useState(0);
@@ -20,13 +21,13 @@ export default function EditTransactionModal({ isOpen, onClose, onSuccess, showD
   const [isRoutine, setIsRoutine] = useState(false);
   const [loading, setLoading] = useState(false);
   const [frequency, setFrequency] = useState<Frequency>('monthly');
-  const [rule, setRule] = useState<any>(null);
+  const [rule, setRule] = useState<RecurringRule | null>(null);
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [walletId, setWalletId] = useState('');
   const [notes, setNotes] = useState('');
 
   // State untuk Presets
-  const [presets, setPresets] = useState<any[]>([]);
+  const [presets, setPresets] = useState<Preset[]>([]);
 
   const fetchPresets = async () => {
     const { data } = await supabase.from('presets').select('*').order('created_at', { ascending: true });
@@ -40,7 +41,7 @@ export default function EditTransactionModal({ isOpen, onClose, onSuccess, showD
       setAmountDisplay(new Intl.NumberFormat('id-ID').format(txData.amount));
       setPreset(txData.merchant_name);
       setDate(txData.transaction_date);
-      setIsRoutine(txData.is_routine);
+      setIsRoutine(!!txData.is_routine);
       setNotes(txData.notes || '');
       setFrequency('monthly');
       setRule(null);
@@ -115,8 +116,8 @@ export default function EditTransactionModal({ isOpen, onClose, onSuccess, showD
       showDialog('Berhasil', 'Transaksi berhasil diperbarui!', 'success');
       onSuccess();
       onClose();
-    } catch (error: any) {
-      showDialog('Gagal', error.message, 'danger');
+    } catch (error: unknown) {
+      showDialog('Gagal', errMsg(error), 'danger');
     } finally {
       setLoading(false);
     }

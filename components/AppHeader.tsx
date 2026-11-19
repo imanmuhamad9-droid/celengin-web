@@ -50,13 +50,13 @@ export default function AppHeader({ title, onBack, topRight, action, z = 'z-50',
 
   useEffect(() => {
     if (!key || !MENU_INFO[key]) { setInfoOpen(false); return; }
-    try { setInfoOpen(localStorage.getItem(SEEN_PREFIX + key) !== '1'); } catch (_) { setInfoOpen(true); }
+    try { setInfoOpen(localStorage.getItem(SEEN_PREFIX + key) !== '1'); } catch { setInfoOpen(true); }
   }, [key]);
 
   const closeInfo = () => {
     setInfoOpen(false);
     if (!key) return;
-    try { localStorage.setItem(SEEN_PREFIX + key, '1'); } catch (_) { /* abaikan */ }
+    try { localStorage.setItem(SEEN_PREFIX + key, '1'); } catch { /* abaikan */ }
   };
 
   // Judul menu tampil di kiri atas (kecuali Home yang tanpa judul)

@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
+import type { Profile } from '@/lib/types';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Check, User } from 'lucide-react';
+import { Check, User } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { formatDateID } from '@/lib/utils';
 import { BADGES, levelFor, fetchBadgeContext, syncBadges, EarnedBadge } from '@/lib/badges';
@@ -16,7 +17,7 @@ export default function BadgesPage() {
   const [progress, setProgress] = useState<Record<string, number>>({});
   const [earned, setEarned] = useState<EarnedBadge[]>([]);
   const [tableOk, setTableOk] = useState(true);
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
 
   const [dialog, setDialog] = useState({ isOpen: false, title: '', msg: '', type: 'info' as 'info' | 'success' | 'danger', onConfirm: undefined as (() => void) | undefined });
   const showDialog = (title: string, msg: string, type: 'info' | 'success' | 'danger', onConfirm?: () => void) => setDialog({ isOpen: true, title, msg, type, onConfirm });

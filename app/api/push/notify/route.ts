@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   if (!token) return NextResponse.json({ error: 'Belum login.' }, { status: 401 });
 
   let targetUserId = '';
-  try { targetUserId = String((await request.json())?.targetUserId || ''); } catch (_) { /* body kosong */ }
+  try { targetUserId = String((await request.json())?.targetUserId || ''); } catch { /* body kosong */ }
   if (!targetUserId) return NextResponse.json({ error: 'targetUserId wajib diisi.' }, { status: 400 });
 
   const pub = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;

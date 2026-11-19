@@ -1,10 +1,11 @@
 'use client';
 import { X, ArrowDownCircle, ArrowUpCircle, StickyNote, CalendarDays, Repeat } from 'lucide-react';
+import type { Transaction } from '@/lib/types';
 import { formatRupiah } from '@/lib/utils';
 
 // Popup detail satu transaksi (dibuka dari Riwayat Terakhir di Home).
 // tx = baris dari tabel transactions.
-export default function TransactionDetailModal({ tx, onClose }: { tx: any | null, onClose: () => void }) {
+export default function TransactionDetailModal({ tx, onClose }: { tx: Transaction | null, onClose: () => void }) {
   if (!tx) return null;
 
   const isIncome = tx.type === 'income';

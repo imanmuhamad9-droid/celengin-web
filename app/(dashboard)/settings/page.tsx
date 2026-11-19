@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
+import type { Profile } from '@/lib/types';
 import { supabase } from '@/lib/supabaseClient';
 import AppHeader from '@/components/AppHeader';
 import { useRouter } from 'next/navigation';
@@ -20,7 +21,7 @@ import BgArt from '@/components/BgArt';
 import { BG_THEMES, BG_DEFAULT, BRIGHT_MIN, BRIGHT_MAX, DARK_MIN, DARK_MAX, BgThemeKey, bgPref, useBgSettings, useCustomBg, useIsDark, saveCustomBg, blobToDataUrl } from '@/lib/appBackground';
 import { Check, Plus, RotateCcw, Sparkles } from 'lucide-react';
 import { Menu as MenuIcon } from 'lucide-react';
-import { toLocalDateStr, formatRupiah } from '@/lib/utils';
+import { toLocalDateStr, formatRupiah, errMsg } from '@/lib/utils';
 
 type View = 'hub' | 'profil' | 'keamanan' | 'gajian' | 'saldo' | 'kartu' | 'tampilan' | 'latar' | 'notif' | 'menu';
 
@@ -92,7 +93,7 @@ export default function SettingsPage() {
   const [view, setView] = useState<View>('hub');
   const extraMenus = useExtraMenus();
   const [isRoutineOpen, setIsRoutineOpen] = useState(false);
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [msg, setMsg] = useState('');
@@ -238,6 +239,7 @@ export default function SettingsPage() {
     e.target.value = '';
     if (!file) return;
     if (!file.type.startsWith('image/')) { showDialog('Gagal', 'File yang dipilih bukan gambar.', 'danger'); return; }
+    if (file.size > 20 * 1024 * 1024) { showDialog('Foto Terlalu Besar', 'Ukuran foto maksimal 20 MB.', 'danger'); return; }
     setCropJob({ file, kind });
   };
 
@@ -266,9 +268,9 @@ export default function SettingsPage() {
       if (upErr) throw new Error(kind === 'cover' ? 'Kolom sampul belum ada. Jalankan sql/06_cover.sql di Supabase.' : upErr.message);
       await reloadProfile(session.user.id);
       setCropJob(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       setCropJob(null);
-      showDialog('Gagal', 'Gagal upload: ' + error.message, 'danger');
+      showDialog('Gagal', 'Gagal upload: ' + errMsg(error), 'danger');
     } finally {
       setIsUploading(false);
     }
@@ -279,7 +281,7 @@ export default function SettingsPage() {
     if (!session) return;
     const col = kind === 'avatar' ? 'avatar_url' : 'cover_url';
     await supabase.from('profiles').update({ [col]: null }).eq('id', session.user.id);
-    setProfile((p: any) => ({ ...p, [col]: null }));
+    setProfile((p) => (p ? { ...p, [col]: null } : p));
   };
 
   const handleUpdateNickname = async () => {
@@ -324,19 +326,27 @@ export default function SettingsPage() {
 
   const handleUploadBg = async (e: React.ChangeEvent<HTMLInputElement>, type: 'safe' | 'low') => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
+    // Sama dengan batas bucket widget-images (sql/audit_and_fix_rls.sql, Bagian 4).
+    const EXT: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
+    const fileExt = EXT[file.type];
+    if (!fileExt) { showDialog('Gagal', 'Format gambar harus JPG, PNG, WebP, atau GIF.', 'danger'); return; }
+    if (file.size > 5 * 1024 * 1024) { showDialog('Gambar Terlalu Besar', 'Ukuran gambar maksimal 5 MB.', 'danger'); return; }
     setUploading(prev => ({ ...prev, [type]: true }));
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      const fileExt = file.name.split('.').pop();
       const fileName = `${session.user.id}-${type}-${Date.now()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage.from('widget-images').upload(fileName, file);
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = await supabase.storage.from('widget-images').getPublicUrl(fileName);
       if (type === 'safe') { setBgSafeUrl(publicUrl); setBgSafePos('center'); setBgSafeZoom(1); }
       else { setBgLowUrl(publicUrl); setBgLowPos('center'); setBgLowZoom(1); }
-    } catch (error: any) { showDialog('Gagal', 'Gagal upload: ' + error.message, 'danger'); }
+    } catch (error: unknown) {
+      console.error('upload latar gagal:', error);
+      showDialog('Gagal', 'Gagal upload: ' + (error instanceof Error ? error.message : 'coba lagi sebentar lagi.'), 'danger');
+    }
     finally { setUploading(prev => ({ ...prev, [type]: false })); }
   };
 
@@ -535,13 +545,13 @@ export default function SettingsPage() {
         {view === 'saldo' && (
           <>
             <div className={CARD}>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Jika saldo di bawah angka ini, kartu saldo di Home berubah ke gambar "menipis".</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Jika saldo di bawah angka ini, kartu saldo di Home berubah ke gambar &quot;menipis&quot;.</p>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 font-bold">Rp</span>
                 <input type="text" inputMode="numeric" value={safeLimitDisplay} onChange={handleLimitChange} className={`${INPUT} pl-12 border-gray-200 dark:border-gray-600 font-bold text-lg`} placeholder="0" />
               </div>
             </div>
-            <SaveBar label="Simpan" />
+            {SaveBar({ label: "Simpan" })}
           </>
         )}
 
@@ -560,7 +570,7 @@ export default function SettingsPage() {
               <input type="file" accept="image/*" className="hidden" ref={fileInputSafeRef} onChange={(e) => handleUploadBg(e, 'safe')} />
               <input type="file" accept="image/*" className="hidden" ref={fileInputLowRef} onChange={(e) => handleUploadBg(e, 'low')} />
             </div>
-            <SaveBar label="Simpan" />
+            {SaveBar({ label: "Simpan" })}
           </>
         )}
 
@@ -572,7 +582,7 @@ export default function SettingsPage() {
               <p className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-1">Mode warna</p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Pilih mode warna aplikasi. Tersimpan otomatis.</p>
               <div className="grid grid-cols-3 gap-2">
-                {[['light', 'Terang', Sun], ['dark', 'Gelap', Moon], ['system', 'Sistem', Monitor]].map(([val, label, Icon]: any) => (
+                {([['light', 'Terang', Sun], ['dark', 'Gelap', Moon], ['system', 'Sistem', Monitor]] as const).map(([val, label, Icon]) => (
                   <button key={val} onClick={() => handleThemeChange(val)} className={`py-4 rounded-2xl text-xs font-bold border-2 flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95 ${theme === val ? 'glass glass-teal' : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400'}`}>
                     <Icon className="w-5 h-5" /> {label}
                   </button>

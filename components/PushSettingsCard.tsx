@@ -1,8 +1,15 @@
 'use client';
 import { Toggle } from '@/components/ui';
+import { errMsg } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import { Bell, Download, Send, Smartphone } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
+
+// Event instal PWA (belum ada di tipe bawaan TypeScript).
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
 
 type ShowDialog = (title: string, msg: string, type: 'info' | 'success' | 'danger', onConfirm?: () => void) => void;
 
@@ -23,12 +30,12 @@ export default function PushSettingsCard({ showDialog }: { showDialog: ShowDialo
   const [subscribed, setSubscribed] = useState(false);
   const [standalone, setStandalone] = useState(false);
   const [isIos, setIsIos] = useState(false);
-  const [installEvent, setInstallEvent] = useState<any>(null);
+  const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     setIsIos(/iphone|ipad|ipod/i.test(navigator.userAgent));
-    setStandalone(window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone === true);
+    setStandalone(window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true);
 
     const ok = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
     setSupported(ok);
@@ -44,7 +51,7 @@ export default function PushSettingsCard({ showDialog }: { showDialog: ShowDialo
         .catch(() => setSubscribed(false));
     }
 
-    const onPrompt = (e: Event) => { e.preventDefault(); setInstallEvent(e); };
+    const onPrompt = (e: Event) => { e.preventDefault(); setInstallEvent(e as BeforeInstallPromptEvent); };
     const onInstalled = () => { setStandalone(true); setInstallEvent(null); };
     window.addEventListener('beforeinstallprompt', onPrompt);
     window.addEventListener('appinstalled', onInstalled);
@@ -84,8 +91,8 @@ export default function PushSettingsCard({ showDialog }: { showDialog: ShowDialo
       if (error) throw error;
       setSubscribed(true);
       showDialog('Berhasil', 'Notifikasi aktif di perangkat ini. Coba tombol "Kirim Tes Notifikasi".', 'success');
-    } catch (e: any) {
-      showDialog('Gagal', e?.message || 'Tidak bisa mengaktifkan notifikasi.', 'danger');
+    } catch (e: unknown) {
+      showDialog('Gagal', errMsg(e, 'Tidak bisa mengaktifkan notifikasi.'), 'danger');
     } finally {
       setBusy(false);
     }
@@ -101,8 +108,8 @@ export default function PushSettingsCard({ showDialog }: { showDialog: ShowDialo
         await sub.unsubscribe();
       }
       setSubscribed(false);
-    } catch (e: any) {
-      showDialog('Gagal', e?.message || 'Tidak bisa menonaktifkan notifikasi.', 'danger');
+    } catch (e: unknown) {
+      showDialog('Gagal', errMsg(e, 'Tidak bisa menonaktifkan notifikasi.'), 'danger');
     } finally {
       setBusy(false);
     }

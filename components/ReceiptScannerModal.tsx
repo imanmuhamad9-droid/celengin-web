@@ -1,5 +1,6 @@
 'use client';
 import { useState, useRef } from 'react';
+import { errMsg } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
 import { X, Upload, Loader2 } from 'lucide-react';
 
@@ -69,8 +70,8 @@ export default function ReceiptScannerModal({ isOpen, onClose, onSuccess }: { is
       alert('Transaksi berhasil disimpan!');
       onSuccess();
       onClose();
-    } catch (error: any) {
-      alert('Gagal menyimpan: ' + error.message);
+    } catch (error: unknown) {
+      alert('Gagal menyimpan: ' + errMsg(error));
     } finally {
       setLoading(false);
     }

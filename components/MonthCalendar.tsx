@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, ChevronLeft, ChevronRight, Flame, Plus, Receipt } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flame, Plus, Receipt } from 'lucide-react';
 import { formatRupiah } from '@/lib/utils';
 import { addDays, nextOccurrence, Frequency } from '@/lib/recurring';
 import { holidayOn, holidaysInMonth } from '@/lib/holidays';

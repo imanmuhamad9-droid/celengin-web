@@ -53,7 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 if (btn === 'soft') document.documentElement.setAttribute('data-btn', 'soft');
                 let bg = JSON.parse(localStorage.getItem('celengin:bg') || 'null');
                 if (bg && bg.theme && bg.theme !== 'none' && (bg.theme !== 'custom' || localStorage.getItem('celengin:bg-custom'))) document.documentElement.setAttribute('data-bg', bg.theme);
-              } catch (_) {}
+              } catch {}
             `,
           }}
         />

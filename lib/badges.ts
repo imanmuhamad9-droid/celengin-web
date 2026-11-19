@@ -147,20 +147,20 @@ export async function fetchBadgeContext(
   };
 
   const [dreams, rules, bills, wallets, myMemberships, splitExpenses] = await Promise.all([
-    safe<any[]>(supabase.from('dream_goals').select('target_amount,current_amount,status').eq('user_id', userId), []),
-    safe<any[]>(supabase.from('recurring_rules').select('id').eq('user_id', userId).eq('is_active', true), []),
-    safe<any[]>(supabase.from('bills').select('paid_count').eq('user_id', userId), []),
-    safe<any[]>(supabase.from('wallets').select('id').eq('user_id', userId), []),
-    safe<any[]>(supabase.from('couple_members').select('goal_id').eq('user_id', userId).eq('status', 'accepted'), []),
-    safe<any[]>(supabase.from('split_expenses').select('id').limit(1), []),
+    safe<{ target_amount: number | string; current_amount: number | string; status: string | null }[]>(supabase.from('dream_goals').select('target_amount,current_amount,status').eq('user_id', userId), []),
+    safe<{ id: string }[]>(supabase.from('recurring_rules').select('id').eq('user_id', userId).eq('is_active', true), []),
+    safe<{ paid_count: number | null }[]>(supabase.from('bills').select('paid_count').eq('user_id', userId), []),
+    safe<{ id: string }[]>(supabase.from('wallets').select('id').eq('user_id', userId), []),
+    safe<{ goal_id: string }[]>(supabase.from('couple_members').select('goal_id').eq('user_id', userId).eq('status', 'accepted'), []),
+    safe<{ id: string }[]>(supabase.from('split_expenses').select('id').limit(1), []),
   ]);
 
   let baregCount = 0;
-  const goalIds = myMemberships.map((m: any) => m.goal_id);
+  const goalIds = myMemberships.map((m) => m.goal_id);
   if (goalIds.length > 0) {
-    const members = await safe<any[]>(supabase.from('couple_members').select('goal_id').in('goal_id', goalIds).eq('status', 'accepted'), []);
+    const members = await safe<{ goal_id: string }[]>(supabase.from('couple_members').select('goal_id').in('goal_id', goalIds).eq('status', 'accepted'), []);
     const counts: Record<string, number> = {};
-    members.forEach((m: any) => { counts[m.goal_id] = (counts[m.goal_id] || 0) + 1; });
+    members.forEach((m) => { counts[m.goal_id] = (counts[m.goal_id] || 0) + 1; });
     baregCount = Object.values(counts).filter((c) => c >= 2).length;
   }
 
@@ -168,9 +168,9 @@ export async function fetchBadgeContext(
     transactions,
     targets,
     dreamCount: dreams.length,
-    dreamDone: dreams.filter((d: any) => d.status === 'achieved' || (Number(d.target_amount) > 0 && Number(d.current_amount) >= Number(d.target_amount))).length,
+    dreamDone: dreams.filter((d) => d.status === 'achieved' || (Number(d.target_amount) > 0 && Number(d.current_amount) >= Number(d.target_amount))).length,
     routineRules: rules.length,
-    billsPaid: bills.reduce((s: number, b: any) => s + (Number(b.paid_count) || 0), 0),
+    billsPaid: bills.reduce((s: number, b) => s + (Number(b.paid_count) || 0), 0),
     walletCount: wallets.length,
     baregCount,
     splitCount: splitExpenses.length,
@@ -191,7 +191,7 @@ export async function syncBadges(userId: string, ctx: BadgeContext): Promise<{
 
   const { data: existing, error } = await supabase.from('user_badges').select('badge_key,earned_at').eq('user_id', userId);
   if (error) return { progress, earned: [], fresh: [], ok: false }; // tabel belum ada
-  const have = new Set((existing || []).map((b: any) => b.badge_key));
+  const have = new Set(((existing || []) as { badge_key: string }[]).map((b) => b.badge_key));
 
   const shouldHave = BADGES.filter((b) => (progress[b.key] || 0) >= b.target);
   const toAdd = shouldHave.filter((b) => !have.has(b.key));

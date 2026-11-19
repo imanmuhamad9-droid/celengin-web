@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import { KeyRound, Eye, EyeOff, Lock } from 'lucide-react';
 import PasswordRequirements from '@/components/PasswordRequirements';
-import AuthShell, { authLabel, authInput, authBorder, authBorderOk, authBorderErr, authBtn, authIcon, authEye } from '@/components/AuthShell';
+import AuthShell, { authLabel, authInput, authBorder, authBtn, authIcon, authEye } from '@/components/AuthShell';
 
 export default function UpdatePasswordPage() {
   const [password, setPassword] = useState('');

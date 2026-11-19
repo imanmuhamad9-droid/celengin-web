@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import type { RecurringRule, Transaction } from '@/lib/types';
 import { XCircle, Repeat, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { formatRupiah, formatDateID, toLocalDateStr } from '@/lib/utils';
@@ -21,17 +22,17 @@ export default function RecurringRulesModal({ isOpen, onClose, showDialog, legac
   isOpen: boolean;
   onClose: () => void;
   showDialog: ShowDialog;
-  legacyTx?: any[];           // opsional: kalau kosong, transaksi rutin lama diambil sendiri oleh modal ini
+  legacyTx?: Transaction[];           // opsional: kalau kosong, transaksi rutin lama diambil sendiri oleh modal ini
   onChanged?: () => void;
 }) {
-  const [rules, setRules] = useState<any[]>([]);
-  const [ownLegacy, setOwnLegacy] = useState<any[]>([]);
+  const [rules, setRules] = useState<RecurringRule[]>([]);
+  const [ownLegacy, setOwnLegacy] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [missingTable, setMissingTable] = useState(false);
   const [legacyFreq, setLegacyFreq] = useState<Record<string, Frequency>>({});
 
   // Form ubah aturan
-  const [editing, setEditing] = useState<any | null>(null);
+  const [editing, setEditing] = useState<RecurringRule | null>(null);
   const [editDate, setEditDate] = useState('');
   const [editFreq, setEditFreq] = useState<Frequency>('monthly');
   const [editAmountDisplay, setEditAmountDisplay] = useState('');
@@ -59,8 +60,8 @@ export default function RecurringRulesModal({ isOpen, onClose, showDialog, legac
 
   if (!isOpen) return null;
 
-  const toggleActive = async (rule: any) => {
-    const patch: any = { is_active: !rule.is_active };
+  const toggleActive = async (rule: RecurringRule) => {
+    const patch: Partial<RecurringRule> = { is_active: !rule.is_active };
     if (!rule.is_active) {
       // Diaktifkan lagi setelah dijeda: mulai dari jadwal berikutnya, tanpa menyusulkan yang terlewat
       patch.next_run_date = firstRunAfter(rule.last_run_date || rule.start_date, rule.frequency, rule.anchor_day, toLocalDateStr(new Date()));
@@ -69,14 +70,14 @@ export default function RecurringRulesModal({ isOpen, onClose, showDialog, legac
     fetchRules(); changed();
   };
 
-  const deleteRule = (rule: any) => {
+  const deleteRule = (rule: RecurringRule) => {
     showDialog('Hapus Aturan Rutin?', 'Transaksi yang sudah tercatat tidak ikut terhapus. Hanya pencatatan otomatisnya yang berhenti.', 'danger', async () => {
       await supabase.from('recurring_rules').delete().eq('id', rule.id);
       fetchRules(); changed();
     });
   };
 
-  const startEdit = (rule: any) => {
+  const startEdit = (rule: RecurringRule) => {
     setEditing(rule);
     setEditDate(rule.is_active ? rule.next_run_date : rule.start_date);
     setEditFreq(rule.frequency);
@@ -111,7 +112,7 @@ export default function RecurringRulesModal({ isOpen, onClose, showDialog, legac
   };
 
   // Kelompokkan transaksi rutin lama (kategori + tipe + nominal sama), kecuali yang sudah jadi aturan
-  const groups: Record<string, any> = {};
+  const groups: Record<string, Transaction> = {};
   (legacyTx ?? ownLegacy).forEach((t) => {
     if (t.recurring_rule_id) return;
     const key = `${t.merchant_name}|${t.type}|${t.amount}`;
@@ -121,7 +122,7 @@ export default function RecurringRulesModal({ isOpen, onClose, showDialog, legac
     !rules.some((r) => r.merchant_name === t.merchant_name && r.type === t.type && Number(r.amount) === Number(t.amount))
   );
 
-  const activateLegacy = async (key: string, t: any) => {
+  const activateLegacy = async (key: string, t: Transaction) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
     const id = await createRecurringRule({

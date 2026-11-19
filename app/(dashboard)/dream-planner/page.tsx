@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import type { DreamGoal, GoalTx, Transaction, Profile } from '@/lib/types';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import { Target, X, ArrowDownCircle, ArrowUpCircle, Info, TrendingUp } from 'lucide-react';
@@ -42,9 +43,9 @@ function ProgressRing({ percent, color, size = 96 }: { percent: number; color: s
 export default function DreamPlannerPage() {
   // Referensi menabung: murni dari uangmu sendiri (rata-rata pemasukan dan pengeluaran bulanan dari transaksimu)
   const [cap, setCap] = useState<{ income: number; expense: number; months: number } | null>(null);
-  const [estimate, setEstimate] = useState<{ goal: any; daysLeft: number | null } | null>(null);
+  const [estimate, setEstimate] = useState<{ goal: DreamGoal; daysLeft: number | null } | null>(null);
 
-  const [goals, setGoals] = useState<any[]>([]);
+  const [goals, setGoals] = useState<DreamGoal[]>([]);
   const [title, setTitle] = useState('');
   const [targetDisplay, setTargetDisplay] = useState('');
   const [targetRaw, setTargetRaw] = useState(0);
@@ -52,9 +53,9 @@ export default function DreamPlannerPage() {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
-  const [selectedGoal, setSelectedGoal] = useState<any>(null);
+  const [selectedGoal, setSelectedGoal] = useState<DreamGoal | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [goalHistory, setGoalHistory] = useState<any[]>([]);
+  const [goalHistory, setGoalHistory] = useState<GoalTx[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const [dialog, setDialog] = useState({ isOpen: false, title: '', msg: '', type: 'info' as 'info'|'success'|'danger', onConfirm: undefined as (()=>void)|undefined });
@@ -78,14 +79,14 @@ export default function DreamPlannerPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const { data: prof } = await supabase.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
-      const payday = normalizePayday((prof as any)?.payday);
+      const payday = normalizePayday((prof as Profile | null)?.payday);
       const today = toLocalDateStr(new Date());
       const current = cycleFor(today, payday);
       const past = [shiftCycle(today, -1, payday)];
       past.push(shiftCycle(past[0].start, -1, payday));
       past.push(shiftCycle(past[1].start, -1, payday));
       const { data } = await supabase.from('transactions').select('amount, type, transaction_date').gte('transaction_date', past[2].start).lte('transaction_date', current.end);
-      const txs = (data || []) as any[];
+      const txs = (data || []) as Pick<Transaction, 'amount' | 'type' | 'transaction_date'>[];
       const sum = (c: { start: string; end: string }) => {
         let i = 0, e = 0;
         for (const t of txs) {
@@ -105,7 +106,7 @@ export default function DreamPlannerPage() {
     })();
   }, []);
 
-  const openEstimate = (goal: any) => {
+  const openEstimate = (goal: DreamGoal) => {
     setEstimate({ goal, daysLeft: calculateDaysLeft(goal.target_date) });
   };
 
@@ -114,7 +115,7 @@ export default function DreamPlannerPage() {
     if (data) setGoalHistory(data);
   };
 
-  const handleCardClick = (goal: any) => {
+  const handleCardClick = (goal: DreamGoal) => {
     setSelectedGoal(goal); fetchHistory(goal.id); setIsDetailOpen(true);
   };
 
@@ -149,7 +150,7 @@ export default function DreamPlannerPage() {
     setDialog({ isOpen: true, title: 'Hapus?', msg: 'Target akan dihapus.', type: 'danger', onConfirm: async () => { await supabase.from('dream_goals').delete().eq('id', id); fetchGoals(); setIsDetailOpen(false); }});
   };
 
-  const calculateDaysLeft = (dateString: string) => {
+  const calculateDaysLeft = (dateString: string | null | undefined) => {
     if (!dateString) return null;
     const target = new Date(dateString); const today = new Date(); today.setHours(0,0,0,0);
     return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
@@ -278,7 +279,7 @@ export default function DreamPlannerPage() {
 
                   {monthsLeft ? (
                     <div>
-                      <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Agar tercapai pada {formatDateID(g.target_date)}</p>
+                      <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Agar tercapai pada {formatDateID(g.target_date ?? "")}</p>
                       <div className="divide-y divide-gray-100 dark:divide-gray-700">
                         <div className={row}><span className="text-gray-600 dark:text-gray-300">Sisihkan per bulan</span><span className="font-extrabold text-gray-900 dark:text-white">{formatRupiah(Math.ceil(perMonthNeed))}</span></div>
                         <div className={row}><span className="text-gray-600 dark:text-gray-300">Atau per minggu</span><span className="font-extrabold text-gray-900 dark:text-white">{formatRupiah(Math.ceil(perWeekNeed))}</span></div>

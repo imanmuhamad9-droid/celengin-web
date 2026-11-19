@@ -69,7 +69,7 @@ export default function NotificationBell({ userId, local }: Props) {
   }, [load]);
 
   useEffect(() => {
-    try { setDismissed(JSON.parse(localStorage.getItem(DISMISS_KEY) || '[]')); } catch (_) { setDismissed([]); }
+    try { setDismissed(JSON.parse(localStorage.getItem(DISMISS_KEY) || '[]')); } catch { setDismissed([]); }
   }, []);
 
   useEffect(() => {
@@ -86,7 +86,7 @@ export default function NotificationBell({ userId, local }: Props) {
   const persistDismissed = (keys: string[]) => {
     const next = keys.slice(-200);
     setDismissed(next);
-    try { localStorage.setItem(DISMISS_KEY, JSON.stringify(next)); } catch (_) { /* abaikan */ }
+    try { localStorage.setItem(DISMISS_KEY, JSON.stringify(next)); } catch { /* abaikan */ }
   };
   const dismissLocal = (key: string) => persistDismissed([...dismissed, key]);
 

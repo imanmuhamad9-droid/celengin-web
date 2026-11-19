@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
+import type { Bill, Preset } from '@/lib/types';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Plus, Receipt, Edit3, Trash2, CheckCircle2, Info, ChevronDown, ChevronUp, ChevronRight, Repeat, X } from 'lucide-react';
+import { Receipt, CheckCircle2, X } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { formatRupiah, formatDateID, parseRupiahInput, toLocalDateStr } from '@/lib/utils';
 import { nextOccurrence, diffDays, dayOfMonth, FREQ_LABEL } from '@/lib/recurring';
@@ -30,7 +31,7 @@ const INCOME_LIKE = /gaji|bonus|thr|pemasukan|income|dividen|bunga|salary|upah|h
 
 export default function BillsPage() {
   const router = useRouter();
-  const [bills, setBills] = useState<any[]>([]);
+  const [bills, setBills] = useState<Bill[]>([]);
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,13 +65,13 @@ export default function BillsPage() {
 
     const { data, error } = await supabase.from('bills').select('*').order('due_date', { ascending: true });
     if (error) setMissingTable(true);
-    else { setMissingTable(false); setBills(data || []); }
+    else { setMissingTable(false); setBills((data || []) as Bill[]); }
 
     const { data: presets } = await supabase.from('presets').select('*').order('created_at', { ascending: true });
     if (presets && presets.length > 0) {
       // Tagihan = pengeluaran, jadi kategori pemasukan (Gaji, Bonus, dst.) tidak ditampilkan
-      const expenseOnly = presets.filter((p: any) => !INCOME_LIKE.test(String(p.label)));
-      setCategories((expenseOnly.length > 0 ? expenseOnly : presets).map((p: any) => `${p.emoji} ${p.label}`));
+      const expenseOnly = (presets as Preset[]).filter((p) => !INCOME_LIKE.test(String(p.label)));
+      setCategories((expenseOnly.length > 0 ? expenseOnly : (presets as Preset[])).map((p) => `${p.emoji} ${p.label}`));
     }
 
     setWallets(await listWallets(session.user.id, false));
@@ -91,7 +92,7 @@ export default function BillsPage() {
     setIsFormOpen(true);
   };
 
-  const openEdit = (b: any) => {
+  const openEdit = (b: Bill) => {
     setEditingId(b.id); setName(b.name); setAmountRaw(Number(b.amount));
     setAmountDisplay(new Intl.NumberFormat('id-ID').format(b.amount));
     setCategory(b.merchant_name); setFrequency(b.frequency); setDueDate(b.due_date);
@@ -108,7 +109,7 @@ export default function BillsPage() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { setSaving(false); return; }
 
-    const payload: any = {
+    const payload = {
       name: name.trim(), amount: amountRaw, merchant_name: category, frequency,
       due_date: dueDate, anchor_day: dayOfMonth(dueDate), remind_days_before: remindDays, is_active: isActive,
       ...(walletId ? { wallet_id: walletId } : {}),
@@ -122,14 +123,14 @@ export default function BillsPage() {
     fetchAll();
   };
 
-  const handleDelete = (b: any) => {
+  const handleDelete = (b: Bill) => {
     showDialog('Hapus Tagihan?', `"${b.name}" akan dihapus. Transaksi yang sudah dicatat tidak ikut terhapus.`, 'danger', async () => {
       await supabase.from('bills').delete().eq('id', b.id);
       fetchAll();
     });
   };
 
-  const handlePay = (b: any) => {
+  const handlePay = (b: Bill) => {
     showDialog('Tandai Lunas?', `Catat pembayaran "${b.name}" sebesar ${formatRupiah(b.amount)} sebagai pengeluaran hari ini.`, 'info', async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
@@ -163,7 +164,7 @@ export default function BillsPage() {
   const paused = enriched.filter((b) => !b.is_active);
   const next30 = active.filter((b) => b.daysLeft <= 30).reduce((s, b) => s + Number(b.amount), 0);
 
-  const renderBill = (b: any) => {
+  const renderBill = (b: Bill & { daysLeft: number }) => {
     const status = b.daysLeft < 0 ? { t: `Telat ${-b.daysLeft} hari`, c: 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400' }
       : b.daysLeft === 0 ? { t: 'Hari ini', c: 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400' }
       : b.daysLeft <= (b.remind_days_before ?? 3) ? { t: `H-${b.daysLeft}`, c: 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400' }
@@ -191,7 +192,7 @@ export default function BillsPage() {
     );
   };
 
-  const Section = ({ title, list, tone }: { title: string; list: any[]; tone?: string }) =>
+  const Section = ({ title, list, tone }: { title: string; list: (Bill & { daysLeft: number })[]; tone?: string }) =>
     list.length === 0 ? null : (
       <div className="space-y-3">
         <p className={`text-xs font-bold uppercase tracking-widest ${tone || 'text-gray-500 dark:text-gray-400'}`}>{title}</p>
@@ -218,10 +219,10 @@ export default function BillsPage() {
           </div>
         </div>
 
-        <Section title="Terlambat" list={overdue} tone="text-red-500" />
-        <Section title="Segera Jatuh Tempo" list={soon} tone="text-yellow-600 dark:text-yellow-400" />
-        <Section title="Mendatang" list={later} />
-        <Section title="Dijeda / Selesai" list={paused} />
+        {Section({ title: "Terlambat", list: overdue, tone: "text-red-500" })}
+        {Section({ title: "Segera Jatuh Tempo", list: soon, tone: "text-yellow-600 dark:text-yellow-400" })}
+        {Section({ title: "Mendatang", list: later })}
+        {Section({ title: "Dijeda / Selesai", list: paused })}
 
         {bills.length === 0 && !missingTable && (
           <div className="glass rounded-3xl p-10 text-center border border-gray-100 dark:border-gray-700 shadow-sm">

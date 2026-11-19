@@ -1,9 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ChevronLeft, ChevronRight, Download, Printer, Info, X, TrendingUp, TrendingDown } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, Printer, Info, X, TrendingUp, TrendingDown } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
-import { formatRupiah, toLocalDateStr } from '@/lib/utils';
+import { formatRupiah, toLocalDateStr, errMsg } from '@/lib/utils';
 import { normalizePayday } from '@/lib/cycle';
 import { Period, Tx, getRange, shiftAnchor, summarize, pctChange, healthScore, buildInsights } from '@/lib/insights';
 import { downloadCsv } from '@/lib/exportReport';
@@ -88,8 +88,8 @@ export default function ReportsPage() {
     try {
       const bytes = await buildReportPdf({ title: 'Laporan Keuangan Celengin', periodLabel: range.label, nickname, summary: cur, transactions: inPeriod, fmt: formatRupiah });
       await savePdf(bytes, `laporan-celengin-${period}-${range.start}.pdf`);
-    } catch (e: any) {
-      showDialog('Gagal Membuat PDF', e?.message || 'Terjadi kesalahan saat membuat PDF.', 'danger');
+    } catch (e: unknown) {
+      showDialog('Gagal Membuat PDF', errMsg(e, 'Terjadi kesalahan saat membuat PDF.'), 'danger');
     } finally {
       setPdfBusy(false);
     }
@@ -135,12 +135,12 @@ export default function ReportsPage() {
             <div>
               <p className="text-white/80 text-[10px] uppercase font-bold">Masuk</p>
               <p className="font-bold text-green-300">+{formatRupiah(cur.income)}</p>
-              <Delta now={cur.income} before={prev.income} />
+              {Delta({ now: cur.income, before: prev.income })}
             </div>
             <div>
               <p className="text-white/80 text-[10px] uppercase font-bold">Keluar</p>
               <p className="font-bold text-red-300">-{formatRupiah(cur.expense)}</p>
-              <Delta now={cur.expense} before={prev.expense} inverse />
+              {Delta({ now: cur.expense, before: prev.expense, inverse: true })}
             </div>
           </div>
           <p className="text-white/60 text-[10px] mt-3">Perbandingan dengan {noun} sebelumnya ({prevRange.label}).</p>

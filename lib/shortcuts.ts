@@ -43,14 +43,14 @@ export function readLocalShortcuts(): ShortcutKey[] | null {
   try {
     const v = localStorage.getItem(LS_KEY);
     return v ? parseShortcuts(JSON.parse(v)) : null;
-  } catch (_) { return null; }
+  } catch { return null; }
 }
 
 /** Simpan ke perangkat dulu (langsung), lalu ke profil supaya ikut ke perangkat lain. Gagal di profil = diabaikan. */
 export async function saveShortcuts(userId: string | null, keys: ShortcutKey[]) {
-  try { localStorage.setItem(LS_KEY, JSON.stringify(keys)); } catch (_) { /* penyimpanan penuh / dinonaktifkan */ }
+  try { localStorage.setItem(LS_KEY, JSON.stringify(keys)); } catch { /* penyimpanan penuh / dinonaktifkan */ }
   if (!userId) return;
-  try { await supabase.from('profiles').update({ shortcuts: keys }).eq('id', userId); } catch (_) { /* kolom belum ada */ }
+  try { await supabase.from('profiles').update({ shortcuts: keys }).eq('id', userId); } catch { /* kolom belum ada */ }
 }
 
 export function shortcutByKey(key: ShortcutKey): ShortcutDef {

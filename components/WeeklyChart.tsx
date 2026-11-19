@@ -33,9 +33,9 @@ export default function WeeklyChart({ days, rangeLabel }: { days: WeekDay[]; ran
   const [sel, setSel] = useState<number | null>(null);
 
   useEffect(() => {
-    try { const m = localStorage.getItem(MODE_KEY); if (m === 'income' || m === 'expense') setMode(m); } catch (_) { /* abaikan */ }
+    try { const m = localStorage.getItem(MODE_KEY); if (m === 'income' || m === 'expense') setMode(m); } catch { /* abaikan */ }
   }, []);
-  const pick = (m: Mode) => { setMode(m); try { localStorage.setItem(MODE_KEY, m); } catch (_) { /* abaikan */ } };
+  const pick = (m: Mode) => { setMode(m); try { localStorage.setItem(MODE_KEY, m); } catch { /* abaikan */ } };
 
   const n = days.length;
   if (n === 0) return null;

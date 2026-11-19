@@ -1,5 +1,6 @@
 'use client';
 import { Toggle } from '@/components/ui';
+import type { Target } from '@/lib/types';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { X, ArrowDownCircle, ArrowUpCircle, Star } from 'lucide-react';
@@ -7,7 +8,13 @@ import { toLocalDateStr } from '@/lib/utils';
 import { cycleFor, normalizePayday } from '@/lib/cycle';
 import DateField from '@/components/DateField';
 
-export default function TargetSetupModal({ isOpen, onClose, onSuccess, showDialog, existingTarget }: any) {
+export default function TargetSetupModal({ isOpen, onClose, onSuccess, showDialog, existingTarget }: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  showDialog: (title: string, msg: string, type: 'info' | 'success' | 'danger', onConfirm?: () => void) => void;
+  existingTarget?: Target | null;
+}) {
   const [periodType, setPeriodType] = useState('week');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');

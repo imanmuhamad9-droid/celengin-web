@@ -1,9 +1,10 @@
 'use client';
 import { useEffect, useState, Suspense } from 'react';
+import type { Transaction } from '@/lib/types';
+import { errMsg } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
-import { formatRupiah } from '@/lib/utils';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import AppHeader from '@/components/AppHeader';
@@ -16,7 +17,7 @@ import GlassCard from '@/components/GlassCard';
 import GlassButton from '@/components/GlassButton';
 
 function TransactionsContent() {
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   
@@ -32,7 +33,7 @@ function TransactionsContent() {
   const itemsPerPage = 7;
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedTx, setSelectedTx] = useState<any>(null);
+  const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
 
   const [dialog, setDialog] = useState({ isOpen: false, title: '', msg: '', type: 'info' as 'info'|'success'|'danger', onConfirm: undefined as (()=>void)|undefined });
   const showDialog = (title: string, msg: string, type: 'info'|'success'|'danger', onConfirm?: () => void) => setDialog({ isOpen: true, title, msg, type, onConfirm });
@@ -51,11 +52,11 @@ function TransactionsContent() {
       if (error) throw error;
       if (data) {
         setTransactions(data);
-        const uniqueCats = Array.from(new Set(data.map((t: any) => t.merchant_name)));
+        const uniqueCats = Array.from(new Set((data as Transaction[]).map((t) => t.merchant_name)));
         setCategories(uniqueCats as string[]);
       }
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Gagal mengambil data');
+    } catch (err: unknown) {
+      setErrorMsg(errMsg(err, 'Gagal mengambil data'));
     } finally {
       setIsLoading(false);
     }
@@ -123,7 +124,7 @@ function TransactionsContent() {
         </div>
 
         <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
-          <select value={filterType} onChange={e => setFilterType(e.target.value as any)} className="glass text-xs rounded-full px-3 py-2 font-semibold shrink-0 outline-none" style={{ color: 'var(--text-main)' }}>
+          <select value={filterType} onChange={e => setFilterType(e.target.value as 'all' | 'income' | 'expense')} className="glass text-xs rounded-full px-3 py-2 font-semibold shrink-0 outline-none" style={{ color: 'var(--text-main)' }}>
             <option value="all">Semua Tipe</option><option value="income">Masuk</option><option value="expense">Keluar</option>
           </select>
           <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="glass text-xs rounded-full px-3 py-2 font-semibold shrink-0 outline-none" style={{ color: 'var(--text-main)' }}>

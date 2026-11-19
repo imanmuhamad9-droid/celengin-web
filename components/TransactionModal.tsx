@@ -1,8 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
+import type { Preset } from '@/lib/types';
 import { supabase } from '@/lib/supabaseClient';
 import { X, Plus, Settings2, Camera, ImageUp, Loader2, Save, Check } from 'lucide-react';
-import { toLocalDateStr } from '@/lib/utils';
+import { toLocalDateStr, errMsg } from '@/lib/utils';
 import { Frequency } from '@/lib/recurring';
 import { createRecurringRule } from '@/lib/recurringClient';
 import { listWallets, Wallet } from '@/lib/wallets';
@@ -13,13 +14,27 @@ import DateField from '@/components/DateField';
 import { Btn, Toggle, RowActions } from '@/components/ui';
 import { scanReceipt } from '@/lib/receiptScan';
 
+type TxRow = {
+  id: string;
+  type: 'income' | 'expense';
+  amountDisplay: string;
+  amountRaw: number;
+  selectedPreset: string;
+  date: string;
+  isRoutine: boolean;
+  frequency: Frequency;
+  walletId: string;
+  notes: string;
+  scanned: boolean;
+};
+
 // Teks kategori yang disimpan di transaksi. Kategori lama yang punya emoji tetap menyimpan emoji supaya Riwayat dan Laporan tidak terpecah; di layar Catat hanya namanya yang tampil.
-const presetValue = (p: any): string => (p.emoji ? `${p.emoji} ${p.label}` : p.label);
+const presetValue = (p: Pick<Preset, 'emoji' | 'label'>): string => (p.emoji ? `${p.emoji} ${p.label}` : p.label);
 
 export default function TransactionModal({ isOpen, onClose, onSuccess, showDialog, initialType, initialDate }: { isOpen: boolean, onClose: () => void, onSuccess: () => void, showDialog: (title: string, msg: string, type: 'info'|'success'|'danger', onConfirm?: () => void) => void, initialType?: 'income' | 'expense', initialDate?: string }) {
   
-  const [txList, setTxList] = useState<any[]>([]);
-  const [presets, setPresets] = useState<any[]>([]);
+  const [txList, setTxList] = useState<TxRow[]>([]);
+  const [presets, setPresets] = useState<Preset[]>([]);
   const [loading, setLoading] = useState(false);
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [defaultWalletId, setDefaultWalletId] = useState('');
@@ -35,7 +50,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
   const [scanPct, setScanPct] = useState(0);
   const [scanNote, setScanNote] = useState<{ merchant: string | null; foundAmount: boolean; foundDate: boolean } | null>(null);
 
-  const createEmptyRow = () => ({
+  const createEmptyRow = (): TxRow => ({
     id: Date.now().toString() + Math.random().toString(),
     type: initialType || 'expense',
     amountDisplay: '',
@@ -90,7 +105,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
 
   if (!isOpen) return null;
 
-  const updateRow = (id: string, field: string, value: any) => {
+  const updateRow = <K extends keyof TxRow>(id: string, field: K, value: TxRow[K]) => {
     setTxList(prev => prev.map(tx => tx.id === id ? { ...tx, [field]: value } : tx));
   };
 
@@ -113,7 +128,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
       setTxList(prev => {
         const base = prev.length > 0 ? prev : [createEmptyRow()];
         const [first, ...rest] = base;
-        const filled = {
+        const filled: TxRow = {
           ...first,
           type: 'expense',
           scanned: true,
@@ -124,8 +139,8 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
       });
       setScanNote({ merchant: r.merchant, foundAmount: !!r.amount, foundDate: !!r.date });
       setInputMode('manual');
-    } catch (err: any) {
-      showDialog('Scan Gagal', err?.message || 'Struk tidak terbaca. Coba foto yang lebih jelas atau isi manual.', 'danger');
+    } catch (err: unknown) {
+      showDialog('Scan Gagal', errMsg(err, 'Struk tidak terbaca. Coba foto yang lebih jelas atau isi manual.'), 'danger');
     } finally {
       setScanning(false);
     }
@@ -183,12 +198,12 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
       
       const routineCount = createdRuleIds.length;
       showDialog('Berhasil', routineCount > 0 ? `${txList.length} transaksi tersimpan. ${routineCount} transaksi rutin akan tercatat otomatis sesuai jadwal.` : `${txList.length} transaksi berhasil disimpan!`, 'success');
-      const hasIn = txList.some((t: any) => t.type === 'income');
-      const hasOut = txList.some((t: any) => t.type === 'expense');
+      const hasIn = txList.some((t) => t.type === 'income');
+      const hasOut = txList.some((t) => t.type === 'expense');
       triggerMoneyRain(hasIn && hasOut ? 'mixed' : hasIn ? 'income' : 'expense');
       onSuccess(); onClose();   
-    } catch (error: any) {
-      showDialog('Gagal', error.message, 'danger');
+    } catch (error: unknown) {
+      showDialog('Gagal', errMsg(error), 'danger');
     } finally {
       setLoading(false);
     }
@@ -210,7 +225,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
     fetchPresets();
   };
 
-  const handleEditPreset = (preset: any) => {
+  const handleEditPreset = (preset: Preset) => {
     setEditingPresetId(preset.id);
     setNewPresetLabel(preset.label);
   };

@@ -40,3 +40,14 @@ export function formatDateID(dateStr: string, withYear = true): string {
 export const digitsOnly = (v: string) => v.replace(/\D/g, '');
 // Nama orang: tanpa angka
 export const noDigits = (v: string) => v.replace(/[0-9]/g, '');
+
+/** Pesan dari error apa pun (Error biasa, error Supabase berbentuk objek, atau string), tanpa memakai any. */
+export function errMsg(e: unknown, fallback = 'Terjadi kesalahan.'): string {
+  if (e instanceof Error && e.message) return e.message;
+  if (typeof e === 'string' && e) return e;
+  if (typeof e === 'object' && e !== null && 'message' in e) {
+    const m = (e as { message: unknown }).message;
+    if (typeof m === 'string' && m) return m;
+  }
+  return fallback;
+}

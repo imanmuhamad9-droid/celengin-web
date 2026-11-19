@@ -205,7 +205,7 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
         validItems.map((it, idx) => ({ expense_id: exp.id, name: it.name.trim(), price: it.priceRaw, qty: Math.max(1, parseInt(it.qtyText, 10) || 1), position: idx })),
       ).select();
       if (iErr || !itemRows) return rollback(iErr?.message || 'Item gagal disimpan.');
-      const byPos = new Map<number, string>(itemRows.map((r: any) => [r.position as number, r.id as string]));
+      const byPos = new Map<number, string>((itemRows as { position: number; id: string }[]).map((r): [number, string] => [r.position, r.id]));
       const assignees = validItems.flatMap((it, idx) => it.memberIds.map((mid) => ({ item_id: byPos.get(idx) as string, member_id: mid })));
       const { error: aErr } = await supabase.from('split_item_assignees').insert(assignees);
       if (aErr) return rollback(aErr.message);

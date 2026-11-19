@@ -10,7 +10,7 @@ const MAX_SIDE = 1800; // sisi terpanjang gambar (px). Lebih besar = lebih akura
 /** Muat gambar dengan orientasi EXIF yang benar (foto HP sering tersimpan miring). */
 async function loadBitmap(file: File): Promise<ImageBitmap | HTMLImageElement> {
   if (typeof createImageBitmap === 'function') {
-    try { return await createImageBitmap(file, { imageOrientation: 'from-image' } as ImageBitmapOptions); } catch (_) { /* pakai cara lama */ }
+    try { return await createImageBitmap(file, { imageOrientation: 'from-image' } as ImageBitmapOptions); } catch { /* pakai cara lama */ }
   }
   const url = URL.createObjectURL(file);
   try {

@@ -1,11 +1,12 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
+import type { Transaction, Target, Bill, Profile } from '@/lib/types';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { User, X, LogOut, Settings, Eye, EyeOff, CalendarDays, Flame, Info, ChevronLeft, ChevronRight, ChevronDown, CheckCircle2, AlertCircle } from 'lucide-react';
+import { User, X, LogOut, Settings, Eye, EyeOff, Flame, ChevronRight, CheckCircle2, AlertCircle } from 'lucide-react';
 import { formatRupiah, toLocalDateStr } from '@/lib/utils';
 import { diffDays } from '@/lib/recurring';
-import { listWallets, computeWalletBalances, Wallet, WalletTransfer } from '@/lib/wallets';
+import { listWallets, Wallet } from '@/lib/wallets';
 import { fetchBadgeContext, syncBadges } from '@/lib/badges';
 import TransactionModal from '@/components/TransactionModal';
 import TransactionDetailModal from '@/components/TransactionDetailModal';
@@ -26,43 +27,34 @@ import GlassButton from '@/components/GlassButton';
 import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null); 
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const [targets, setTargets] = useState<any[]>([]);
-  const [bills, setBills] = useState<any[]>([]);
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null); 
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [targets, setTargets] = useState<Target[]>([]);
+  const [bills, setBills] = useState<Bill[]>([]);
   const [wallets, setWallets] = useState<Wallet[]>([]);
-  const [transfers, setTransfers] = useState<WalletTransfer[]>([]);
   const badgeSynced = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
   
   const [currentMonthStr, setCurrentMonthStr] = useState('');
-  const [calendarMonth, setCalendarMonth] = useState(0);
-const [calendarYear, setCalendarYear] = useState(2024);
 const [todayStr, setTodayStr] = useState('');
-  const [maxDateStr, setMaxDateStr] = useState('');
   const [last7Days, setLast7Days] = useState<string[]>([]);
-  const [selectedDay, setSelectedDay] = useState<any>(null);
   const [isBalanceHidden, setIsBalanceHidden] = useState(false);
     // State Info Edukasi
   const [showInfoJatah, setShowInfoJatah] = useState(false);
   const [showInfoStreak, setShowInfoStreak] = useState(false);
 
-  // State untuk Kalender
-  const [calendarView, setCalendarView] = useState<'expense' | 'income' | 'all'>('expense');
-  const [showCalendar, setShowCalendar] = useState(true);
-  const [greeting, setGreeting] = useState('Halo');
   const [paydayLater, setPaydayLater] = useState(false);
   const [showMonth, setShowMonth] = useState(false); // lipatan Statistik
   const [statsView, setStatsView] = useState<'week' | 'month'>('month');
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [categoryDetails, setCategoryDetails] = useState<any[]>([]);
+  const [categoryDetails, setCategoryDetails] = useState<Transaction[]>([]);
 
-  const [detailTx, setDetailTx] = useState<any>(null); // transaksi yang sedang dibuka detailnya
+  const [detailTx, setDetailTx] = useState<Transaction | null>(null); // transaksi yang sedang dibuka detailnya
 
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
-  const [txType, setTxType] = useState<'income' | 'expense'>('expense');
+  const [txType] = useState<'income' | 'expense'>('expense');
   const [txDate, setTxDate] = useState<string | undefined>(undefined);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
@@ -90,13 +82,9 @@ const [todayStr, setTodayStr] = useState('');
     const { data: billData } = await supabase.from('bills').select('*').eq('user_id', session.user.id).eq('is_active', true);
     setBills(billData || []);
 
-    // Dompet + transfer (kosong kalau fitur Dompet belum diaktifkan)
+    // Dompet (kosong kalau fitur Dompet belum diaktifkan)
     const walletList = await listWallets(session.user.id, true);
     setWallets(walletList);
-    if (walletList.length > 0) {
-      const { data: trData } = await supabase.from('wallet_transfers').select('*');
-      setTransfers((trData || []) as WalletTransfer[]);
-    }
 
     // Cek pencapaian (badge) sekali per kunjungan
     if (!badgeSynced.current && txData) {
@@ -107,7 +95,7 @@ const [todayStr, setTodayStr] = useState('');
     setIsLoading(false);
   };
 
-  const runBadgeSync = async (uid: string, tx: any[], tg: any[]) => {
+  const runBadgeSync = async (uid: string, tx: Transaction[], tg: Target[]) => {
     try {
       const ctx = await fetchBadgeContext(uid, tx, tg);
       const res = await syncBadges(uid, ctx);
@@ -116,7 +104,7 @@ const [todayStr, setTodayStr] = useState('');
         const more = res.fresh.length > 3 ? `  ·  +${res.fresh.length - 3} lainnya` : '';
         showDialog('Badge Baru! 🏅', names + more, 'success');
       }
-    } catch (_) { /* badge bersifat tambahan, abaikan error */ }
+    } catch { /* badge bersifat tambahan, abaikan error */ }
   };
 
   // Muat ulang data saat transaksi baru dicatat lewat tombol Catat di menu
@@ -133,13 +121,7 @@ const [todayStr, setTodayStr] = useState('');
     const localToday = toLocalDateStr(now);
     setCurrentMonthStr(localToday.substring(0, 7));
     setTodayStr(localToday);
-    const h = now.getHours();
-    setGreeting(h < 11 ? 'Pagi' : h < 15 ? 'Siang' : h < 18 ? 'Sore' : 'Malam');
-    setMaxDateStr(localToday);
 
-    // 2. Set Bulan & Tahun untuk Kalender
-    setCalendarMonth(now.getMonth());
-    setCalendarYear(now.getFullYear());
 
     // 3. Set Data 7 Hari Terakhir
     const days = [...Array(7)].map((_, i) => {
@@ -162,7 +144,7 @@ const [todayStr, setTodayStr] = useState('');
     if (!user) return;
     const { error } = await supabase.from('profiles').update({ payday: day }).eq('id', user.id);
     if (error) { showDialog('Belum Bisa Disimpan', 'Jalankan sql/08_payday.sql di Supabase SQL Editor dulu, lalu coba lagi.', 'danger'); return; }
-    setProfile((prev: any) => ({ ...prev, payday: day }));
+    setProfile((prev) => (prev ? { ...prev, payday: day } : prev));
   };
 
   const handleCategoryClick = (categoryName: string) => {
@@ -175,7 +157,6 @@ const [todayStr, setTodayStr] = useState('');
   const totalExpense = transactions.filter(t => t.type === 'expense').reduce((acc, curr) => acc + Number(curr.amount), 0);
   const walletInitialTotal = wallets.reduce((s, w) => s + (Number(w.initial_balance) || 0), 0);
   const balance = totalIncome - totalExpense + walletInitialTotal;
-  const walletCalc = computeWalletBalances(wallets, transactions, transfers);
 
   // "Bulan ini" mengikuti siklus gajian (tanggal gajian 1 = bulan kalender biasa)
   const payday = normalizePayday(profile?.payday);
@@ -183,13 +164,8 @@ const [todayStr, setTodayStr] = useState('');
   const monthlyTx = cycle
     ? transactions.filter(t => t.transaction_date >= cycle.start && t.transaction_date <= cycle.end)
     : transactions.filter(t => t.transaction_date.startsWith(currentMonthStr || '0000-00'));
-  const monthlyIncome = monthlyTx.filter(t => t.type === 'income').reduce((acc, curr) => acc + Number(curr.amount), 0);
-  const monthlyExpense = monthlyTx.filter(t => t.type === 'expense').reduce((acc, curr) => acc + Number(curr.amount), 0);
   
-  const incomeCategories = monthlyTx.filter(t => t.type === 'income').reduce((acc: any, curr) => { acc[curr.merchant_name] = (acc[curr.merchant_name] || 0) + Number(curr.amount); return acc; }, {});
-  const expenseCategories = monthlyTx.filter(t => t.type === 'expense').reduce((acc: any, curr) => { acc[curr.merchant_name] = (acc[curr.merchant_name] || 0) + Number(curr.amount); return acc; }, {});
 
-  const totalMonthly = monthlyIncome + monthlyExpense;
 
   // Statistik bisa dilihat per minggu (Senin-Minggu) atau per bulan/siklus gajian. Logika bulanan tidak berubah.
   const weekRange = todayStr ? getRange('week', todayStr, payday) : null;
@@ -198,8 +174,8 @@ const [todayStr, setTodayStr] = useState('');
     : monthlyTx;
   const sIncome = statsTx.filter(t => t.type === 'income').reduce((acc, curr) => acc + Number(curr.amount), 0);
   const sExpense = statsTx.filter(t => t.type === 'expense').reduce((acc, curr) => acc + Number(curr.amount), 0);
-  const sIncomeCats = statsTx.filter(t => t.type === 'income').reduce((acc: any, curr) => { acc[curr.merchant_name] = (acc[curr.merchant_name] || 0) + Number(curr.amount); return acc; }, {});
-  const sExpenseCats = statsTx.filter(t => t.type === 'expense').reduce((acc: any, curr) => { acc[curr.merchant_name] = (acc[curr.merchant_name] || 0) + Number(curr.amount); return acc; }, {});
+  const sIncomeCats = statsTx.filter(t => t.type === 'income').reduce((acc: Record<string, number>, curr) => { acc[curr.merchant_name] = (acc[curr.merchant_name] || 0) + Number(curr.amount); return acc; }, {});
+  const sExpenseCats = statsTx.filter(t => t.type === 'expense').reduce((acc: Record<string, number>, curr) => { acc[curr.merchant_name] = (acc[curr.merchant_name] || 0) + Number(curr.amount); return acc; }, {});
   const sTotal = sIncome + sExpense;
 
   const weeklyData = last7Days.map(date => {
@@ -210,7 +186,6 @@ const [todayStr, setTodayStr] = useState('');
     return { date, dayName, income, expense };
   });
 
-  const maxWeeklyValue = Math.max(...weeklyData.map(d => Math.max(d.income, d.expense)), 10000);
 
   const activeWarnings = targets.filter(target => {
     if (target.target_expense <= 0) return false;
@@ -352,20 +327,7 @@ const [todayStr, setTodayStr] = useState('');
 
   const recentTx = transactions.slice(0, 5);
 
-  const currentYear = calendarYear;
-const currentMonth = calendarMonth;
-  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-  const daysArray = Array.from({ length: daysInMonth }, (_, i) => {
-    const dayStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(i+1).padStart(2,'0')}`;
-    const exp = transactions.filter(t => t.transaction_date === dayStr && t.type === 'expense').reduce((a, b) => a + Number(b.amount), 0);
-    return { day: i+1, dateStr: dayStr, expense: exp };
-  });
   
-  // Perhitungan kalender
-  const maxDailyIncome = Math.max(1, ...daysArray.map(d => transactions.filter(t => t.transaction_date === d.dateStr && t.type === 'income').reduce((a, b) => a + Number(b.amount), 0)));
-  const maxDailyExpense = Math.max(1, ...daysArray.map(d => d.expense));
-  const mostExpensiveDay = daysArray.reduce((prev, current) => (prev.expense > current.expense) ? prev : current, daysArray[0]);
 
   if (isLoading || !currentMonthStr) return (
     <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>
@@ -506,8 +468,8 @@ const currentMonth = calendarMonth;
                 ? { color: '#f59e0b', title: 'Hati-hati, hampir habis', sub: `${spentPct}% dari pemasukan sudah terpakai.` }
                 : { color: '#ef4444', title: 'Boncos, lebih besar pasak', sub: `Pengeluaran ${spentPct}% dari pemasukan.` };
           const palette = ['#ef4444', '#f97316', '#f59e0b', '#8b5cf6', '#0ea5e9', '#94a3b8'];
-          const incomeRows = Object.entries(sIncomeCats).sort(([, a]: any, [, b]: any) => b - a) as [string, any][];
-          const expenseRows = Object.entries(sExpenseCats).sort(([, a]: any, [, b]: any) => b - a) as [string, any][];
+          const incomeRows = Object.entries(sIncomeCats).sort(([, a], [, b]) => b - a);
+          const expenseRows = Object.entries(sExpenseCats).sort(([, a], [, b]) => b - a);
           return (
             <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
               <div className="mb-4">

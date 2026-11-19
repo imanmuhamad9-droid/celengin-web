@@ -10,10 +10,18 @@ export interface ReceiptResult {
 
 const TESS_URL = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
 
-let loader: Promise<any> | null = null;
-function loadTesseract(): Promise<any> {
+interface TesseractLike {
+  recognize(
+    image: Blob,
+    lang: string,
+    opts: { logger: (m: { status?: string; progress?: number }) => void },
+  ): Promise<{ data?: { text?: string } }>;
+}
+
+let loader: Promise<TesseractLike> | null = null;
+function loadTesseract(): Promise<TesseractLike> {
   if (typeof window === 'undefined') return Promise.reject(new Error('Hanya tersedia di browser.'));
-  const w = window as any;
+  const w = window as Window & { Tesseract?: TesseractLike };
   if (w.Tesseract) return Promise.resolve(w.Tesseract);
   if (loader) return loader;
   loader = new Promise((resolve, reject) => {
@@ -131,8 +139,8 @@ export async function scanReceipt(file: File, onProgress?: (pct: number) => void
   const Tesseract = await loadTesseract();
   const image = await prepareImage(file);
   const res = await Tesseract.recognize(image, 'ind+eng', {
-    logger: (msg: any) => {
-      if (onProgress && msg?.status === 'recognizing text' && typeof msg.progress === 'number') onProgress(Math.round(msg.progress * 100));
+    logger: (msg) => {
+      if (onProgress && msg.status === 'recognizing text' && typeof msg.progress === 'number') onProgress(Math.round(msg.progress * 100));
     },
   });
   return parseReceiptText(res?.data?.text || '');
