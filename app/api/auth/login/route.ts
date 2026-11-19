@@ -6,15 +6,15 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
 const GENERIC = 'Email/username atau password salah.';
 
-// Pembatas sederhana per IP (best effort; instance serverless bisa berbeda-beda)
-const hits = new Map<string, { n: number; t: number }>();
-function limited(ip: string) {
-  const now = Date.now();
-  const h = hits.get(ip);
-  if (!h || now - h.t > 60_000) { hits.set(ip, { n: 1, t: now }); return false; }
-  h.n += 1;
-  return h.n > 10;
+// Pembatas laju bersama lewat database (sql/04_rate_limit.sql), jadi berlaku di semua instance serverless.
+// Bila database gagal dihubungi, login tetap dibolehkan (fail-open) dan kegagalannya dicatat di log.
+async function limited(key: string, limit: number, windowSeconds: number): Promise<boolean> {
+  const { data, error } = await supabaseAdmin().rpc('rate_limit_hit', { p_key: key, p_limit: limit, p_window_seconds: windowSeconds });
+  if (error) { console.error('rate_limit_hit gagal:', error.message); return false; }
+  return data === true;
 }
+
+const TOO_MANY = { error: 'Terlalu banyak percobaan. Coba lagi sebentar lagi.' };
 
 function anonClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -35,12 +35,16 @@ async function emailFromUsername(username: string): Promise<string | null> {
 export async function POST(request: Request) {
   try {
     const ip = (request.headers.get('x-forwarded-for') || 'unknown').split(',')[0].trim();
-    if (limited(ip)) return NextResponse.json({ error: 'Terlalu banyak percobaan. Coba lagi sebentar lagi.' }, { status: 429 });
+    if (await limited(`login:ip:${ip}`, 10, 60)) return NextResponse.json(TOO_MANY, { status: 429 });
 
     const body = await request.json().catch(() => ({}));
     const identifier = String(body?.identifier || '').trim().toLowerCase();
     const action = body?.action === 'resend' ? 'resend' : 'login';
     if (!identifier || identifier.includes('@')) return NextResponse.json({ error: GENERIC }, { status: 400 });
+
+    // Batas per akun: serangan dari banyak IP ke satu username tetap tertahan.
+    const accountKey = `${action}:user:${identifier.slice(0, 64)}`;
+    if (await limited(accountKey, action === 'resend' ? 3 : 8, 15 * 60)) return NextResponse.json(TOO_MANY, { status: 429 });
 
     const email = await emailFromUsername(identifier);
 
@@ -61,7 +65,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: GENERIC }, { status: 401 });
     }
     return NextResponse.json({ access_token: data.session.access_token, refresh_token: data.session.refresh_token });
-  } catch (e: any) {
+  } catch (e: unknown) {
+    console.error('login gagal:', e instanceof Error ? e.message : e);
     return NextResponse.json({ error: 'Server belum siap untuk login username. Coba login dengan email.' }, { status: 500 });
   }
 }

@@ -41,8 +41,9 @@ export default function AppHeader({ title, onBack, topRight, action, z = 'z-50',
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const { data } = await supabase.from('profiles').select('avatar_url').eq('id', session.user.id).maybeSingle();
-      avatarCache = data?.avatar_url ?? null;
-      if (!cancelled) setAvatar(avatarCache);
+      const url: string | null = data?.avatar_url ?? null;
+      avatarCache = url;
+      if (!cancelled) setAvatar(url);
     })();
     return () => { cancelled = true; };
   }, []);

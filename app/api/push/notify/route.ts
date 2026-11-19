@@ -5,6 +5,8 @@ import { NextResponse } from 'next/server';
 import * as webpush from 'web-push';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
+type NotifRow = { id: string; title: string; body: string | null; link: string | null };
+
 export async function POST(request: Request) {
   const token = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
   if (!token) return NextResponse.json({ error: 'Belum login.' }, { status: 401 });
@@ -23,7 +25,7 @@ export async function POST(request: Request) {
   const callerId = userData.user.id;
 
   const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-  const { data: notifs } = await admin
+  const { data: notifsData } = await admin
     .from('notifications')
     .select('id,title,body,link')
     .eq('user_id', targetUserId)
@@ -33,6 +35,7 @@ export async function POST(request: Request) {
     .gte('created_at', since)
     .order('created_at', { ascending: false })
     .limit(3);
+  const notifs = notifsData as NotifRow[] | null;
   if (!notifs || notifs.length === 0) return NextResponse.json({ sent: 0 });
 
   const { data: subs } = await admin.from('push_subscriptions').select('*').eq('user_id', targetUserId);

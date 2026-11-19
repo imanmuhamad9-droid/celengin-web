@@ -6,7 +6,32 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { computeNet, simplifyDebts } from '@/lib/splitbill';
 import { addDays, dayOfWeek, diffDays, nextOccurrence, todayInJakarta, Frequency } from '@/lib/recurring';
 
+type PushMsg = { title: string; body: string; url: string; tag: string };
+type RuleRow = {
+  id: string; user_id: string; merchant_name: string; amount: number; type: string;
+  frequency: string; anchor_day: number; next_run_date: string; last_run_date: string | null;
+  end_date: string | null; wallet_id: string | null;
+};
+type BookRow = { id: string; name: string; emoji: string | null };
+type MemberRow = { id: string; group_id: string; name: string; user_id: string | null; status: string };
+type ExpenseRow = {
+  id: string; group_id: string; total_amount: number; paid_by: string;
+  split_shares: { member_id: string; share_amount: number }[] | null;
+};
+type SettlementRow = { id: string; group_id: string; from_member: string; to_member: string; amount: number };
+type SubRow = { user_id: string; endpoint: string; p256dh: string; auth: string };
+type TxRow = { user_id: string; type: string; amount: number; transaction_date: string };
+type BillRow = { user_id: string; name: string; amount: number; due_date: string; remind_days_before: number | null };
+
+type QueuedMsg = PushMsg & { notifId?: string };
+
 const rp = (n: number) => 'Rp' + new Intl.NumberFormat('id-ID').format(Math.round(n));
+
+// Batas waktu fungsi (detik). Push dikirim paralel per kelompok supaya muat.
+export const maxDuration = 60;
+
+const PUSH_BATCH = 20;
+const PUSH_OPTIONS = { TTL: 24 * 60 * 60, timeout: 8000 };
 
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
@@ -20,12 +45,14 @@ export async function GET(request: Request) {
 
   // ---------------------------------------------------------------- 1. TRANSAKSI RUTIN
   const createdByUser: Record<string, number> = {};
-  const { data: rules, error: rulesErr } = await admin
+  const { data: rulesData, error: rulesErr } = await admin
     .from('recurring_rules')
     .select('*')
     .eq('is_active', true)
-    .lte('next_run_date', today);
+    .lte('next_run_date', today)
+    ;
 
+  const rules = rulesData as RuleRow[] | null;
   if (rulesErr) {
     report.errors.push('rules: ' + rulesErr.message);
   } else {
@@ -74,19 +101,23 @@ export async function GET(request: Request) {
 
   // ---------------------------------------------------------------- 1b. PENGINGAT AKHIR BULAN (Gantian)
   // Hari terakhir tiap bulan (waktu Jakarta): beri tahu anggota buku Gantian yang saldonya belum impas.
-  const gantianPush: Record<string, { title: string; body: string; url: string; tag: string }[]> = {};
+  const gantianPush: Record<string, QueuedMsg[]> = {};
   const isMonthEnd = addDays(today, 1).slice(0, 7) !== today.slice(0, 7);
   if (isMonthEnd) {
     try {
-      const { data: books, error: bErr } = await admin.from('split_groups').select('id,name,emoji').eq('kind', 'running');
+      const { data: booksData, error: bErr } = await admin.from('split_groups').select('id,name,emoji').eq('kind', 'running');
       if (bErr) throw new Error(bErr.message);
+      const books = booksData as BookRow[] | null;
       const ids = (books || []).map((b) => b.id);
       if (ids.length > 0) {
-        const [{ data: mem }, { data: exps }, { data: sets }] = await Promise.all([
+        const [{ data: memData }, { data: expsData }, { data: setsData }] = await Promise.all([
           admin.from('split_members').select('id,group_id,name,user_id,status').in('group_id', ids),
           admin.from('split_expenses').select('id,group_id,total_amount,paid_by,split_shares(member_id,share_amount)').in('group_id', ids),
           admin.from('split_settlements').select('id,group_id,from_member,to_member,amount').in('group_id', ids),
         ]);
+        const mem = memData as MemberRow[] | null;
+        const exps = expsData as ExpenseRow[] | null;
+        const sets = setsData as SettlementRow[] | null;
         const dayStart = `${today}T00:00:00+07:00`;
         for (const b of books || []) {
           const ms = (mem || []).filter((m) => m.group_id === b.id);
@@ -97,7 +128,7 @@ export async function GET(request: Request) {
             es.map((e) => ({
               id: e.id, title: '', total_amount: e.total_amount, paid_by: e.paid_by, created_by: '', expense_date: today,
               split_type: 'custom' as const, created_at: '',
-              shared_expense_shares: ((e.split_shares as { member_id: string; share_amount: number }[]) || []).map((x) => ({ user_id: x.member_id, share_amount: x.share_amount })),
+              shared_expense_shares: (e.split_shares || []).map((x) => ({ user_id: x.member_id, share_amount: x.share_amount })),
             })),
             (sets || []).filter((x) => x.group_id === b.id).map((x) => ({ id: x.id, from_user: x.from_member, to_user: x.to_member, amount: x.amount, created_at: '' })),
           );
@@ -112,13 +143,20 @@ export async function GET(request: Request) {
               .map((d) => `${nm(d.from)} harus bayar ${rp(d.amount)} ke ${nm(d.to)}`)
               .join('; ');
             const link = `/gantian?book=${b.id}`;
-            const { data: dup } = await admin.from('notifications').select('id').eq('user_id', m.user_id).eq('kind', 'gantian_reminder').eq('link', link).gte('created_at', dayStart).limit(1);
-            if (dup && dup.length > 0) continue;
+            const { data: dup } = await admin.from('notifications').select('id,pushed_at').eq('user_id', m.user_id).eq('kind', 'gantian_reminder').eq('link', link).gte('created_at', dayStart).limit(1);
             const title = `Waktunya hitung Bayarin`;
             const text = `${b.name}: ${body}.`;
-            const { error: nErr } = await admin.from('notifications').insert({ user_id: m.user_id, kind: 'gantian_reminder', title, body: text, link, pushed_at: new Date().toISOString() });
-            if (nErr) { report.errors.push('gantian notif: ' + nErr.message); continue; }
-            (gantianPush[m.user_id] = gantianPush[m.user_id] || []).push({ title, body: text, url: link, tag: `gantian-${b.id}` });
+            let notifId: string | undefined;
+            if (dup && dup.length > 0) {
+              // Sudah dibuat hari ini. Kirim ulang push hanya bila run sebelumnya belum sempat mengirimnya.
+              if (dup[0].pushed_at) continue;
+              notifId = dup[0].id;
+            } else {
+              const { data: created, error: nErr } = await admin.from('notifications').insert({ user_id: m.user_id, kind: 'gantian_reminder', title, body: text, link }).select('id').single();
+              if (nErr || !created) { report.errors.push('gantian notif: ' + (nErr?.message || 'insert gagal')); continue; }
+              notifId = created.id;
+            }
+            (gantianPush[m.user_id] = gantianPush[m.user_id] || []).push({ title, body: text, url: link, tag: `gantian-${b.id}`, notifId });
           }
         }
       }
@@ -136,36 +174,43 @@ export async function GET(request: Request) {
   }
   webpush.setVapidDetails(process.env.VAPID_SUBJECT || 'mailto:admin@example.com', pub, priv);
 
-  const { data: subs, error: subsErr } = await admin.from('push_subscriptions').select('*');
+  const { data: subsData, error: subsErr } = await admin.from('push_subscriptions').select('*');
   if (subsErr) {
     report.errors.push('subs: ' + subsErr.message);
     return NextResponse.json(report);
   }
-  const subsByUser: Record<string, typeof subs> = {};
+  const subs = subsData as SubRow[] | null;
+  const subsByUser: Record<string, SubRow[]> = {};
   (subs || []).forEach((s) => { (subsByUser[s.user_id] = subsByUser[s.user_id] || []).push(s); });
   const userIds = Object.keys(subsByUser);
   if (userIds.length === 0) return NextResponse.json(report);
 
   // Transaksi 7 hari terakhir milik user yang berlangganan (untuk "belum mencatat" + ringkasan Senin)
-  const { data: recentTx } = await admin
+  const { data: recentTxData } = await admin
     .from('transactions')
     .select('user_id,type,amount,transaction_date')
     .in('user_id', userIds)
-    .gte('transaction_date', addDays(today, -7));
+    .gte('transaction_date', addDays(today, -7))
+    ;
+
+  const recentTx = recentTxData as TxRow[] | null;
 
   // Tagihan aktif yang jatuh tempo dalam 14 hari ke depan atau telat <= 7 hari
-  const { data: bills } = await admin
+  const { data: billsData } = await admin
     .from('bills')
     .select('user_id,name,amount,due_date,remind_days_before')
     .in('user_id', userIds)
     .eq('is_active', true)
     .lte('due_date', addDays(today, 14))
-    .gte('due_date', addDays(today, -7));
+    .gte('due_date', addDays(today, -7))
+    ;
 
+  const bills = billsData as BillRow[] | null;
   const isMonday = dayOfWeek(today) === 1;
 
+  const queue: { uid: string; msgs: QueuedMsg[] }[] = [];
   for (const uid of userIds) {
-    const msgs: { title: string; body: string; url: string; tag: string }[] = [];
+    const msgs: QueuedMsg[] = [];
 
     // a. Tagihan
     const dueBills = (bills || [])
@@ -209,23 +254,46 @@ export async function GET(request: Request) {
       }
     }
 
-    for (const m of msgs) {
-      for (const s of subsByUser[uid] || []) {
-        try {
-          await webpush.sendNotification(
-            { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-            JSON.stringify(m),
-          );
-          report.pushSent += 1;
-        } catch (e: unknown) {
-          report.pushFailed += 1;
-          const code = (e as { statusCode?: number })?.statusCode;
-          if (code === 404 || code === 410) {
-            await admin.from('push_subscriptions').delete().eq('endpoint', s.endpoint);
-          }
-        }
-      }
+    if (msgs.length > 0) queue.push({ uid, msgs });
+  }
+
+  // Kirim paralel per kelompok user. Satu endpoint yang lambat/gagal tidak menahan yang lain.
+  const deadEndpoints = new Set<string>();
+  const pushedNotifIds: string[] = [];
+  const sendOne = async (s: SubRow, m: QueuedMsg): Promise<boolean> => {
+    const { title, body, url, tag } = m;
+    try {
+      await webpush.sendNotification(
+        { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+        JSON.stringify({ title, body, url, tag }),
+        PUSH_OPTIONS,
+      );
+      report.pushSent += 1;
+      return true;
+    } catch (e: unknown) {
+      report.pushFailed += 1;
+      const code = (e as { statusCode?: number })?.statusCode;
+      if (code === 404 || code === 410) deadEndpoints.add(s.endpoint);
+      return false;
     }
+  };
+  for (let i = 0; i < queue.length; i += PUSH_BATCH) {
+    await Promise.all(queue.slice(i, i + PUSH_BATCH).map(async ({ uid, msgs }) => {
+      for (const m of msgs) {
+        const results = await Promise.all((subsByUser[uid] || []).map((s) => sendOne(s, m)));
+        if (m.notifId && results.some(Boolean)) pushedNotifIds.push(m.notifId);
+      }
+    }));
+  }
+
+  // Tandai terkirim hanya untuk notifikasi yang benar-benar sampai ke minimal satu perangkat.
+  if (pushedNotifIds.length > 0) {
+    const { error } = await admin.from('notifications').update({ pushed_at: new Date().toISOString() }).in('id', pushedNotifIds);
+    if (error) report.errors.push('pushed_at: ' + error.message);
+  }
+  if (deadEndpoints.size > 0) {
+    const { error } = await admin.from('push_subscriptions').delete().in('endpoint', [...deadEndpoints]);
+    if (error) report.errors.push('hapus subscription mati: ' + error.message);
   }
 
   return NextResponse.json(report);
