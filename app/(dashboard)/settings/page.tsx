@@ -4,7 +4,7 @@ import type { Profile } from '@/lib/types';
 import { supabase } from '@/lib/supabaseClient';
 import AppHeader from '@/components/AppHeader';
 import { useRouter } from 'next/navigation';
-import { Save, Upload, Sun, Moon, Monitor, User, LogOut, Lock, Camera, Trash2, Eye, EyeOff, ChevronRight, CalendarClock, Wallet, Image as ImageIcon, Palette, Bell, Repeat, Trophy } from 'lucide-react';
+import { Save, Upload, Sun, Moon, Monitor, User, LogOut, Lock, Camera, Trash2, Eye, EyeOff, ChevronRight, CalendarClock, Wallet, Image as ImageIcon, Palette, Bell, Repeat, Trophy, Download } from 'lucide-react';
 import CardBgEditor from '@/components/CardBgEditor';
 import PhotoCropper from '@/components/PhotoCropper';
 import SkeletonLoader from '@/components/SkeletonLoader';
@@ -12,6 +12,7 @@ import PasswordRequirements from '@/components/PasswordRequirements';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import PushSettingsCard from '@/components/PushSettingsCard';
+import DataAccountCard from '@/components/DataAccountCard';
 import RecurringRulesModal from '@/components/RecurringRulesModal';
 import { cycleFor, normalizePayday } from '@/lib/cycle';
 import { EXTRA_MENUS, ExtraMenuKey, saveExtraMenus, useExtraMenus } from '@/lib/menuSettings';
@@ -23,12 +24,13 @@ import { Check, Plus, RotateCcw, Sparkles } from 'lucide-react';
 import { Menu as MenuIcon } from 'lucide-react';
 import { toLocalDateStr, formatRupiah, errMsg } from '@/lib/utils';
 
-type View = 'hub' | 'profil' | 'keamanan' | 'gajian' | 'saldo' | 'kartu' | 'tampilan' | 'latar' | 'notif' | 'menu';
+type View = 'hub' | 'profil' | 'keamanan' | 'data' | 'gajian' | 'saldo' | 'kartu' | 'tampilan' | 'latar' | 'notif' | 'menu';
 
 const TITLES: Record<View, string> = {
   hub: 'Pengaturan',
   profil: 'Profil Saya',
   keamanan: 'Keamanan',
+  data: 'Data & Akun',
   gajian: 'Tanggal Gajian',
   saldo: 'Batas Saldo Aman',
   kartu: 'Kartu Saldo',
@@ -432,6 +434,7 @@ export default function SettingsPage() {
             <Group label="Akun">
               <Row icon={<User className="w-5 h-5" />} title="Profil Saya" sub="Foto profil, foto sampul, nickname" onClick={() => go('profil')} />
               <Row icon={<Lock className="w-5 h-5" />} title="Keamanan" sub="Ganti password" onClick={() => go('keamanan')} />
+              <Row icon={<Download className="w-5 h-5" />} title="Data & Akun" sub="Unduh datamu, hapus akun" onClick={() => go('data')} />
             </Group>
 
             <Group label="Atur Uang">
@@ -696,6 +699,7 @@ export default function SettingsPage() {
 
         {/* ===== NOTIFIKASI ===== */}
         {view === 'notif' && <PushSettingsCard showDialog={showDialog} />}
+        {view === 'data' && <DataAccountCard showDialog={showDialog} />}
       </main>
 
       {cropJob && (
