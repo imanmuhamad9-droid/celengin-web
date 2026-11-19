@@ -1,4 +1,5 @@
 'use client';
+import { triggerMoneyRain } from '@/components/MoneyRain';
 import { useEffect, useState } from 'react';
 import type { Bill, Preset } from '@/lib/types';
 import { useRouter } from 'next/navigation';
@@ -148,6 +149,7 @@ export default function BillsPage() {
         : { due_date: nextOccurrence(b.due_date, b.frequency, b.anchor_day) };
       await supabase.from('bills').update({ ...patch, last_paid_date: payDate, paid_count: (b.paid_count || 0) + 1 }).eq('id', b.id);
       fetchAll();
+      triggerMoneyRain('expense', Number(b.amount));
       showLater('Berhasil', `"${b.name}" tercatat sebagai pengeluaran.`, 'success');
     });
   };

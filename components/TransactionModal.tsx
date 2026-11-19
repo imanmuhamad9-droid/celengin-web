@@ -210,7 +210,8 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
       showDialog('Berhasil', routineCount > 0 ? `${txList.length} transaksi tersimpan. ${routineCount} transaksi rutin akan tercatat otomatis sesuai jadwal.` : `${txList.length} transaksi berhasil disimpan!`, 'success');
       const hasIn = txList.some((t) => t.type === 'income');
       const hasOut = txList.some((t) => t.type === 'expense');
-      triggerMoneyRain(hasIn && hasOut ? 'mixed' : hasIn ? 'income' : 'expense');
+      const sum = (t: 'income' | 'expense') => txList.filter((x) => x.type === t).reduce((s, x) => s + x.amountRaw, 0);
+      triggerMoneyRain(hasIn && hasOut ? 'mixed' : hasIn ? 'income' : 'expense', hasIn && hasOut ? undefined : sum(hasIn ? 'income' : 'expense'));
       onSuccess(); onClose();   
     } catch (error: unknown) {
       showDialog('Gagal', errMsg(error), 'danger');
