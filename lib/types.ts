@@ -102,6 +102,7 @@ export interface Profile {
   avatar_url?: string | null;
   cover_url?: string | null;
   payday?: number | null;
+  payday_shift?: 'none' | 'before' | 'after' | null;
   emergency_months?: number | null;
   // Widget saldo aman di Dashboard
   safe_limit?: number | null;

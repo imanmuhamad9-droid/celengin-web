@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { X, ArrowDownCircle, ArrowUpCircle, Star } from 'lucide-react';
 import { toLocalDateStr } from '@/lib/utils';
-import { cycleFor, normalizePayday } from '@/lib/cycle';
+import { cycleFor, paydayRuleFrom, type PaydayRule } from '@/lib/cycle';
 import DateField from '@/components/DateField';
 
 export default function TargetSetupModal({ isOpen, onClose, onSuccess, showDialog, existingTarget }: {
@@ -26,7 +26,7 @@ export default function TargetSetupModal({ isOpen, onClose, onSuccess, showDialo
   const [expenseRaw, setExpenseRaw] = useState(0);
   
   const [loading, setLoading] = useState(false);
-  const [payday, setPayday] = useState(1);
+  const [payday, setPayday] = useState<PaydayRule>({ day: 1, shift: 'none' });
 
   // Tanggal gajian dipakai untuk tombol periode "Bulan"
   useEffect(() => {
@@ -35,7 +35,7 @@ export default function TargetSetupModal({ isOpen, onClose, onSuccess, showDialo
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
-      setPayday(normalizePayday(data?.payday));
+      setPayday(paydayRuleFrom(data));
     })();
   }, [isOpen]);
 
@@ -79,7 +79,7 @@ export default function TargetSetupModal({ isOpen, onClose, onSuccess, showDialo
       end = new Date(start); end.setDate(start.getDate() + 6);
     } 
     else if (type === 'month') {
-      if (payday > 1) {
+      if (payday.day > 1) {
         const c = cycleFor(toLocalDateStr(today), payday);
         setStartDate(c.start);
         setEndDate(c.end);

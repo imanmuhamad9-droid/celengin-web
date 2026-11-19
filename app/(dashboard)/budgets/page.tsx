@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { formatRupiah, parseRupiahInput, toLocalDateStr } from '@/lib/utils';
-import { Cycle, cycleFor, normalizePayday, shiftCycle } from '@/lib/cycle';
+import { Cycle, cycleFor, paydayRuleFrom, shiftCycle, type PaydayRule } from '@/lib/cycle';
 import { BudgetRow, budgetUsage, catLabel, normCat } from '@/lib/finance';
 import { useCatatAction } from '@/lib/catatAction';
 import CustomDialog from '@/components/CustomDialog';
@@ -26,7 +26,7 @@ export default function BudgetsPage() {
   const [today, setToday] = useState('');          // diisi saat data dimuat (bukan saat render)
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState('');
-  const [payday, setPayday] = useState(1);
+  const [payday, setPayday] = useState<PaydayRule>({ day: 1, shift: 'none' });
   const [viewDate, setViewDate] = useState('');       // tanggal di dalam siklus yang dilihat; kosong = siklus berjalan
   const [tableOk, setTableOk] = useState(true);
   const [budgets, setBudgets] = useState<BudgetRow[]>([]);
@@ -45,7 +45,7 @@ export default function BudgetsPage() {
     const now = toLocalDateStr(new Date());
     setToday(now);
     const { data: prof } = await supabase.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
-    const pd = normalizePayday((prof as { payday?: unknown } | null)?.payday);
+    const pd = paydayRuleFrom(prof as { payday?: unknown; payday_shift?: unknown } | null);
     setPayday(pd);
     const cyc = cycleFor(date || now, pd);
 

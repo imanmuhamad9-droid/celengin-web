@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { formatRupiah, formatDateID, parseRupiahInput, toLocalDateStr } from '@/lib/utils';
-import { cycleFor, normalizePayday, shiftCycle } from '@/lib/cycle';
+import { cycleFor, paydayRuleFrom, shiftCycle } from '@/lib/cycle';
 import { avgMonthlyExpense, emergencyStatus, savingPlans } from '@/lib/finance';
 import { useCatatAction } from '@/lib/catatAction';
 import CustomDialog from '@/components/CustomDialog';
@@ -49,7 +49,7 @@ export default function EmergencyFundPage() {
     setEntries((ent || []) as Entry[]);
 
     // Rata-rata pengeluaran dari 3 siklus gajian terakhir yang sudah selesai
-    const payday = normalizePayday((prof as { payday?: unknown } | null)?.payday);
+    const payday = paydayRuleFrom(prof as { payday?: unknown; payday_shift?: unknown } | null);
     const today = toLocalDateStr(new Date());
     const cur = cycleFor(today, payday);
     const c1 = shiftCycle(today, -1, payday);

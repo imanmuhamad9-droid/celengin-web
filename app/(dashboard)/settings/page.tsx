@@ -14,7 +14,7 @@ import BottomNav from '@/components/BottomNav';
 import PushSettingsCard from '@/components/PushSettingsCard';
 import DataAccountCard from '@/components/DataAccountCard';
 import RecurringRulesModal from '@/components/RecurringRulesModal';
-import { cycleFor, normalizePayday } from '@/lib/cycle';
+import { cycleFor, normalizePayday, parsePayShift, upcomingPaydayInfo, type PayShift } from '@/lib/cycle';
 import { EXTRA_MENUS, ExtraMenuKey, saveExtraMenus, useExtraMenus } from '@/lib/menuSettings';
 import { Toggle } from '@/components/ui';
 import { BgLayer } from '@/components/AppBackground';
@@ -108,6 +108,8 @@ export default function SettingsPage() {
   // Tanggal gajian (disimpan langsung saat dipilih)
   const [payday, setPayday] = useState(1);
   const [paydayReady, setPaydayReady] = useState(true);
+  const [payShift, setPayShift] = useState<PayShift>('none');
+  const [shiftReady, setShiftReady] = useState(true);
   const [todayStr, setTodayStr] = useState('');
 
   // Saldo
@@ -171,6 +173,8 @@ export default function SettingsPage() {
         setProfile(data);
         setPayday(normalizePayday(data.payday));
         setPaydayReady('payday' in data);
+        setPayShift(parsePayShift(data.payday_shift));
+        setShiftReady('payday_shift' in data);
         setTodayStr(toLocalDateStr(new Date()));
 
         const limit = data.safe_limit || 500000;
@@ -366,6 +370,20 @@ export default function SettingsPage() {
     }
   };
 
+  const handleShiftChange = async (shift: PayShift) => {
+    const before = payShift;
+    setPayShift(shift);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    const { error } = await supabase.from('profiles').update({ payday_shift: shift }).eq('id', session.user.id);
+    if (error) {
+      setPayShift(before);
+      showDialog('Belum Bisa Disimpan', 'Jalankan sql/06_payday_shift.sql di Supabase SQL Editor dulu, lalu coba lagi.', 'danger');
+    } else {
+      setMsg('Pengaturan hari kerja disimpan.'); setTimeout(() => setMsg(''), 2500);
+    }
+  };
+
   // Menyimpan batas saldo + background kartu (tombol Simpan di halaman Batas Saldo & Kartu Saldo)
   const handleSave = async () => {
     setIsSaving(true); setMsg('');
@@ -438,7 +456,7 @@ export default function SettingsPage() {
             </Group>
 
             <Group label="Atur Uang">
-              <Row icon={<CalendarClock className="w-5 h-5" />} title="Tanggal Gajian" sub={payday === 1 ? 'Tanggal 1 (bulan kalender)' : `Tanggal ${payday}`} onClick={() => go('gajian')} />
+              <Row icon={<CalendarClock className="w-5 h-5" />} title="Tanggal Gajian" sub={payday === 1 ? 'Tanggal 1 (bulan kalender)' : `Tanggal ${payday}${payShift === 'before' ? ' · maju ke hari kerja' : payShift === 'after' ? ' · mundur ke hari kerja' : ''}`} onClick={() => go('gajian')} />
               <Row icon={<Wallet className="w-5 h-5" />} title="Batas Saldo Aman" sub={formatRupiah(safeLimitRaw)} onClick={() => go('saldo')} />
               <Row icon={<ImageIcon className="w-5 h-5" />} title="Kartu Saldo" sub="Gambar saat saldo aman dan menipis" onClick={() => go('kartu')} />
               <Row icon={<Repeat className="w-5 h-5" />} title="Transaksi Rutin" sub="Gaji, langganan, cicilan otomatis" onClick={() => setIsRoutineOpen(true)} />
@@ -538,8 +556,42 @@ export default function SettingsPage() {
                 <option key={d} value={d}>{d === 1 ? 'Tanggal 1 (bulan kalender)' : `Tanggal ${d}`}</option>
               ))}
             </select>
-            {todayStr && <p className="text-xs text-teal-700 dark:text-teal-400 font-bold mt-3">Siklus saat ini: {cycleFor(todayStr, payday).label}</p>}
+            {todayStr && <p className="text-xs text-teal-700 dark:text-teal-400 font-bold mt-3">Siklus saat ini: {cycleFor(todayStr, { day: payday, shift: payShift }).label}</p>}
+
+            <p className="text-sm font-bold text-gray-800 dark:text-gray-100 mt-5 mb-1">Kalau tanggal gajian jatuh di akhir pekan atau libur</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{payday === 1 ? 'Tanggal 1 memakai bulan kalender biasa, jadi tidak digeser.' : 'Gajian sering dibayar lebih awal atau lebih lambat. Pilih yang sesuai dengan tempat kerjamu.'}</p>
+            <div role="radiogroup" aria-label="Geser gajian ke hari kerja" className="space-y-2">
+              {([
+                ['none', 'Tidak digeser', 'Tetap di tanggal itu, apa pun harinya'],
+                ['before', 'Maju ke hari kerja sebelumnya', 'Sabtu/Minggu/libur → Jumat atau hari kerja terakhir sebelumnya'],
+                ['after', 'Mundur ke hari kerja berikutnya', 'Sabtu/Minggu/libur → Senin atau hari kerja pertama sesudahnya'],
+              ] as const).map(([val, title, sub]) => (
+                <button key={val} type="button" role="radio" aria-checked={payShift === val} disabled={payday === 1}
+                  onClick={() => handleShiftChange(val)}
+                  className={`w-full text-left p-3 rounded-2xl border-2 transition-all active:scale-[0.99] disabled:opacity-40 ${payShift === val ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20' : 'border-gray-200 dark:border-gray-600'}`}>
+                  <span className="block text-sm font-bold text-gray-800 dark:text-gray-100">{title}</span>
+                  <span className="block text-xs text-gray-500 dark:text-gray-400">{sub}</span>
+                </button>
+              ))}
+            </div>
+
+            {todayStr && payday > 1 && (
+              <div className="mt-4 rounded-2xl bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-600 p-3">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1.5">Gajian berikutnya</p>
+                {upcomingPaydayInfo(todayStr, { day: payday, shift: payShift }, 3).map((p) => {
+                  const fmt = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
+                  return (
+                    <p key={p.date} className="text-xs text-gray-800 dark:text-gray-100 py-0.5">
+                      <b>{fmt(p.date)}</b>
+                      {p.date !== p.nominal && <span className="text-orange-600 dark:text-orange-400"> · digeser dari {fmt(p.nominal)}</span>}
+                    </p>
+                  );
+                })}
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-2">Hari libur nasional dan cuti bersama tercatat sampai 2027. Sesudah itu hanya Sabtu dan Minggu yang dihitung.</p>
+              </div>
+            )}
             {msg && <p className="text-xs font-bold text-teal-600 dark:text-teal-400 mt-2">{msg}</p>}
+            {!shiftReady && <p className="text-[11px] text-orange-600 dark:text-orange-400 mt-2">Kolom pengaturan hari kerja belum ada. Jalankan sql/06_payday_shift.sql di Supabase dulu.</p>}
             {!paydayReady && <p className="text-[11px] text-orange-600 dark:text-orange-400 mt-2">Kolom tanggal gajian belum ada. Jalankan sql/08_payday.sql di Supabase dulu.</p>}
           </div>
         )}

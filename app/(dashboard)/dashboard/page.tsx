@@ -18,7 +18,7 @@ import NotificationBell, { LocalNotif } from '@/components/NotificationBell';
 import AttentionStrip, { AttentionItem } from '@/components/AttentionStrip';
 import PaydayPrompt from '@/components/PaydayPrompt';
 import SectionToggle from '@/components/SectionToggle';
-import { cycleFor, normalizePayday } from '@/lib/cycle';
+import { cycleFor, paydayRuleFrom } from '@/lib/cycle';
 import WeeklyChart from '@/components/WeeklyChart';
 import { getRange } from '@/lib/insights';
 import SkeletonLoader from '@/components/SkeletonLoader';
@@ -159,7 +159,7 @@ const [todayStr, setTodayStr] = useState('');
   const balance = totalIncome - totalExpense + walletInitialTotal;
 
   // "Bulan ini" mengikuti siklus gajian (tanggal gajian 1 = bulan kalender biasa)
-  const payday = normalizePayday(profile?.payday);
+  const payday = paydayRuleFrom(profile);
   const cycle = todayStr ? cycleFor(todayStr, payday) : null;
   const monthlyTx = cycle
     ? transactions.filter(t => t.transaction_date >= cycle.start && t.transaction_date <= cycle.end)
@@ -475,10 +475,10 @@ const [todayStr, setTodayStr] = useState('');
               <div className="mb-4">
                 <div className="flex p-1 rounded-2xl bg-teal-500/10 border border-teal-500/20">
                   <button onClick={() => setStatsView('week')} className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition-all active:scale-95 ${statsView === 'week' ? 'glass glass-teal' : 'text-gray-600 dark:text-gray-300'}`}>Mingguan</button>
-                  <button onClick={() => setStatsView('month')} className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition-all active:scale-95 ${statsView === 'month' ? 'glass glass-teal' : 'text-gray-600 dark:text-gray-300'}`}>{payday > 1 ? 'Siklus Gajian' : 'Bulanan'}</button>
+                  <button onClick={() => setStatsView('month')} className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition-all active:scale-95 ${statsView === 'month' ? 'glass glass-teal' : 'text-gray-600 dark:text-gray-300'}`}>{payday.day > 1 ? 'Siklus Gajian' : 'Bulanan'}</button>
                 </div>
                 <p className="text-[10px] text-gray-400 dark:text-gray-500 text-center mt-2">
-                  {statsView === 'week' && weekRange ? `Minggu ini: ${weekRange.label}` : payday > 1 && cycle ? cycle.label : 'Bulan ini'}
+                  {statsView === 'week' && weekRange ? `Minggu ini: ${weekRange.label}` : payday.day > 1 && cycle ? cycle.label : 'Bulan ini'}
                 </p>
               </div>
 

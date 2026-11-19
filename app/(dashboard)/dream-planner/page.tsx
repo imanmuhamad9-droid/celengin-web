@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import { Target, X, ArrowDownCircle, ArrowUpCircle, Info, TrendingUp } from 'lucide-react';
 import { formatRupiah, formatDateID, toLocalDateStr, errMsg } from '@/lib/utils';
-import { cycleFor, shiftCycle, normalizePayday } from '@/lib/cycle';
+import { cycleFor, shiftCycle, paydayRuleFrom } from '@/lib/cycle';
 import UpdateGoalModal from '@/components/UpdateGoalModal';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
@@ -79,7 +79,7 @@ export default function DreamPlannerPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const { data: prof } = await supabase.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
-      const payday = normalizePayday((prof as Profile | null)?.payday);
+      const payday = paydayRuleFrom(prof as Profile | null);
       const today = toLocalDateStr(new Date());
       const current = cycleFor(today, payday);
       const past = [shiftCycle(today, -1, payday)];

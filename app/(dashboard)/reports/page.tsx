@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Download, Printer, Info, X, TrendingUp, TrendingDown } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { formatRupiah, toLocalDateStr, errMsg } from '@/lib/utils';
-import { normalizePayday } from '@/lib/cycle';
+import { paydayRuleFrom, type PaydayRule } from '@/lib/cycle';
 import { Period, Tx, getRange, shiftAnchor, summarize, pctChange, healthScore, buildInsights } from '@/lib/insights';
 import { downloadCsv } from '@/lib/exportReport';
 import { listWallets, Wallet } from '@/lib/wallets';
@@ -26,7 +26,7 @@ export default function ReportsPage() {
   const [transactions, setTransactions] = useState<Tx[]>([]);
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [nickname, setNickname] = useState('');
-  const [payday, setPayday] = useState(1);
+  const [payday, setPayday] = useState<PaydayRule>({ day: 1, shift: 'none' });
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Period>('month');
   const [anchor, setAnchor] = useState('');
@@ -49,7 +49,7 @@ export default function ReportsPage() {
       if (tx) setTransactions(tx as Tx[]);
       const { data: prof } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
       setNickname(prof?.nickname || prof?.full_name || '');
-      setPayday(normalizePayday(prof?.payday));
+      setPayday(paydayRuleFrom(prof));
       setWallets(await listWallets(session.user.id, false));
       setLoading(false);
     };
