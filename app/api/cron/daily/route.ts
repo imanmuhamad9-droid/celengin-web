@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import * as webpush from 'web-push';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { computeNet, simplifyDebts } from '@/lib/splitbill';
+import { parsePushPrefs, wantsPush, type PushKind, type PushPrefs } from '@/lib/pushPrefs';
 import { addDays, dayOfWeek, diffDays, nextOccurrence, todayInJakarta, Frequency } from '@/lib/recurring';
 
 type PushMsg = { title: string; body: string; url: string; tag: string };
@@ -23,7 +24,7 @@ type SubRow = { user_id: string; endpoint: string; p256dh: string; auth: string 
 type TxRow = { user_id: string; type: string; amount: number; transaction_date: string };
 type BillRow = { user_id: string; name: string; amount: number; due_date: string; remind_days_before: number | null };
 
-type QueuedMsg = PushMsg & { notifId?: string };
+type QueuedMsg = PushMsg & { kind: PushKind; notifId?: string };
 
 const rp = (n: number) => 'Rp' + new Intl.NumberFormat('id-ID').format(Math.round(n));
 
@@ -156,7 +157,7 @@ export async function GET(request: Request) {
               if (nErr || !created) { report.errors.push('gantian notif: ' + (nErr?.message || 'insert gagal')); continue; }
               notifId = created.id;
             }
-            (gantianPush[m.user_id] = gantianPush[m.user_id] || []).push({ title, body: text, url: link, tag: `gantian-${b.id}`, notifId });
+            (gantianPush[m.user_id] = gantianPush[m.user_id] || []).push({ title, body: text, url: link, tag: `gantian-${b.id}`, kind: 'gantian', notifId });
           }
         }
       }
@@ -208,6 +209,12 @@ export async function GET(request: Request) {
   const bills = billsData as BillRow[] | null;
   const isMonday = dayOfWeek(today) === 1;
 
+  // Preferensi notifikasi per user (kunci kosong = aktif). Bila kolom belum ada, semua tetap dikirim.
+  const prefsByUser: Record<string, PushPrefs> = {};
+  const { data: prefRows, error: prefErr } = await admin.from('profiles').select('id,push_prefs').in('id', userIds);
+  if (prefErr) report.errors.push('push_prefs: ' + prefErr.message);
+  ((prefRows || []) as { id: string; push_prefs: unknown }[]).forEach((row) => { prefsByUser[row.id] = parsePushPrefs(row.push_prefs); });
+
   const queue: { uid: string; msgs: QueuedMsg[] }[] = [];
   for (const uid of userIds) {
     const msgs: QueuedMsg[] = [];
@@ -220,15 +227,15 @@ export async function GET(request: Request) {
       const b = dueBills[0];
       const d = diffDays(today, b.due_date);
       const when = d < 0 ? `telat ${-d} hari` : d === 0 ? 'jatuh tempo HARI INI' : d === 1 ? 'jatuh tempo besok' : `jatuh tempo ${d} hari lagi`;
-      msgs.push({ title: '🧾 Pengingat Tagihan', body: `${b.name} (${rp(b.amount)}) ${when}.`, url: '/bills', tag: 'bills' });
+      msgs.push({ title: '🧾 Pengingat Tagihan', body: `${b.name} (${rp(b.amount)}) ${when}.`, url: '/bills', tag: 'bills', kind: 'bills' });
     } else if (dueBills.length > 1) {
       const total = dueBills.reduce((s, b) => s + Number(b.amount), 0);
-      msgs.push({ title: '🧾 Pengingat Tagihan', body: `${dueBills.length} tagihan segera jatuh tempo, total ${rp(total)}.`, url: '/bills', tag: 'bills' });
+      msgs.push({ title: '🧾 Pengingat Tagihan', body: `${dueBills.length} tagihan segera jatuh tempo, total ${rp(total)}.`, url: '/bills', tag: 'bills', kind: 'bills' });
     }
 
     // b. Transaksi rutin yang baru tercatat otomatis
     if (createdByUser[uid]) {
-      msgs.push({ title: '🤖 Transaksi Rutin', body: `${createdByUser[uid]} transaksi rutin tercatat otomatis hari ini.`, url: '/transactions', tag: 'routine' });
+      msgs.push({ title: '🤖 Transaksi Rutin', body: `${createdByUser[uid]} transaksi rutin tercatat otomatis hari ini.`, url: '/transactions', tag: 'routine', kind: 'routine' });
     }
 
     // a2. Pengingat Gantian akhir bulan
@@ -241,7 +248,7 @@ export async function GET(request: Request) {
     const loggedToday = mine.filter((t) => t.transaction_date === today).length > (createdByUser[uid] || 0);
     const wasActive = mine.some((t) => t.transaction_date < today);
     if (!loggedToday && wasActive) {
-      msgs.push({ title: '📝 Sudah catat hari ini?', body: 'Belum ada pengeluaran yang kamu catat hari ini. Yuk catat sebelum lupa!', url: '/dashboard', tag: 'daily' });
+      msgs.push({ title: '📝 Sudah catat hari ini?', body: 'Belum ada pengeluaran yang kamu catat hari ini. Yuk catat sebelum lupa!', url: '/dashboard', tag: 'daily', kind: 'daily' });
     }
 
     // d. Ringkasan mingguan (Senin)
@@ -250,11 +257,12 @@ export async function GET(request: Request) {
       const inc = week.filter((t) => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0);
       const exp = week.filter((t) => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
       if (week.length > 0) {
-        msgs.push({ title: '📊 Ringkasan Minggu Lalu', body: `Masuk ${rp(inc)}, keluar ${rp(exp)}. Lihat detailnya di Laporan.`, url: '/reports', tag: 'weekly' });
+        msgs.push({ title: '📊 Ringkasan Minggu Lalu', body: `Masuk ${rp(inc)}, keluar ${rp(exp)}. Lihat detailnya di Laporan.`, url: '/reports', tag: 'weekly', kind: 'weekly' });
       }
     }
 
-    if (msgs.length > 0) queue.push({ uid, msgs });
+    const allowed = msgs.filter((m) => wantsPush(prefsByUser[uid], m.kind));
+    if (allowed.length > 0) queue.push({ uid, msgs: allowed });
   }
 
   // Kirim paralel per kelompok user. Satu endpoint yang lambat/gagal tidak menahan yang lain.

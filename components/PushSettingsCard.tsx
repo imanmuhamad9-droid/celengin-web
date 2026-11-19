@@ -4,6 +4,7 @@ import { errMsg } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import { Bell, Download, Send, Smartphone } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
+import { PUSH_KINDS, parsePushPrefs, wantsPush, type PushKind, type PushPrefs } from '@/lib/pushPrefs';
 
 // Event instal PWA (belum ada di tipe bawaan TypeScript).
 interface BeforeInstallPromptEvent extends Event {
@@ -32,6 +33,8 @@ export default function PushSettingsCard({ showDialog }: { showDialog: ShowDialo
   const [isIos, setIsIos] = useState(false);
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [busy, setBusy] = useState(false);
+  const [prefs, setPrefs] = useState<PushPrefs>({});
+  const [prefsReady, setPrefsReady] = useState(false);
 
   useEffect(() => {
     setIsIos(/iphone|ipad|ipod/i.test(navigator.userAgent));
@@ -50,6 +53,12 @@ export default function PushSettingsCard({ showDialog }: { showDialog: ShowDialo
         })
         .catch(() => setSubscribed(false));
     }
+
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) return;
+      const { data, error } = await supabase.from('profiles').select('push_prefs').eq('id', session.user.id).maybeSingle();
+      if (!error) { setPrefs(parsePushPrefs(data?.push_prefs)); setPrefsReady(true); }
+    });
 
     const onPrompt = (e: Event) => { e.preventDefault(); setInstallEvent(e as BeforeInstallPromptEvent); };
     const onInstalled = () => { setStandalone(true); setInstallEvent(null); };
@@ -131,6 +140,17 @@ export default function PushSettingsCard({ showDialog }: { showDialog: ShowDialo
 
   const iosNeedsInstall = isIos && !standalone;
 
+  // Simpan pilihan jenis notifikasi; dikembalikan bila gagal disimpan
+  const togglePref = async (kind: PushKind, on: boolean) => {
+    const before = prefs;
+    const next = { ...prefs, [kind]: on };
+    setPrefs(next);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setPrefs(before); return; }
+    const { error } = await supabase.from('profiles').update({ push_prefs: next }).eq('id', session.user.id);
+    if (error) { setPrefs(before); showDialog('Gagal', errMsg(error, 'Pilihan notifikasi gagal disimpan.'), 'danger'); }
+  };
+
   return (
     <div className="glass p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors">
       <h3 className="font-bold text-gray-800 dark:text-white mb-1">Aplikasi & Notifikasi</h3>
@@ -175,6 +195,21 @@ export default function PushSettingsCard({ showDialog }: { showDialog: ShowDialo
 
       {iosNeedsInstall && (
         <p className="text-[10px] text-orange-600 dark:text-orange-400 mt-2 leading-relaxed">Di iPhone/iPad, notifikasi hanya bisa diaktifkan setelah Celengin ditambahkan ke Layar Utama (iOS 16.4+). Buka aplikasi dari ikon di layar utama, lalu kembali ke sini.</p>
+      )}
+
+      {prefsReady && (
+        <div className="mt-3 rounded-2xl border border-gray-100 dark:border-gray-600 divide-y divide-gray-100 dark:divide-gray-600">
+          <p className="px-3 pt-2.5 pb-1.5 text-[10px] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Jenis notifikasi</p>
+          {PUSH_KINDS.map((k) => (
+            <div key={k.key} className="flex items-center justify-between gap-3 px-3 py-2">
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-gray-800 dark:text-gray-100">{k.label}</p>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400">{k.desc}</p>
+              </div>
+              <Toggle checked={wantsPush(prefs, k.key)} onChange={(v) => togglePref(k.key, v)} label={k.label} />
+            </div>
+          ))}
+        </div>
       )}
 
       {subscribed && (
