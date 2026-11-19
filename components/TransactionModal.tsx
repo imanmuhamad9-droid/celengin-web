@@ -12,7 +12,8 @@ import WalletChips from '@/components/WalletChips';
 import { triggerMoneyRain } from '@/components/MoneyRain';
 import DateField from '@/components/DateField';
 import { Btn, Toggle, RowActions } from '@/components/ui';
-import { scanReceipt } from '@/lib/receiptScan';
+import { recognizeReceipt, overallPercent } from '@/lib/receiptOcr';
+import { parseReceiptText } from '@/lib/receiptParser';
 
 type TxRow = {
   id: string;
@@ -124,7 +125,8 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
     if (!file.type.startsWith('image/')) return showDialog('Format Tidak Didukung', 'Pilih foto struk berformat gambar (JPG atau PNG).', 'danger');
     setScanning(true); setScanPct(0);
     try {
-      const r = await scanReceipt(file, setScanPct);
+      const parsed = parseReceiptText(await recognizeReceipt(file, (s, p) => setScanPct(overallPercent(s, p))));
+      const r = { amount: parsed.total ?? parsed.subtotal, date: parsed.date, merchant: parsed.merchant };
       setTxList(prev => {
         const base = prev.length > 0 ? prev : [createEmptyRow()];
         const [first, ...rest] = base;

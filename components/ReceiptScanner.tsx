@@ -1,7 +1,7 @@
 'use client';
 import { useRef, useState } from 'react';
 import { Camera, ImageIcon, ScanLine } from 'lucide-react';
-import { recognizeReceipt, OcrStage } from '@/lib/receiptOcr';
+import { recognizeReceipt, overallPercent, OcrStage } from '@/lib/receiptOcr';
 import { parseReceiptText, ParsedReceipt } from '@/lib/receiptParser';
 
 interface Props {
@@ -17,7 +17,6 @@ const STAGE_LABEL: Record<OcrStage, string> = {
   read: 'Membaca struk...',
 };
 // Bagian bilah progres untuk tiap tahap (persen total)
-const STAGE_RANGE: Record<OcrStage, [number, number]> = { prepare: [0, 8], download: [8, 40], read: [40, 100] };
 const MAX_BYTES = 15 * 1024 * 1024;
 
 export default function ReceiptScanner({ onResult, showDialog, multiple = false }: Props) {
@@ -39,9 +38,8 @@ export default function ReceiptScanner({ onResult, showDialog, multiple = false 
     setPercent(0);
     try {
       const text = await recognizeReceipt(file, (s, p) => {
-        const [from, to] = STAGE_RANGE[s];
         setStage(s);
-        setPercent(Math.round(from + ((to - from) * Math.min(100, p)) / 100));
+        setPercent(overallPercent(s, p));
       });
       setRawText(text);
       const parsed = parseReceiptText(text);

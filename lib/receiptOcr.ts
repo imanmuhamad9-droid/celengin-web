@@ -5,6 +5,14 @@
 export type OcrStage = 'prepare' | 'download' | 'read';
 export type OcrProgress = (stage: OcrStage, percent: number) => void;
 
+const STAGE_RANGE: Record<OcrStage, [number, number]> = { prepare: [0, 8], download: [8, 40], read: [40, 100] };
+
+/** Gabungkan tahap + persen tahap (0-100) menjadi satu persen keseluruhan untuk progress bar. */
+export function overallPercent(stage: OcrStage, percent: number): number {
+  const [from, to] = STAGE_RANGE[stage];
+  return Math.round(from + ((to - from) * Math.min(100, percent)) / 100);
+}
+
 const MAX_SIDE = 1800; // sisi terpanjang gambar (px). Lebih besar = lebih akurat tapi lebih lambat.
 
 /** Muat gambar dengan orientasi EXIF yang benar (foto HP sering tersimpan miring). */
