@@ -201,8 +201,8 @@ export default function SettingsPage() {
     if (newNickname === profile?.nickname) { setIsNicknameAvailable(true); return; }
     const checkNickname = async () => {
       setIsCheckingNickname(true);
-      const { data } = await supabase.from('profiles').select('nickname').eq('nickname', newNickname).single();
-      setIsNicknameAvailable(!data);
+      const { data, error } = await supabase.rpc('nickname_available', { n: newNickname });
+      setIsNicknameAvailable(error ? true : data === true);
       setIsCheckingNickname(false);
     };
     const timer = setTimeout(checkNickname, 500);

@@ -30,8 +30,9 @@ export default function RegisterPage() {
     if (nickname.length < 3) { setIsNicknameAvailable(null); return; }
     const checkNickname = async () => {
       setIsCheckingNickname(true);
-      const { data } = await supabase.from('profiles').select('nickname').eq('nickname', nickname).single();
-      setIsNicknameAvailable(!data);
+      const { data, error } = await supabase.rpc('nickname_available', { n: nickname });
+      // Gagal cek (jaringan/RPC): jangan menyatakan "sudah dipakai"; indeks unik di database tetap menjaga.
+      setIsNicknameAvailable(error ? true : data === true);
       setIsCheckingNickname(false);
     };
     const timer = setTimeout(checkNickname, 500);
