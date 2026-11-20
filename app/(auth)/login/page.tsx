@@ -79,7 +79,7 @@ export default function LoginPage() {
       <AuthShell
         title="Selamat Datang Kembali"
         subtitle="Masuk ke Celengin."
-        footer={<>Belum punya akun? <Link href="/register" className="text-teal-600 dark:text-teal-400 font-bold hover:underline">Daftar di sini</Link></>}
+        footer={<>Belum punya akun? <Link href="/register" className="text-sky-600 dark:text-sky-400 font-bold hover:underline">Daftar di sini</Link></>}
       >
         {errorMsg && (
           <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs p-3 rounded-2xl mb-4 border border-red-100 dark:border-red-800/40">
@@ -102,7 +102,7 @@ export default function LoginPage() {
           <div>
             <div className="flex justify-between items-center mb-1.5">
               <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200">Password</label>
-              <button type="button" onClick={() => setIsResetModalOpen(true)} className="text-xs font-bold text-teal-600 dark:text-teal-400 hover:underline">Lupa Password?</button>
+              <button type="button" onClick={() => setIsResetModalOpen(true)} className="text-xs font-bold text-sky-600 dark:text-sky-400 hover:underline">Lupa Password?</button>
             </div>
             <div className="relative">
               <Lock className={authIcon} />

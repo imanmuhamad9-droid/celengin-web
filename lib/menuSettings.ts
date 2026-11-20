@@ -1,12 +1,12 @@
-// Pengaturan "Menu tambahan": menu yang boleh muncul di hamburger (menggantikan gelembung Catat).
+// Pengaturan "Menu tambahan": menu yang boleh muncul di strip Menu Cepat di Home.
 // Disimpan di perangkat dulu (langsung terasa), lalu ke profil supaya ikut ke perangkat lain.
 // Gagal di profil (kolom belum ada) = diabaikan; pengaturan tetap jalan di perangkat ini.
 import { useSyncExternalStore } from 'react';
 import type { ComponentType } from 'react';
-import { CreditCard, History, Landmark, PieChart, Receipt, ShieldCheck, Trophy, Wallet } from 'lucide-react';
+import { CreditCard, History, Landmark, PieChart, Receipt, ShieldCheck, Target, Trophy, Wallet } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 
-export type ExtraMenuKey = 'riwayat' | 'tagihan' | 'pencapaian' | 'dompet' | 'darurat' | 'anggaran' | 'kekayaan' | 'cicilan';
+export type ExtraMenuKey = 'riwayat' | 'tagihan' | 'pencapaian' | 'dompet' | 'darurat' | 'anggaran' | 'kekayaan' | 'cicilan' | 'tantangan';
 
 export interface ExtraMenuDef {
   key: ExtraMenuKey;
@@ -21,6 +21,7 @@ export interface ExtraMenuDef {
 export const EXTRA_MENUS: ExtraMenuDef[] = [
   { key: 'riwayat', label: 'Riwayat', desc: 'Semua transaksi', href: '/transactions', group: 'menu', Icon: History },
   { key: 'tagihan', label: 'Tagihan', desc: 'Pengingat tagihan dan rutin', href: '/bills', group: 'menu', Icon: Receipt },
+  { key: 'tantangan', label: 'Tantangan', desc: 'Batas pengeluaran harian, mingguan, atau bulanan', href: '/spending-challenge', group: 'menu', Icon: Target },
   { key: 'pencapaian', label: 'Pencapaian', desc: 'Badge bonus buat kamu', href: '/badges', group: 'menu', Icon: Trophy },
   { key: 'dompet', label: 'Dompet', desc: 'Saldo tiap rekening dan e-wallet. On juga memunculkan pilihan dompet saat Catat.', href: '/wallets', group: 'fitur', Icon: Wallet },
   { key: 'darurat', label: 'Dana Darurat', desc: 'Target otomatis dari pengeluaranmu dan progres menabungnya', href: '/emergency-fund', group: 'fitur', Icon: ShieldCheck },
@@ -64,7 +65,7 @@ function subscribe(cb: () => void) {
   };
 }
 
-/** Menu tambahan yang sedang dinyalakan (kosong = tidak ada hamburger, hanya tombol Catat). */
+/** Menu tambahan yang sedang dinyalakan (kosong = strip Menu Cepat disembunyikan). */
 export function useExtraMenus(): ExtraMenuKey[] {
   return useSyncExternalStore(subscribe, snapshot, () => EMPTY);
 }

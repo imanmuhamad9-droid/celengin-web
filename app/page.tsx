@@ -53,15 +53,15 @@ export default function LoginPage() {
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 text-gray-900" placeholder="kamu@email.com" required />
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-sky-500 text-gray-900" placeholder="kamu@email.com" required />
           </div>
           <div>
             <div className="flex justify-between items-center mb-1">
               <label className="block text-sm font-medium text-gray-700">Password</label>
-              <button type="button" onClick={() => setIsResetModalOpen(true)} className="text-xs font-semibold text-teal-600 hover:underline">Lupa Password?</button>
+              <button type="button" onClick={() => setIsResetModalOpen(true)} className="text-xs font-semibold text-sky-600 hover:underline">Lupa Password?</button>
             </div>
             <div className="relative">
-              <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full pl-4 pr-12 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-teal-500 text-gray-900" placeholder="Password kamu" required />
+              <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full pl-4 pr-12 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-sky-500 text-gray-900" placeholder="Password kamu" required />
               <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-3.5 text-gray-400 hover:text-gray-600 transition-colors">
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
@@ -73,7 +73,7 @@ export default function LoginPage() {
         </form>
 
         <p className="text-center text-sm text-gray-500 mt-6">
-          Belum punya akun? <Link href="/register" className="text-teal-600 font-semibold hover:underline">Daftar di sini</Link>
+          Belum punya akun? <Link href="/register" className="text-sky-600 font-semibold hover:underline">Daftar di sini</Link>
         </p>
       </div>
 
@@ -86,7 +86,7 @@ export default function LoginPage() {
             <form onSubmit={handleResetPassword} className="space-y-4">
               <div className="relative">
                 <Mail className="w-5 h-5 text-gray-400 absolute left-3 top-3" />
-                <input type="email" value={resetEmail} onChange={e => setResetEmail(e.target.value)} required className="w-full pl-10 pr-4 py-3 border rounded-xl text-sm focus:ring-2 focus:ring-teal-500" placeholder="Email terdaftar" />
+                <input type="email" value={resetEmail} onChange={e => setResetEmail(e.target.value)} required className="w-full pl-10 pr-4 py-3 border rounded-xl text-sm focus:ring-2 focus:ring-sky-500" placeholder="Email terdaftar" />
               </div>
               <button type="submit" disabled={resetLoading} className="glass glass-solid-teal w-full font-bold py-3.5 rounded-xl transition-all mt-2 disabled:opacity-50">
                 {resetLoading ? 'Mengirim...' : 'Kirim Link Reset'}

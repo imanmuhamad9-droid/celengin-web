@@ -86,7 +86,7 @@ export default function TargetPage() {
                 <div key={target.id} className="glass rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-gray-700 relative transition-colors">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <CalendarDays className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                      <CalendarDays className="w-4 h-4 text-sky-600 dark:text-sky-400" />
                       <div>
                         <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100 capitalize">{target.period_type === 'custom' ? 'Custom' : target.period_type}</h3>
                         <p className="text-[10px] text-gray-500 dark:text-gray-400">{formatDate(target.start_date)} - {formatDate(target.end_date)}</p>

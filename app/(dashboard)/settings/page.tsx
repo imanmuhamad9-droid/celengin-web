@@ -49,7 +49,7 @@ const INPUT = 'glass w-full h-12 px-4 rounded-2xl border text-gray-900 dark:text
 function Row({ icon, title, sub, onClick, danger }: { icon: React.ReactNode; title: string; sub?: string; onClick: () => void; danger?: boolean }) {
   return (
     <button onClick={onClick} className="glass w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors">
-      <span className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${danger ? 'bg-red-50 dark:bg-red-900/30 text-red-500' : 'bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400'}`}>{icon}</span>
+      <span className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${danger ? 'bg-red-50 dark:bg-red-900/30 text-red-500' : 'bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400'}`}>{icon}</span>
       <span className="flex-1 min-w-0">
         <span className={`block text-sm font-bold ${danger ? 'text-red-500' : 'text-gray-800 dark:text-gray-100'}`}>{title}</span>
         {sub && <span className="block text-xs text-gray-500 dark:text-gray-400 truncate">{sub}</span>}
@@ -86,7 +86,7 @@ function BgSlider({ label, value, min, max, disabled, onChange }: { label: strin
       <span className="flex justify-between text-xs font-bold text-gray-700 dark:text-gray-200 mb-1.5">
         <span>{label}</span><span className="text-[color:var(--teal-primary)]">{value}%</span>
       </span>
-      <input type="range" min={min} max={max} step={1} value={value} disabled={disabled} onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-teal-600" aria-label={label} />
+      <input type="range" min={min} max={max} step={1} value={value} disabled={disabled} onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-sky-600" aria-label={label} />
     </label>
   );
 }
@@ -226,7 +226,7 @@ export default function SettingsPage() {
     }
   };
 
-  // Ukuran "sedang" dan warna "aqua" adalah bawaan, jadi atributnya cukup dihapus
+  // Ukuran "sedang" dan warna "biru langit" adalah bawaan, jadi atributnya cukup dihapus
   const handleSizeChange = (s: 'kecil' | 'sedang' | 'besar') => {
     setUiSize(s);
     localStorage.setItem('ui-size', s);
@@ -417,7 +417,7 @@ export default function SettingsPage() {
   });
   const SaveBar = ({ label }: { label: string }) => (
     <>
-      {msg && <p className="text-center text-sm font-bold text-teal-600 dark:text-teal-400">{msg}</p>}
+      {msg && <p className="text-center text-sm font-bold text-sky-600 dark:text-sky-400">{msg}</p>}
       <button onClick={handleSave} disabled={isSaving} className={BTN_MAIN}><Save className="w-5 h-5" /> {isSaving ? 'Menyimpan...' : label}</button>
     </>
   );
@@ -439,12 +439,12 @@ export default function SettingsPage() {
         {view === 'hub' && (
           <>
             <button onClick={() => go('profil')} className={`${CARD} w-full flex items-center gap-4 text-left active:scale-[0.99] transition-transform`}>
-              <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 border-2 border-teal-500 shadow-md shrink-0 flex items-center justify-center">
+              <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 border-2 border-sky-500 shadow-md shrink-0 flex items-center justify-center">
                 {profile?.avatar_url ? <img src={profile.avatar_url} alt="Profil" className="w-full h-full object-cover" /> : <User className="w-8 h-8 text-gray-400" />}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-lg font-extrabold text-gray-900 dark:text-white truncate">{profile?.nickname || 'Sobat'}</p>
-                <p className="text-xs text-teal-600 dark:text-teal-400 font-bold">Ubah profil</p>
+                <p className="text-xs text-sky-600 dark:text-sky-400 font-bold">Ubah profil</p>
               </div>
               <ChevronRight className="w-5 h-5 text-gray-300 dark:text-gray-500 shrink-0" />
             </button>
@@ -465,7 +465,7 @@ export default function SettingsPage() {
             <Group label="Aplikasi">
               <Row icon={<Palette className="w-5 h-5" />} title="Tampilan" sub={themeLabel} onClick={() => go('tampilan')} />
               <Row icon={<Sparkles className="w-5 h-5" />} title="Tema Latar" sub={bgLabel} onClick={() => go('latar')} />
-              <Row icon={<MenuIcon className="w-5 h-5" />} title="Menu Tambahan" sub={extraMenus.length > 0 ? `${extraMenus.length} menu di hamburger` : 'Belum ada, tombol Catat tampil biasa'} onClick={() => go('menu')} />
+              <Row icon={<MenuIcon className="w-5 h-5" />} title="Menu Tambahan" sub={extraMenus.length > 0 ? `${extraMenus.length} menu di Home` : 'Belum ada, kotak menu di Home disembunyikan'} onClick={() => go('menu')} />
               <Row icon={<Bell className="w-5 h-5" />} title="Notifikasi" sub="Pengingat di HP kamu" onClick={() => go('notif')} />
               <Row icon={<Trophy className="w-5 h-5" />} title="Pencapaian" sub="Badge bonus buat kamu" onClick={() => router.push('/badges')} />
             </Group>
@@ -480,7 +480,7 @@ export default function SettingsPage() {
         {view === 'profil' && (
           <>
             <div className="rounded-3xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-700 glass">
-              <div className="h-32 bg-cover bg-center relative" style={{ backgroundColor: profile?.theme_color || '#0f766e', ...(profile?.cover_url ? { backgroundImage: `url(${profile.cover_url})` } : {}) }}>
+              <div className="h-32 bg-cover bg-center relative" style={{ backgroundColor: profile?.theme_color || '#0369a1', ...(profile?.cover_url ? { backgroundImage: `url(${profile.cover_url})` } : {}) }}>
                 {profile?.cover_url && <div className="absolute inset-0 bg-black/20" />}
               </div>
               <div className="flex flex-col items-center -mt-12 pb-5">
@@ -518,7 +518,7 @@ export default function SettingsPage() {
                 {newNickname.length >= 3 && <div className="absolute right-4 top-1/2 -translate-y-1/2">{isCheckingNickname ? <span className="text-xs text-gray-400">Cek...</span> : isNicknameAvailable ? <span className="text-xs text-green-600 dark:text-green-400 font-bold">Tersedia</span> : <span className="text-xs text-red-500 font-bold">Dipakai</span>}</div>}
               </div>
               <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1.5">Minimal 3 huruf, tanpa spasi. Nickname juga bisa dipakai untuk masuk.</p>
-              {nickMsg && <p className="text-xs font-bold text-teal-600 dark:text-teal-400 mt-2">{nickMsg}</p>}
+              {nickMsg && <p className="text-xs font-bold text-sky-600 dark:text-sky-400 mt-2">{nickMsg}</p>}
               <button onClick={handleUpdateNickname} disabled={isSavingNickname || !isNicknameAvailable || newNickname.length < 3 || newNickname === profile?.nickname} className={`${BTN_MAIN}mt-3`}>{isSavingNickname ? 'Menyimpan...' : 'Simpan Nickname'}</button>
             </div>
           </>
@@ -556,7 +556,7 @@ export default function SettingsPage() {
                 <option key={d} value={d}>{d === 1 ? 'Tanggal 1 (bulan kalender)' : `Tanggal ${d}`}</option>
               ))}
             </select>
-            {todayStr && <p className="text-xs text-teal-700 dark:text-teal-400 font-bold mt-3">Siklus saat ini: {cycleFor(todayStr, { day: payday, shift: payShift }).label}</p>}
+            {todayStr && <p className="text-xs text-sky-700 dark:text-sky-400 font-bold mt-3">Siklus saat ini: {cycleFor(todayStr, { day: payday, shift: payShift }).label}</p>}
 
             <p className="text-sm font-bold text-gray-800 dark:text-gray-100 mt-5 mb-1">Kalau tanggal gajian jatuh di akhir pekan atau libur</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{payday === 1 ? 'Tanggal 1 memakai bulan kalender biasa, jadi tidak digeser.' : 'Gajian sering dibayar lebih awal atau lebih lambat. Pilih yang sesuai dengan tempat kerjamu.'}</p>
@@ -568,7 +568,7 @@ export default function SettingsPage() {
               ] as const).map(([val, title, sub]) => (
                 <button key={val} type="button" role="radio" aria-checked={payShift === val} disabled={payday === 1}
                   onClick={() => handleShiftChange(val)}
-                  className={`w-full text-left p-3 rounded-2xl border-2 transition-all active:scale-[0.99] disabled:opacity-40 ${payShift === val ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20' : 'border-gray-200 dark:border-gray-600'}`}>
+                  className={`w-full text-left p-3 rounded-2xl border-2 transition-all active:scale-[0.99] disabled:opacity-40 ${payShift === val ? 'border-sky-500 bg-sky-50 dark:bg-sky-900/20' : 'border-gray-200 dark:border-gray-600'}`}>
                   <span className="block text-sm font-bold text-gray-800 dark:text-gray-100">{title}</span>
                   <span className="block text-xs text-gray-500 dark:text-gray-400">{sub}</span>
                 </button>
@@ -590,7 +590,7 @@ export default function SettingsPage() {
                 <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-2">Hari libur nasional dan cuti bersama tercatat sampai 2027. Sesudah itu hanya Sabtu dan Minggu yang dihitung.</p>
               </div>
             )}
-            {msg && <p className="text-xs font-bold text-teal-600 dark:text-teal-400 mt-2">{msg}</p>}
+            {msg && <p className="text-xs font-bold text-sky-600 dark:text-sky-400 mt-2">{msg}</p>}
             {!shiftReady && <p className="text-[11px] text-orange-600 dark:text-orange-400 mt-2">Kolom pengaturan hari kerja belum ada. Jalankan sql/06_payday_shift.sql di Supabase dulu.</p>}
             {!paydayReady && <p className="text-[11px] text-orange-600 dark:text-orange-400 mt-2">Kolom tanggal gajian belum ada. Jalankan sql/08_payday.sql di Supabase dulu.</p>}
           </div>
@@ -727,9 +727,9 @@ export default function SettingsPage() {
         {view === 'menu' && (
           <>
             <div className={CARD}>
-              <p className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-1">Menu di hamburger</p>
+              <p className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-1">Menu cepat di Home</p>
               <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                Menu yang kamu nyalakan muncul di tombol hamburger, menggantikan tombol Catat. Catat tetap ada di dalam hamburger. Kalau semuanya dimatikan, hamburger hilang dan tombol Catat kembali seperti biasa.
+                Menu yang kamu nyalakan muncul sebagai kotak yang bisa digeser ke samping di Home. Kalau semuanya dimatikan, kotak itu hilang.
               </p>
             </div>
             {(['menu', 'fitur'] as const).map((g) => (

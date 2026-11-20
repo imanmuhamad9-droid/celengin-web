@@ -11,6 +11,7 @@ import DateField from '@/components/DateField';
 import ReceiptScanner from '@/components/ReceiptScanner';
 import type { ParsedAdj, ParsedReceipt } from '@/lib/receiptParser';
 
+import SegmentedControl from '@/components/SegmentedControl';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
@@ -25,7 +26,7 @@ interface Props {
 interface ItemDraft { key: string; name: string; priceDisplay: string; priceRaw: number; qtyText: string; memberIds: string[] }
 interface AdjDraft { mode: AdjMode; display: string; raw: number }
 
-const inputCls = 'w-full min-w-0 h-11 px-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm focus:ring-2 focus:ring-teal-500';
+const inputCls = 'w-full min-w-0 h-11 px-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm focus:ring-2 focus:ring-sky-500';
 const labelCls = 'block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1';
 let keySeq = 0;
 const newItem = (): ItemDraft => ({ key: `i${++keySeq}`, name: '', priceDisplay: '', priceRaw: 0, qtyText: '1', memberIds: [] });
@@ -34,7 +35,7 @@ const emptyAdj = (mode: AdjMode): AdjDraft => ({ mode, display: '', raw: 0 });
 function StepTitle({ n, title, hint }: { n: number; title: string; hint?: string }) {
   return (
     <div className="flex items-start gap-2 mb-2">
-      <span className="w-5 h-5 rounded-full bg-teal-600 text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">{n}</span>
+      <span className="w-5 h-5 rounded-full bg-sky-600 text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">{n}</span>
       <div className="min-w-0">
         <p className="text-sm font-bold text-gray-800 dark:text-gray-100">{title}</p>
         {hint && <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-snug">{hint}</p>}
@@ -231,19 +232,15 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
 
         <form onSubmit={save} className="flex-1 overflow-y-auto px-5 pb-5 space-y-5">
           {/* Mode */}
-          <div className="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-xl">
-            {isG ? (
-              <>
-            <button type="button" onClick={() => setMode('quick')} className={`flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 ${mode === 'quick' ? 'glass text-teal-700 dark:text-teal-300' : 'text-gray-500 dark:text-gray-300'}`}><Calculator className="w-4 h-4" /> {isG ? 'Satu barang' : 'Total saja'}</button>
-            <button type="button" onClick={() => setMode('items')} className={`flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 ${mode === 'items' ? 'glass text-teal-700 dark:text-teal-300' : 'text-gray-500 dark:text-gray-300'}`}><Receipt className="w-4 h-4" /> {isG ? 'Banyak barang (struk)' : 'Struk per item'}</button>
-              </>
-            ) : (
-              <>
-            <button type="button" onClick={() => setMode('items')} className={`flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 ${mode === 'items' ? 'glass text-teal-700 dark:text-teal-300' : 'text-gray-500 dark:text-gray-300'}`}><Receipt className="w-4 h-4" /> {isG ? 'Banyak barang (struk)' : 'Struk per item'}</button>
-            <button type="button" onClick={() => setMode('quick')} className={`flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 ${mode === 'quick' ? 'glass text-teal-700 dark:text-teal-300' : 'text-gray-500 dark:text-gray-300'}`}><Calculator className="w-4 h-4" /> {isG ? 'Satu barang' : 'Total saja'}</button>
-              </>
-            )}
-          </div>
+          <SegmentedControl
+            options={(() => {
+              const quick = { value: 'quick' as const, label: <><Calculator className="w-4 h-4" /> {isG ? 'Satu barang' : 'Total saja'}</> };
+              const items = { value: 'items' as const, label: <><Receipt className="w-4 h-4" /> {isG ? 'Banyak barang (struk)' : 'Struk per item'}</> };
+              return isG ? [quick, items] : [items, quick];
+            })()}
+            value={mode}
+            onChange={setMode}
+          />
 
           {/* 1. Info */}
           <section>
@@ -346,12 +343,12 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
               {/* 4. Hasil */}
               <section>
                 <StepTitle n={4} title="Hasil hitungan" />
-                <div className="rounded-2xl bg-teal-700 text-white p-4 text-xs space-y-1">
-                  <div className="flex justify-between"><span className="text-teal-100">Subtotal</span><span>{formatRupiah(result.subtotal)}</span></div>
-                  {result.discount > 0 && <div className="flex justify-between"><span className="text-teal-100">Diskon</span><span>-{formatRupiah(result.discount)}</span></div>}
-                  {result.service > 0 && <div className="flex justify-between"><span className="text-teal-100">Service</span><span>+{formatRupiah(result.service)}</span></div>}
-                  {result.tax > 0 && <div className="flex justify-between"><span className="text-teal-100">Pajak</span><span>+{formatRupiah(result.tax)}</span></div>}
-                  <div className="flex justify-between pt-2 mt-1 border-t border-teal-500 text-sm font-bold"><span>Total tagihan</span><span>{formatRupiah(result.total)}</span></div>
+                <div className="rounded-2xl bg-sky-700 text-white p-4 text-xs space-y-1">
+                  <div className="flex justify-between"><span className="text-sky-100">Subtotal</span><span>{formatRupiah(result.subtotal)}</span></div>
+                  {result.discount > 0 && <div className="flex justify-between"><span className="text-sky-100">Diskon</span><span>-{formatRupiah(result.discount)}</span></div>}
+                  {result.service > 0 && <div className="flex justify-between"><span className="text-sky-100">Service</span><span>+{formatRupiah(result.service)}</span></div>}
+                  {result.tax > 0 && <div className="flex justify-between"><span className="text-sky-100">Pajak</span><span>+{formatRupiah(result.tax)}</span></div>}
+                  <div className="flex justify-between pt-2 mt-1 border-t border-sky-500 text-sm font-bold"><span>Total tagihan</span><span>{formatRupiah(result.total)}</span></div>
                 </div>
                 {result.unassigned.length > 0 && (
                   <p className="mt-2 text-[11px] font-bold text-yellow-700 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-2.5">{result.unassigned.length} item belum dipilih pemakainya (kotak berwarna kuning di atas).</p>
@@ -364,7 +361,7 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
                       <div key={m.id} className="rounded-xl border border-gray-100 dark:border-gray-700 p-3">
                         <div className="flex justify-between items-center gap-2">
                           <span className="font-bold text-sm text-gray-800 dark:text-gray-100 truncate">{m.name}</span>
-                          <span className="font-bold text-sm text-teal-700 dark:text-teal-300 shrink-0">{formatRupiah(b.total)}</span>
+                          <span className="font-bold text-sm text-sky-700 dark:text-sky-300 shrink-0">{formatRupiah(b.total)}</span>
                         </div>
                         <div className="mt-1.5 space-y-0.5">
                           {b.lines.map((l) => <p key={l.key} className="text-[10px] text-gray-500 dark:text-gray-400 flex justify-between gap-2"><span className="truncate">{l.name}</span><span className="shrink-0">{formatRupiah(l.amount)}</span></p>)}
@@ -384,10 +381,7 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
               <StepTitle n={2} title="Total dan pembagian" />
               <div className="space-y-3">
                 <div><label className={labelCls}>Total tagihan (Rp)</label><input inputMode="numeric" value={qTotalDisplay} onChange={(e) => { const p = parseRupiahInput(e.target.value); setQTotal(p.raw); setQTotalDisplay(p.display); }} placeholder="0" className={`${inputCls} font-bold`} /></div>
-                <div className="flex gap-2">
-                  <button type="button" onClick={() => setQSplit('equal')} className={`flex-1 py-2 rounded-xl text-xs font-bold border-2 ${qSplit === 'equal' ? 'glass glass-teal' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}>Bagi rata</button>
-                  <button type="button" onClick={() => setQSplit('custom')} className={`flex-1 py-2 rounded-xl text-xs font-bold border-2 ${qSplit === 'custom' ? 'glass glass-teal' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}>Atur sendiri</button>
-                </div>
+                <SegmentedControl options={[{ value: 'equal', label: 'Bagi rata' }, { value: 'custom', label: 'Atur sendiri' }]} value={qSplit} onChange={setQSplit} />
                 {isG && members.length > 1 && (
                   <div>
                     <label className={labelCls}>Untuk siapa</label>

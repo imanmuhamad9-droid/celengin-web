@@ -122,7 +122,7 @@ export default function PhotoCropper({ file, shape, aspect, outWidth, title, onC
 
         <div className="flex items-center gap-3 mt-4">
           <button type="button" onClick={() => changeZoom(zoom - 0.25)} aria-label="Perkecil" className="glass w-9 h-9 shrink-0 rounded-xl text-gray-600 dark:text-gray-200 flex items-center justify-center"><Minus className="w-4 h-4" /></button>
-          <input type="range" min={1} max={MAX_ZOOM} step={0.05} value={zoom} onChange={(e) => changeZoom(Number(e.target.value))} className="flex-1 accent-teal-600" aria-label="Zoom" />
+          <input type="range" min={1} max={MAX_ZOOM} step={0.05} value={zoom} onChange={(e) => changeZoom(Number(e.target.value))} className="flex-1 accent-sky-600" aria-label="Zoom" />
           <button type="button" onClick={() => changeZoom(zoom + 0.25)} aria-label="Perbesar" className="glass w-9 h-9 shrink-0 rounded-xl text-gray-600 dark:text-gray-200 flex items-center justify-center"><Plus className="w-4 h-4" /></button>
         </div>
 

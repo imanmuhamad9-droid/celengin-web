@@ -152,7 +152,7 @@ export default function RecurringRulesModal({ isOpen, onClose, showDialog, legac
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Nominal</label>
                 <div className="relative">
                   <span className="absolute left-3 top-2.5 text-gray-500 dark:text-gray-400 font-bold text-sm">Rp</span>
-                  <input type="text" inputMode="numeric" value={editAmountDisplay} onChange={handleEditAmount} placeholder="0" className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 text-sm font-bold" />
+                  <input type="text" inputMode="numeric" value={editAmountDisplay} onChange={handleEditAmount} placeholder="0" className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 text-sm font-bold" />
                 </div>
               </div>
 
@@ -164,7 +164,7 @@ export default function RecurringRulesModal({ isOpen, onClose, showDialog, legac
               </div>
 
               {previewNext && (
-                <p className="text-[11px] font-semibold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-900/20 border border-teal-100 dark:border-teal-800 rounded-xl px-3 py-2">
+                <p className="text-[11px] font-semibold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-900/20 border border-sky-100 dark:border-sky-800 rounded-xl px-3 py-2">
                   Dicatat otomatis berikutnya: {formatDateID(previewNext)}
                 </p>
               )}
@@ -194,7 +194,7 @@ export default function RecurringRulesModal({ isOpen, onClose, showDialog, legac
                     <p className="font-bold text-gray-800 dark:text-gray-100 text-sm truncate">{rule.merchant_name}</p>
                     <p className={`text-xs font-bold mt-0.5 ${rule.type === 'income' ? 'text-green-600' : 'text-red-500'}`}>{rule.type === 'income' ? '+' : '-'}{formatRupiah(rule.amount)}</p>
                     <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{describeFrequency(rule)}</p>
-                    <p className="text-[10px] text-teal-600 dark:text-teal-400 font-semibold">{rule.is_active ? `Berikutnya: ${formatDateID(rule.next_run_date)}` : 'Dijeda'}</p>
+                    <p className="text-[10px] text-sky-600 dark:text-sky-400 font-semibold">{rule.is_active ? `Berikutnya: ${formatDateID(rule.next_run_date)}` : 'Dijeda'}</p>
                   </div>
                   <div className="flex items-center justify-between gap-2 mt-3">
                     <Toggle checked={rule.is_active} onChange={() => toggleActive(rule)} label="Aktifkan transaksi rutin" onText="Aktif" offText="Jeda" />

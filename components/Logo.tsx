@@ -8,7 +8,7 @@ export default function Logo({ size = 32 }: { size?: number }) {
         height={size} 
         className="rounded-xl object-contain"
       />
-      <span className="font-bold text-xl text-teal-800 dark:text-teal-400">Celengin.</span>
+      <span className="font-bold text-xl text-sky-800 dark:text-sky-400">Celengin.</span>
     </div>
   );
 }

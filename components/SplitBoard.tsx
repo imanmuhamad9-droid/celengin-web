@@ -21,6 +21,7 @@ import SubTabs, { SPLIT_TABS } from '@/components/SubTabs';
 import { Btn } from '@/components/ui';
 import SkeletonLoader from '@/components/SkeletonLoader';
 
+import SegmentedControl from '@/components/SegmentedControl';
 interface GroupCard extends SplitGroup { memberCount: number; total: number }
 interface Invite { memberId: string; group: SplitGroup }
 
@@ -73,7 +74,7 @@ function labelsFor(running: boolean) {
     sqlFile: 'sql/03_splitbill.sql',
   };
 }
-const inputCls = 'w-full min-w-0 h-11 px-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm focus:ring-2 focus:ring-teal-500';
+const inputCls = 'w-full min-w-0 h-11 px-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm focus:ring-2 focus:ring-sky-500';
 
 export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
   const router = useRouter();
@@ -479,10 +480,10 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
           <p className="text-[10px] font-bold text-gray-700 dark:text-gray-200 truncate">{m.bank_name || 'Rekening'}</p>
           <p className="text-[11px] font-mono text-gray-600 dark:text-gray-300 truncate">{m.account_number}{m.account_holder ? ` · a/n ${m.account_holder}` : ''}</p>
         </div>
-        <button onClick={() => copyText(m.account_number!)} className="shrink-0 p-1.5 rounded-lg border border-gray-200 dark:border-gray-600 text-teal-600 dark:text-teal-400" aria-label="Salin nomor rekening"><Copy className="w-3.5 h-3.5" /></button>
+        <button onClick={() => copyText(m.account_number!)} className="shrink-0 p-1.5 rounded-lg border border-gray-200 dark:border-gray-600 text-sky-600 dark:text-sky-400" aria-label="Salin nomor rekening"><Copy className="w-3.5 h-3.5" /></button>
       </div>
     ) : (
-      <p className="mt-1.5 text-[10px] text-gray-400">Belum ada info rekening {m.name}.{(isOwner || isMine(m)) && <button onClick={() => openBank(m)} className="ml-1 font-bold text-teal-600 dark:text-teal-400">Isi sekarang</button>}</p>
+      <p className="mt-1.5 text-[10px] text-gray-400">Belum ada info rekening {m.name}.{(isOwner || isMine(m)) && <button onClick={() => openBank(m)} className="ml-1 font-bold text-sky-600 dark:text-sky-400">Isi sekarang</button>}</p>
     )
   );
 
@@ -512,7 +513,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
               <div className="space-y-2">
                 <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Undangan Masuk</p>
                 {invites.map((inv) => (
-                  <div key={inv.memberId} className="glass border border-teal-200 dark:border-teal-800 p-4 rounded-2xl">
+                  <div key={inv.memberId} className="glass border border-sky-200 dark:border-sky-800 p-4 rounded-2xl">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="min-w-0"><p className="text-[11px] text-gray-500 dark:text-gray-400">{L.inviteLabel}</p><p className="font-bold text-sm text-gray-800 dark:text-white truncate">{inv.group.name}</p></div>
                     </div>
@@ -546,22 +547,22 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
         {group && (
           <>
             {isRunning ? (
-              <div className="bg-teal-700 text-white rounded-3xl p-5 shadow-lg">
+              <div className="bg-sky-700 text-white rounded-3xl p-5 shadow-lg">
                 {expenses.length === 0 ? (
-                  <><p className="text-[11px] text-teal-100">Saldo</p><p className="text-lg font-bold">Belum ada catatan</p></>
+                  <><p className="text-[11px] text-sky-100">Saldo</p><p className="text-lg font-bold">Belum ada catatan</p></>
                 ) : debts.length === 0 ? (
-                  <><p className="text-[11px] text-teal-100">Saldo</p><p className="text-2xl font-bold">Impas 🎉</p><p className="text-[11px] text-teal-100 mt-0.5">Tidak ada yang perlu dibayar.</p></>
+                  <><p className="text-[11px] text-sky-100">Saldo</p><p className="text-2xl font-bold">Impas 🎉</p><p className="text-[11px] text-sky-100 mt-0.5">Tidak ada yang perlu dibayar.</p></>
                 ) : (
                   (myDebts.length > 0 ? myDebts : debts.slice(0, 1)).map((d, i) => (
                     <div key={i} className={i > 0 ? 'mt-3' : ''}>
-                      <p className="text-[11px] text-teal-100">
+                      <p className="text-[11px] text-sky-100">
                         {`${nameOf(d.from)} harus bayar ke ${nameOf(d.to)}`}
                       </p>
                       <p className="text-3xl font-bold">{formatRupiah(d.amount)}</p>
                     </div>
                   ))
                 )}
-                <p className="text-[11px] text-teal-100 mt-3">{members.length} orang · {expenses.length} catatan · bulan ini {formatRupiah(monthTotal)}</p>
+                <p className="text-[11px] text-sky-100 mt-3">{members.length} orang · {expenses.length} catatan · bulan ini {formatRupiah(monthTotal)}</p>
                 <div className="mt-3 space-y-2">
                   {debts.length > 0 && (myDebts.length > 0 ? myDebts : debts.slice(0, 1)).length === 1 && (
                     <div className="flex gap-2">
@@ -575,20 +576,20 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                 </div>
               </div>
             ) : (
-              <div className="bg-teal-700 text-white rounded-3xl p-5 shadow-lg">
-                <p className="text-[11px] text-teal-100">Total pengeluaran grup</p>
+              <div className="bg-sky-700 text-white rounded-3xl p-5 shadow-lg">
+                <p className="text-[11px] text-sky-100">Total pengeluaran grup</p>
                 <p className="text-2xl font-bold">{formatRupiah(totalSpent)}</p>
-                <p className="text-[11px] text-teal-100 mt-1">{members.length} orang · {expenses.length} pengeluaran</p>
+                <p className="text-[11px] text-sky-100 mt-1">{members.length} orang · {expenses.length} pengeluaran</p>
               </div>
             )}
 
             <button onClick={() => { setEditExp(null); setIsExpOpen(true); }} className="glass glass-solid-teal w-full text-sm font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-all"><Plus className="w-5 h-5" /> {L.addExp}</button>
 
-            <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
-              {(['ringkasan', 'pengeluaran', 'anggota'] as const).map((t) => (
-                <button key={t} onClick={() => setTab(t)} className={`flex-1 py-2 rounded-lg text-xs font-bold capitalize transition-all ${tab === t ? 'glass text-teal-700 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'}`}>{L.tabs[t]}</button>
-              ))}
-            </div>
+            <SegmentedControl
+              options={(['ringkasan', 'pengeluaran', 'anggota'] as const).map((t) => ({ value: t, label: L.tabs[t] }))}
+              value={tab}
+              onChange={setTab}
+            />
 
             {/* --- Ringkasan --- */}
             {tab === 'ringkasan' && (
@@ -606,7 +607,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                         const receiver = memberById(d.to);
                         const involvesMe = (memberById(d.from) && isMine(memberById(d.from)!)) || (receiver && isMine(receiver));
                         return (
-                          <div key={i} className={`p-3 rounded-xl ${involvesMe ? 'bg-teal-50 dark:bg-teal-900/20 border border-teal-100 dark:border-teal-800' : 'bg-gray-50 dark:bg-gray-700/50'}`}>
+                          <div key={i} className={`p-3 rounded-xl ${involvesMe ? 'bg-sky-50 dark:bg-sky-900/20 border border-sky-100 dark:border-sky-800' : 'bg-gray-50 dark:bg-gray-700/50'}`}>
                             <div className="flex items-center gap-2">
                               <div className="flex-1 min-w-0 text-xs text-gray-700 dark:text-gray-200">
                                 <span className="font-bold">{nameOf(d.from)}</span> <ArrowRight className="w-3 h-3 inline mx-0.5" /> <span className="font-bold">{nameOf(d.to)}</span>
@@ -696,7 +697,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                       <div className="min-w-0 flex-1">
                         <p className="font-bold text-sm text-gray-800 dark:text-gray-100 truncate">{m.name}{!isRunning && isMine(m) ? ' (kamu)' : ''}</p>
                         <div className="flex flex-wrap gap-1 mt-1">
-                          {m.user_id === group.user_id && <span className="text-[9px] font-bold bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 px-1.5 py-0.5 rounded">Pembuat</span>}
+                          {m.user_id === group.user_id && <span className="text-[9px] font-bold bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 px-1.5 py-0.5 rounded">Pembuat</span>}
                           {m.user_id && m.status === 'accepted' && m.user_id !== group.user_id && <span className="text-[9px] font-bold bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 px-1.5 py-0.5 rounded flex items-center gap-0.5"><UserCheck className="w-3 h-3" /> Pengguna Celengin</span>}
                           {m.status === 'pending' && <span className="text-[9px] font-bold bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 px-1.5 py-0.5 rounded">Menunggu persetujuan</span>}
                           {!m.user_id && <span className="text-[9px] font-bold bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 px-1.5 py-0.5 rounded">Nama saja</span>}
@@ -740,17 +741,19 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
               <div>
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">{L.friends}</label>
                 <div className="flex flex-wrap gap-1.5 mb-2">
-                  <span className="text-[11px] bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 px-2.5 py-1 rounded-lg font-bold max-w-full truncate">{myName}{isRunning ? '' : ' (kamu)'}</span>
+                  <span className="text-[11px] bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400 px-2.5 py-1 rounded-lg font-bold max-w-full truncate">{myName}{isRunning ? '' : ' (kamu)'}</span>
                   {gMembers.map((m, i) => (
                     <span key={i} className={`text-[11px] border px-2.5 py-1 rounded-lg flex items-center gap-1 max-w-full ${m.userId ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300' : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200'}`}>
                       <span className="truncate">{m.userId ? '✉ ' : ''}{m.name}</span><button type="button" onClick={() => setGMembers((p) => p.filter((_, j) => j !== i))} className="text-gray-400 hover:text-red-500 shrink-0"><X className="w-3 h-3" /></button>
                     </span>
                   ))}
                 </div>
-                <div className="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-xl mb-2">
-                  <button type="button" onClick={() => { setGInviteMode(false); setGMemberInput(''); }} className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold ${!gInviteMode ? 'glass text-teal-700 dark:text-teal-300' : 'text-gray-500 dark:text-gray-300'}`}>Nama saja</button>
-                  <button type="button" onClick={() => { setGInviteMode(true); setGMemberInput(''); }} className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold ${gInviteMode ? 'glass text-teal-700 dark:text-teal-300' : 'text-gray-500 dark:text-gray-300'}`}>Undang pengguna (email)</button>
-                </div>
+                <SegmentedControl
+                  className="mb-2"
+                  options={[{ value: 'nama', label: 'Nama saja' }, { value: 'email', label: 'Undang pengguna (email)' }]}
+                  value={gInviteMode ? 'email' : 'nama'}
+                  onChange={(v) => { setGInviteMode(v === 'email'); setGMemberInput(''); }}
+                />
                 <div className="flex gap-2">
                   <input type={gInviteMode ? 'email' : 'text'} value={gMemberInput} onChange={(e) => setGMemberInput(gInviteMode ? e.target.value : noDigits(e.target.value))} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addGroupMemberChip(); } }} placeholder={gInviteMode ? 'email@contoh.com' : 'Nama teman'} className={inputCls} />
                   <button type="button" onClick={() => addGroupMemberChip()} disabled={gAdding} className="glass glass-teal w-11 h-11 rounded-xl shrink-0 flex items-center justify-center disabled:opacity-50"><Plus className="w-5 h-5" /></button>

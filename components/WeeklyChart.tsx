@@ -70,7 +70,7 @@ export default function WeeklyChart({ days, rangeLabel }: { days: WeekDay[]; ran
         </div>
         <div className="glass flex p-0.5 rounded-full shrink-0">
           {(['expense', 'income'] as Mode[]).map((m) => (
-            <button key={m} onClick={() => pick(m)} className={`glass-pressable px-3 h-7 rounded-full text-[11px] font-bold ${mode === m ? 'text-[color:var(--teal-primary)]' : 'text-[color:var(--text-muted)]'}`} style={mode === m ? { background: 'rgba(44, 143, 126, 0.14)' } : undefined}>{m === 'expense' ? 'Keluar' : 'Masuk'}</button>
+            <button key={m} onClick={() => pick(m)} className={`glass-pressable px-3 h-7 rounded-full text-[11px] font-bold ${mode === m ? 'text-[color:var(--teal-primary)]' : 'text-[color:var(--text-muted)]'}`} style={mode === m ? { background: 'rgba(2, 132, 199, 0.14)' } : undefined}>{m === 'expense' ? 'Keluar' : 'Masuk'}</button>
           ))}
         </div>
       </div>

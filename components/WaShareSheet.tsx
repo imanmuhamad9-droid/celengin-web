@@ -61,7 +61,7 @@ export default function WaShareSheet({ isOpen, onClose, title = 'Kirim ke WhatsA
       <div className="relative w-full max-w-md bg-white dark:bg-gray-900 rounded-t-3xl shadow-2xl p-5 pb-7 max-h-[88vh] overflow-y-auto animate-in slide-in-from-bottom-8 duration-300">
         <div className="w-10 h-1 rounded-full bg-gray-200 dark:bg-gray-700 mx-auto mb-4" />
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-bold text-lg text-gray-800 dark:text-gray-100 flex items-center gap-2"><MessageCircle className="w-5 h-5 text-teal-600 dark:text-teal-400" /> {title}</h3>
+          <h3 className="font-bold text-lg text-gray-800 dark:text-gray-100 flex items-center gap-2"><MessageCircle className="w-5 h-5 text-sky-600 dark:text-sky-400" /> {title}</h3>
           <button onClick={onClose} aria-label="Tutup" className="glass w-8 h-8 rounded-full text-gray-500 dark:text-gray-400 flex items-center justify-center"><X className="w-4 h-4" /></button>
         </div>
 
@@ -85,14 +85,14 @@ export default function WaShareSheet({ isOpen, onClose, title = 'Kirim ke WhatsA
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={12}
-          className="w-full text-[12px] leading-snug font-mono bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-2xl p-3 focus:ring-2 focus:ring-teal-500"
+          className="w-full text-[12px] leading-snug font-mono bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-2xl p-3 focus:ring-2 focus:ring-sky-500"
         />
 
         <div className="flex gap-2 mt-3">
           <button onClick={openWa} className="glass glass-solid-teal flex-1 h-12 rounded-xl text-sm font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform">
             <MessageCircle className="w-4 h-4" /> {phone ? `Kirim ke ${current.label}` : 'Buka WhatsApp'}
           </button>
-          <button onClick={copy} aria-label="Salin pesan" className="glass h-12 px-4 rounded-xl border text-teal-700 dark:text-teal-300 text-sm font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform">
+          <button onClick={copy} aria-label="Salin pesan" className="glass h-12 px-4 rounded-xl border text-sky-700 dark:text-sky-300 text-sm font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-transform">
             <Copy className="w-4 h-4" /> Salin
           </button>
         </div>

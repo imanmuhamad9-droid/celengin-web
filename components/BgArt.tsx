@@ -103,7 +103,7 @@ function Coin({ x, y, r, face, edge, label }: { x: number; y: number; r: number;
     <g transform={`translate(${x} ${y})`}>
       <circle r={r} fill={face} stroke={edge} strokeWidth={r * 0.14} />
       <circle r={r * 0.68} fill="none" stroke={edge} strokeWidth={r * 0.07} opacity="0.6" />
-      <text y={r * 0.25} textAnchor="middle" fontSize={r * 0.7} fontWeight="800" fill={edge} fontFamily="system-ui, sans-serif">{label}</text>
+      <text y={r * 0.25} textAnchor="middle" fontSize={r * 0.7} fontWeight="800" fill={edge} fontFamily="var(--font-jakarta), system-ui, sans-serif">{label}</text>
     </g>
   );
 }
@@ -163,10 +163,10 @@ export default function BgArt({ theme, dark }: { theme: BgThemeKey; dark: boolea
       const r = rng(21);
       body = (
         <>
-          <Sky id={g('sky')} stops={dark ? ['#06202e', '#0b2f45', '#0f172a'] : ['#e0f2fe', '#ecfeff', '#f0fdfa']} />
+          <Sky id={g('sky')} stops={dark ? ['#06202e', '#0b2f45', '#0f172a'] : ['#e0f2fe', '#ecfeff', '#f0f9ff']} />
           {Array.from({ length: 26 }, (_, i) => {
             const cx = r() * W, cy = r() * H, rad = 10 + r() * 48;
-            const hue = ['#38bdf8', '#2dd4bf', '#a78bfa', '#f472b6'][i % 4];
+            const hue = ['#38bdf8', '#38bdf8', '#a78bfa', '#f472b6'][i % 4];
             return (
               <g key={i}>
                 <circle cx={cx} cy={cy} r={rad} fill={hue} opacity={dark ? 0.12 : 0.14} stroke={hue} strokeOpacity={dark ? 0.55 : 0.5} strokeWidth="2" />
@@ -188,7 +188,7 @@ export default function BgArt({ theme, dark }: { theme: BgThemeKey; dark: boolea
           <rect width={W} height={H} fill={dark ? '#030712' : '#f8fafc'} />
           <g filter={`url(#${g('blur')})`}>
             {blobs.map(([c, x, y, rad, o], i) => <ellipse key={i} cx={x as number} cy={y as number} rx={rad as number} ry={(rad as number) * 0.7} fill={c as string} opacity={o as number} transform={`rotate(${i * 25 - 20} ${x} ${y})`} />)}
-            <path d="M-40 360C80 300 160 420 260 340S420 300 460 330L460 400C400 380 340 440 240 420S60 360-40 430Z" fill={dark ? '#34d399' : '#99f6e4'} opacity={dark ? 0.5 : 0.7} />
+            <path d="M-40 360C80 300 160 420 260 340S420 300 460 330L460 400C400 380 340 440 240 420S60 360-40 430Z" fill={dark ? '#34d399' : '#bae6fd'} opacity={dark ? 0.5 : 0.7} />
           </g>
           {dark && <Stars seed={3} n={60} color="#fff" max={1.2} />}
         </>
@@ -196,7 +196,7 @@ export default function BgArt({ theme, dark }: { theme: BgThemeKey; dark: boolea
       break;
     }
     case 'gelombang': {
-      const c = dark ? ['#042f2e', '#134e4a', '#115e59', '#0f766e', '#0d9488'] : ['#f0fdfa', '#ccfbf1', '#99f6e4', '#5eead4', '#2dd4bf'];
+      const c = dark ? ['#042f2e', '#0c4a6e', '#075985', '#0369a1', '#0284c7'] : ['#f0f9ff', '#e0f2fe', '#bae6fd', '#7dd3fc', '#38bdf8'];
       body = (
         <>
           <rect width={W} height={H} fill={c[0]} />
@@ -206,7 +206,7 @@ export default function BgArt({ theme, dark }: { theme: BgThemeKey; dark: boolea
           <path d={`M0 640C90 600 170 680 260 650S370 610 400 625L400 ${H}L0 ${H}Z`} fill={c[2]} />
           <path d={`M0 720C100 690 170 760 270 730S370 700 400 710L400 ${H}L0 ${H}Z`} fill={c[3]} />
           <path d={`M0 790C110 770 190 820 290 800S380 780 400 790L400 ${H}L0 ${H}Z`} fill={c[4]} />
-          <g fill="none" stroke={dark ? '#5eead4' : '#14b8a6'} strokeOpacity="0.25" strokeWidth="2">
+          <g fill="none" stroke={dark ? '#7dd3fc' : '#0ea5e9'} strokeOpacity="0.25" strokeWidth="2">
             {[260, 300, 340, 380].map((y) => <path key={y} d={`M-20 ${y}C80 ${y - 40} 160 ${y + 40} 240 ${y}S380 ${y - 30} 420 ${y}`} />)}
           </g>
         </>
@@ -325,7 +325,7 @@ export default function BgArt({ theme, dark }: { theme: BgThemeKey; dark: boolea
       const coin = dark ? { face: '#b45309', edge: '#fde68a' } : { face: '#fde68a', edge: '#b45309' };
       body = (
         <>
-          <Sky id={g('sky')} stops={dark ? ['#1a1020', '#221628', '#14121f'] : ['#fff7ed', '#fdf2f8', '#f0fdfa']} />
+          <Sky id={g('sky')} stops={dark ? ['#1a1020', '#221628', '#14121f'] : ['#fff7ed', '#fdf2f8', '#f0f9ff']} />
           <g opacity={dark ? 0.55 : 0.85}>
             {Array.from({ length: 22 }, (_, i) => <Coin key={i} x={r() * W} y={r() * H} r={9 + r() * 14} face={coin.face} edge={coin.edge} label={i % 3 === 0 ? 'C' : 'Rp'} />)}
           </g>

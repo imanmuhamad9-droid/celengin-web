@@ -143,7 +143,7 @@ export default function EditTransactionModal({ isOpen, onClose, onSuccess, showD
           {/* Nominal */}
           <div>
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Nominal (Rp)</label>
-            <input type="text" inputMode="numeric" value={amountDisplay} onChange={handleAmountChange} required className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm font-bold focus:ring-2 focus:ring-teal-500" />
+            <input type="text" inputMode="numeric" value={amountDisplay} onChange={handleAmountChange} required className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm font-bold focus:ring-2 focus:ring-sky-500" />
           </div>
 
           {/* Kategori (Tombol Preset) */}
@@ -166,7 +166,7 @@ export default function EditTransactionModal({ isOpen, onClose, onSuccess, showD
 
           <div>
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Keterangan (opsional)</label>
-            <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={200} placeholder="Cth: beli pulsa buat ibu" className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-teal-500" />
+            <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={200} placeholder="Cth: beli pulsa buat ibu" className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-sky-500" />
           </div>
 
           <WalletChips wallets={wallets} value={walletId} onChange={setWalletId} />
@@ -182,17 +182,17 @@ export default function EditTransactionModal({ isOpen, onClose, onSuccess, showD
           </div>
 
           {isRoutine && rule && (
-            <div className="p-3 bg-teal-50 dark:bg-teal-900/20 rounded-xl flex items-start gap-2">
-              <Repeat className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
+            <div className="p-3 bg-sky-50 dark:bg-sky-900/20 rounded-xl flex items-start gap-2">
+              <Repeat className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0 mt-0.5" />
               <div>
-                <p className="text-[11px] font-bold text-teal-700 dark:text-teal-400">{describeFrequency(rule)}</p>
-                <p className="text-[10px] text-teal-700/70 dark:text-teal-400/70">{rule.is_active ? `Tercatat otomatis, berikutnya ${formatDateID(rule.next_run_date)}` : 'Aturan sedang dijeda. Aktifkan di Riwayat → Transaksi Rutin.'}</p>
+                <p className="text-[11px] font-bold text-sky-700 dark:text-sky-400">{describeFrequency(rule)}</p>
+                <p className="text-[10px] text-sky-700/70 dark:text-sky-400/70">{rule.is_active ? `Tercatat otomatis, berikutnya ${formatDateID(rule.next_run_date)}` : 'Aturan sedang dijeda. Aktifkan di Riwayat → Transaksi Rutin.'}</p>
               </div>
             </div>
           )}
           {isRoutine && !rule && (
-            <div className="p-3 bg-teal-50 dark:bg-teal-900/20 rounded-xl">
-              <p className="text-[10px] font-bold text-teal-700 dark:text-teal-400 mb-2">Tercatat otomatis, ulangi:</p>
+            <div className="p-3 bg-sky-50 dark:bg-sky-900/20 rounded-xl">
+              <p className="text-[10px] font-bold text-sky-700 dark:text-sky-400 mb-2">Tercatat otomatis, ulangi:</p>
               <FrequencyPicker value={frequency} onChange={setFrequency} />
             </div>
           )}

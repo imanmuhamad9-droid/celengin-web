@@ -6,7 +6,7 @@ import MoneyRain from "@/components/MoneyRain";
 import AutoRefresh from "@/components/AutoRefresh";
 import AppBackground from "@/components/AppBackground";
 
-const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"] });
+const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-jakarta", display: "swap" });
 
 export const metadata: Metadata = {
   title: "Celengin - Financial Tracker",
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0f766e",
+  themeColor: "#0369a1",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1, // cegah Safari iPhone zoom otomatis saat mengetuk kolom input
@@ -33,7 +33,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id" suppressHydrationWarning>
+    <html lang="id" suppressHydrationWarning className={jakarta.variable}>
       <head>
         <script
           dangerouslySetInnerHTML={{

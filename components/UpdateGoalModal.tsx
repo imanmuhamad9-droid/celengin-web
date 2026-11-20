@@ -37,7 +37,7 @@ export default function UpdateGoalModal({ isOpen, onClose, onSave, goal }: Props
 
         <h3 className="text-xl font-extrabold text-center text-gray-900 dark:text-white">Update Tabungan</h3>
         <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-1 mb-5">
-          Untuk Impian: <span className="font-bold text-teal-700 dark:text-teal-400">{goal.title}</span>
+          Untuk Impian: <span className="font-bold text-sky-700 dark:text-sky-400">{goal.title}</span>
         </p>
 
         <div className="grid grid-cols-2 gap-3 mb-5">
@@ -63,7 +63,7 @@ export default function UpdateGoalModal({ isOpen, onClose, onSave, goal }: Props
             value={display}
             onChange={(e) => { const p = parseRupiahInput(e.target.value); setRaw(p.raw); setDisplay(p.display); }}
             placeholder="500.000"
-            className="w-full pl-11 pr-4 py-3.5 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 text-lg font-bold focus:outline-none focus:border-teal-500 transition-colors"
+            className="w-full pl-11 pr-4 py-3.5 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 text-lg font-bold focus:outline-none focus:border-sky-500 transition-colors"
           />
         </div>
         <p className="text-[10px] text-right text-gray-400 dark:text-gray-500 mt-2 mb-5">Dana saat ini: {formatRupiah(Number(goal.current_amount) || 0)}</p>

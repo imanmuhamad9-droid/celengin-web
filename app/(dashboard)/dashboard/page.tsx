@@ -3,28 +3,28 @@ import { useEffect, useState, useRef } from 'react';
 import type { Transaction, Target, Bill, Profile } from '@/lib/types';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { User, X, LogOut, Settings, Eye, EyeOff, Flame, ChevronRight, CheckCircle2, AlertCircle } from 'lucide-react';
 import { formatRupiah, toLocalDateStr } from '@/lib/utils';
 import { diffDays } from '@/lib/recurring';
 import { listWallets, Wallet } from '@/lib/wallets';
 import { fetchBadgeContext, syncBadges } from '@/lib/badges';
 import TransactionModal from '@/components/TransactionModal';
 import TransactionDetailModal from '@/components/TransactionDetailModal';
-import TxList from '@/components/TxList';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import AppHeader from '@/components/AppHeader';
+import QuickMenu from '@/components/QuickMenu';
 import NotificationBell, { LocalNotif } from '@/components/NotificationBell';
 import AttentionStrip, { AttentionItem } from '@/components/AttentionStrip';
 import PaydayPrompt from '@/components/PaydayPrompt';
-import SectionToggle from '@/components/SectionToggle';
 import { cycleFor, paydayRuleFrom } from '@/lib/cycle';
 import WeeklyChart from '@/components/WeeklyChart';
 import { getRange } from '@/lib/insights';
 import SkeletonLoader from '@/components/SkeletonLoader';
-import GlassCard from '@/components/GlassCard';
-import GlassButton from '@/components/GlassButton';
-import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
+import HomeGreeting from '@/components/home/HomeGreeting';
+import BalanceCard, { type DailyAllowance } from '@/components/home/BalanceCard';
+import RecentTxCard from '@/components/home/RecentTxCard';
+import StatsCard from '@/components/home/StatsCard';
+import { ProfileModal, CategoryDetailModal, AllowanceInfoModal, StreakInfoModal } from '@/components/home/HomeModals';
 
 export default function DashboardPage() {
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
@@ -45,8 +45,6 @@ const [todayStr, setTodayStr] = useState('');
   const [showInfoStreak, setShowInfoStreak] = useState(false);
 
   const [paydayLater, setPaydayLater] = useState(false);
-  const [showMonth, setShowMonth] = useState(false); // lipatan Statistik
-  const [statsView, setStatsView] = useState<'week' | 'month'>('month');
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [categoryDetails, setCategoryDetails] = useState<Transaction[]>([]);
@@ -167,17 +165,7 @@ const [todayStr, setTodayStr] = useState('');
   
 
 
-  // Statistik bisa dilihat per minggu (Senin-Minggu) atau per bulan/siklus gajian. Logika bulanan tidak berubah.
   const weekRange = todayStr ? getRange('week', todayStr, payday) : null;
-  const statsTx = statsView === 'week' && weekRange
-    ? transactions.filter(t => t.transaction_date >= weekRange.start && t.transaction_date <= weekRange.end)
-    : monthlyTx;
-  const sIncome = statsTx.filter(t => t.type === 'income').reduce((acc, curr) => acc + Number(curr.amount), 0);
-  const sExpense = statsTx.filter(t => t.type === 'expense').reduce((acc, curr) => acc + Number(curr.amount), 0);
-  const sIncomeCats = statsTx.filter(t => t.type === 'income').reduce((acc: Record<string, number>, curr) => { acc[curr.merchant_name] = (acc[curr.merchant_name] || 0) + Number(curr.amount); return acc; }, {});
-  const sExpenseCats = statsTx.filter(t => t.type === 'expense').reduce((acc: Record<string, number>, curr) => { acc[curr.merchant_name] = (acc[curr.merchant_name] || 0) + Number(curr.amount); return acc; }, {});
-  const sTotal = sIncome + sExpense;
-
   const weeklyData = last7Days.map(date => {
     const dayTx = transactions.filter(t => t.transaction_date === date);
     const income = dayTx.filter(t => t.type === 'income').reduce((acc, curr) => acc + Number(curr.amount), 0);
@@ -333,6 +321,11 @@ const [todayStr, setTodayStr] = useState('');
     <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>
   );
 
+  const displayName = profile?.nickname || profile?.full_name || user?.email?.split('@')[0];
+  const allowance: DailyAllowance | null = primaryTarget
+    ? { perDay: dailyAllowance, left: jatahHariIni, spentToday: todayExpenseAmt, targetUsedPct }
+    : null;
+
   return (
     <div className="min-h-screen bg-[var(--page-bg)] pb-40 transition-colors">
       <AppHeader
@@ -340,88 +333,22 @@ const [todayStr, setTodayStr] = useState('');
         onAvatarClick={() => setIsProfileModalOpen(true)}
       />
 
+      {/* Urutan kotak di Home: pindahkan baris di bawah untuk menata ulang */}
       <main className="px-5 mt-4 space-y-4">
+        <HomeGreeting name={displayName ?? ''} todayStr={todayStr} streak={streak} showStreak={dailyAllowance > 0} onStreakClick={() => setShowInfoStreak(true)} />
 
-        {/* SAPAAN + STREAK + PROFIL */}
-        <div className="flex justify-between items-center">
-          <div className="min-w-0">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Selamat Datang 👋</p>
-            <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white truncate leading-tight">{profile?.nickname || profile?.full_name || user?.email?.split('@')[0]}</h2>
-            {todayStr && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{new Date(todayStr + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>}
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            {dailyAllowance > 0 && (
-              <button onClick={() => setShowInfoStreak(true)} aria-label="Streak hemat" className="glass glass-teal flex items-center gap-1 border text-xs font-bold px-2.5 py-1.5 rounded-full active:scale-95 transition-transform">
-                <Flame className="w-3.5 h-3.5" /> {streak}
-              </button>
-            )}
-          </div>
-        </div>
+        <BalanceCard
+          profile={profile}
+          balance={balance}
+          totalIncome={totalIncome}
+          totalExpense={totalExpense}
+          hidden={isBalanceHidden}
+          onToggleHidden={() => setIsBalanceHidden((v) => !v)}
+          allowance={allowance}
+          onInfoAllowance={() => setShowInfoJatah(true)}
+        />
 
-        {/* 1) KOTAK RINGKASAN KEUANGAN (Liquid Glass; latar kartu kustom dari profil tetap dipakai di bawah kaca) */}
-        <GlassCard padded={false} className="relative overflow-hidden">
-          {profile?.safe_limit && profile?.bg_safe_url && (
-            <div className="absolute inset-0 z-0" style={{ backgroundImage: balance >= profile.safe_limit ? `url(${profile.bg_safe_url})` : `url(${profile.bg_low_url})`, backgroundSize: balance >= profile.safe_limit ? `${(profile.bg_safe_zoom || 1) * 100}%` : `${(profile.bg_low_zoom || 1) * 100}%`, backgroundPosition: balance >= profile.safe_limit ? (profile.bg_safe_pos || 'center') : (profile.bg_low_pos || 'center'), backgroundRepeat: 'no-repeat' }}></div>
-          )}
-          {profile?.safe_limit && profile?.bg_safe_url && <div className="absolute inset-0 z-0 bg-white/60 dark:bg-black/50"></div>}
-
-          <div className="relative z-10 p-5">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <p className="text-xs font-semibold text-[color:var(--text-muted)]">Uang Sisa</p>
-                  <GlassButton size="icon" onClick={() => setIsBalanceHidden(!isBalanceHidden)} aria-label={isBalanceHidden ? 'Tampilkan saldo' : 'Sembunyikan saldo'} className="!w-7 !h-7 text-[color:var(--text-muted)]">
-                    {isBalanceHidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                  </GlassButton>
-                </div>
-                <h3 className="text-3xl font-extrabold tracking-tight" style={{ color: 'var(--text-main)' }}>{isBalanceHidden ? 'Rp ******' : formatRupiah(balance)}</h3>
-              </div>
-              {profile?.safe_limit && (
-                <span className={`glass shrink-0 px-3 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 ${balance >= profile.safe_limit ? 'glass-teal' : 'glass-danger'}`}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></span>
-                  {balance >= profile.safe_limit ? 'Aman' : 'Krisis'}
-                </span>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-2.5 mt-4">
-              <div className="rounded-2xl px-3.5 py-2.5 bg-white/30 dark:bg-white/5 border border-white/40 dark:border-white/10">
-                <p className="text-[11px] font-semibold flex items-center gap-1 text-[color:var(--text-muted)]"><ArrowDownLeft className="w-3.5 h-3.5 text-green-600 dark:text-green-400" /> Uang Masuk</p>
-                <p className="text-sm font-extrabold mt-0.5 text-green-600 dark:text-green-400">{isBalanceHidden ? 'Rp ***' : formatRupiah(totalIncome)}</p>
-              </div>
-              <div className="rounded-2xl px-3.5 py-2.5 bg-white/30 dark:bg-white/5 border border-white/40 dark:border-white/10">
-                <p className="text-[11px] font-semibold flex items-center gap-1 text-[color:var(--text-muted)]"><ArrowUpRight className="w-3.5 h-3.5 text-red-500 dark:text-red-400" /> Uang Keluar</p>
-                <p className="text-sm font-extrabold mt-0.5 text-red-500 dark:text-red-400">{isBalanceHidden ? 'Rp ***' : formatRupiah(totalExpense)}</p>
-              </div>
-            </div>
-
-            {/* Pengeluaran yang diperbolehkan hari ini */}
-            {primaryTarget ? (
-              <button onClick={() => setShowInfoJatah(true)} className="glass-pressable mt-3 w-full rounded-2xl px-4 py-3 flex items-center justify-between gap-3 text-left bg-white/30 dark:bg-white/5 border border-white/40 dark:border-white/10">
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold text-[color:var(--text-muted)]">Boleh dipakai hari ini</p>
-                  <p className="text-lg font-extrabold leading-tight" style={{ color: 'var(--text-main)' }}>{isBalanceHidden ? 'Rp ***' : formatRupiah(jatahHariIni)}</p>
-                  <p className="text-[11px] text-[color:var(--text-muted)]">
-                    {todayExpenseAmt > dailyAllowance ? `Jatah habis, lewat ${formatRupiah(todayExpenseAmt - dailyAllowance)}` : jatahHariIni < dailyAllowance * 0.25 ? 'Jatah tinggal sedikit' : `Dari jatah ${formatRupiah(dailyAllowance)} per hari`} · target bulan ini {targetUsedPct}%
-                  </p>
-                </div>
-                {todayExpenseAmt > dailyAllowance ? <AlertCircle className="w-6 h-6 shrink-0 text-[color:var(--text-muted)]" /> : <CheckCircle2 className="w-6 h-6 shrink-0 text-[color:var(--teal-primary)]" />}
-              </button>
-            ) : (
-              <button onClick={() => router.push('/spending-challenge')} className="glass-pressable mt-3 w-full rounded-2xl px-4 py-3 flex items-center justify-between text-left bg-white/30 dark:bg-white/5 border border-white/40 dark:border-white/10">
-                <div>
-                  <p className="text-sm font-bold" style={{ color: 'var(--text-main)' }}>Atur tantangan utama</p>
-                  <p className="text-[11px] text-[color:var(--text-muted)]">Biar kamu tahu boleh jajan berapa tiap hari</p>
-                </div>
-                <ChevronRight className="w-5 h-5 shrink-0 text-[color:var(--text-muted)]" />
-              </button>
-            )}
-          </div>
-        </GlassCard>
-
-        {/* PINTASAN (chip) */}
-
-        {/* PERLU PERHATIAN (hilang bila kosong) */}
+        {/* Perlu perhatian (hilang bila kosong) */}
         <AttentionStrip items={attentionItems} />
 
         {/* Pertanyaan tanggal gajian: sekali saja, hanya bila kolom payday sudah ada dan belum diisi */}
@@ -429,231 +356,39 @@ const [todayStr, setTodayStr] = useState('');
           <PaydayPrompt onPick={handleSavePayday} onLater={() => setPaydayLater(true)} />
         )}
 
-        {/* MINGGU INI */}
-        <div>
-          <WeeklyChart
-            days={weeklyData}
-            rangeLabel={last7Days.length > 0 ? `${new Date(last7Days[0] + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} - ${new Date(last7Days[6] + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}` : ''}
-          />
-        </div>
+        <WeeklyChart
+          days={weeklyData}
+          rangeLabel={last7Days.length > 0 ? `${new Date(last7Days[0] + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} - ${new Date(last7Days[6] + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}` : ''}
+        />
 
-        {/* 3) CARD DAFTAR TRANSAKSI: 5 terakhir, dikelompokkan per tanggal */}
-        <GlassCard>
-          <div className="flex items-center justify-between">
-            <h2 className="font-bold text-base" style={{ color: 'var(--text-main)' }}>Daftar Transaksi</h2>
-            <button onClick={() => router.push('/transactions')} className="text-sm font-bold flex items-center gap-0.5 text-[color:var(--teal-primary)] active:opacity-70 transition-opacity">
-              Lihat semua <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-          {recentTx.length === 0 ? (
-            <p className="text-xs py-4 text-center text-[color:var(--text-muted)]">Belum ada transaksi. Ketuk Catat untuk mulai.</p>
-          ) : (
-            <TxList transactions={recentTx} onSelect={setDetailTx} />
-          )}
-        </GlassCard>
+        {/* Menu cepat (hilang bila tidak ada menu aktif) */}
+        <QuickMenu />
 
-        {/* LIPATAN: STATISTIK (mingguan / bulanan) */}
-        <GlassCard>
-          <SectionToggle title="Statistik" open={showMonth} onToggle={() => setShowMonth(v => !v)} />
-        {showMonth && (
-          <div className="mt-4">
-        {(() => {
-          const spentPct = sIncome > 0 ? Math.round((sExpense / sIncome) * 100) : null;
-          const net = sIncome - sExpense;
-          const mood = spentPct === null
-            ? { color: '#f59e0b', title: 'Belum ada pemasukan', sub: 'Pengeluaran sudah tercatat, tapi belum ada uang masuk di periode ini.' }
-            : spentPct <= 70
-              ? { color: '#10b981', title: 'Aman, masih longgar', sub: `Baru ${spentPct}% dari pemasukan yang terpakai.` }
-              : spentPct <= 100
-                ? { color: '#f59e0b', title: 'Hati-hati, hampir habis', sub: `${spentPct}% dari pemasukan sudah terpakai.` }
-                : { color: '#ef4444', title: 'Boncos, lebih besar pasak', sub: `Pengeluaran ${spentPct}% dari pemasukan.` };
-          const palette = ['#ef4444', '#f97316', '#f59e0b', '#8b5cf6', '#0ea5e9', '#94a3b8'];
-          const incomeRows = Object.entries(sIncomeCats).sort(([, a], [, b]) => b - a);
-          const expenseRows = Object.entries(sExpenseCats).sort(([, a], [, b]) => b - a);
-          return (
-            <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
-              <div className="mb-4">
-                <div className="flex p-1 rounded-2xl bg-teal-500/10 border border-teal-500/20">
-                  <button onClick={() => setStatsView('week')} className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition-all active:scale-95 ${statsView === 'week' ? 'glass glass-teal' : 'text-gray-600 dark:text-gray-300'}`}>Mingguan</button>
-                  <button onClick={() => setStatsView('month')} className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition-all active:scale-95 ${statsView === 'month' ? 'glass glass-teal' : 'text-gray-600 dark:text-gray-300'}`}>{payday.day > 1 ? 'Siklus Gajian' : 'Bulanan'}</button>
-                </div>
-                <p className="text-[10px] text-gray-400 dark:text-gray-500 text-center mt-2">
-                  {statsView === 'week' && weekRange ? `Minggu ini: ${weekRange.label}` : payday.day > 1 && cycle ? cycle.label : 'Bulan ini'}
-                </p>
-              </div>
+        <RecentTxCard transactions={recentTx} onSelect={setDetailTx} />
 
-              {sTotal === 0 && (
-                <p className="text-xs text-gray-400 dark:text-gray-500 text-center py-8">{statsView === 'week' ? 'Belum ada transaksi minggu ini.' : 'Belum ada transaksi di periode ini.'}</p>
-              )}
-              {sTotal > 0 && (<>
-              {/* Ringkasan: satu kalimat + satu bar */}
-              <div className="rounded-2xl p-4 mb-4" style={{ backgroundColor: mood.color + '1a' }}>
-                <p className="text-sm font-extrabold" style={{ color: mood.color }}>{mood.title}</p>
-                <p className="text-[11px] text-gray-600 dark:text-gray-300 mt-0.5">{mood.sub}</p>
-                <div className="w-full h-3 rounded-full bg-white/70 dark:bg-gray-700 mt-3 overflow-hidden">
-                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(spentPct ?? 100, 100)}%`, backgroundColor: mood.color }}></div>
-                </div>
-                <div className="flex justify-between text-[10px] text-gray-500 dark:text-gray-400 mt-1.5">
-                  <span>Terpakai</span><span>Pemasukan {formatRupiah(sIncome)}</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 mb-2">
-                <div className="rounded-xl bg-green-50 dark:bg-green-900/20 px-3 py-2.5"><p className="text-[10px] text-gray-500 dark:text-gray-400">Masuk</p><p className="text-sm font-extrabold text-green-600 dark:text-green-400">{formatRupiah(sIncome)}</p></div>
-                <div className="rounded-xl bg-red-50 dark:bg-red-900/20 px-3 py-2.5"><p className="text-[10px] text-gray-500 dark:text-gray-400">Keluar</p><p className="text-sm font-extrabold text-red-500 dark:text-red-400">{formatRupiah(sExpense)}</p></div>
-              </div>
-              <div className="rounded-xl bg-gray-50 dark:bg-gray-700/50 px-3 py-2.5 mb-5 flex items-center justify-between">
-                <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400">{net >= 0 ? 'Sisa' : 'Kurang'}</p>
-                <p className="text-sm font-extrabold" style={{ color: net >= 0 ? '#0d9488' : '#ef4444' }}>{formatRupiah(Math.abs(net))}</p>
-              </div>
-
-              {expenseRows.length > 0 && (
-                <div className="mb-5">
-                  <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-2">Uangmu habis buat apa?</p>
-                  <div className="space-y-3">
-                    {expenseRows.map(([name, amount], i) => {
-                      const pct = sExpense > 0 ? Math.round((Number(amount) / sExpense) * 100) : 0;
-                      const color = palette[Math.min(i, palette.length - 1)];
-                      return (
-                        <div key={name} onClick={() => handleCategoryClick(name)} className="cursor-pointer">
-                          <div className="flex items-center justify-between gap-2 mb-1.5">
-                            <span className={`truncate text-sm ${i === 0 ? 'font-extrabold text-gray-800 dark:text-gray-100' : 'font-semibold text-gray-700 dark:text-gray-200'}`}>{i === 0 ? '🔥 ' : ''}{name}</span>
-                            <span className="shrink-0 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold text-white" style={{ backgroundColor: color }}>{pct}%</span>
-                          </div>
-                          <div className="w-full h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden"><div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.max(pct, 2)}%`, backgroundColor: color }}></div></div>
-                          <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mt-1">{formatRupiah(Number(amount))}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {incomeRows.length > 0 && (
-                <div>
-                  <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase mb-2">Uang datang dari mana?</p>
-                  <div className="space-y-3">
-                    {incomeRows.map(([name, amount]) => {
-                      const pct = sIncome > 0 ? Math.round((Number(amount) / sIncome) * 100) : 0;
-                      return (
-                        <div key={name} onClick={() => handleCategoryClick(name)} className="cursor-pointer">
-                          <div className="flex items-center justify-between gap-2 mb-1.5">
-                            <span className="truncate text-sm font-semibold text-gray-700 dark:text-gray-200">{name}</span>
-                            <span className="shrink-0 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold text-white bg-green-500">{pct}%</span>
-                          </div>
-                          <div className="w-full h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden"><div className="h-full rounded-full bg-green-500 transition-all duration-500" style={{ width: `${Math.max(pct, 2)}%` }}></div></div>
-                          <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mt-1">{formatRupiah(Number(amount))}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-              </>)}
-            </div>
-          );
-        })()}
-          </div>
-        )}
-        </GlassCard>
-
+        <StatsCard
+          monthlyTx={monthlyTx}
+          allTx={transactions}
+          weekRange={weekRange}
+          cycleLabel={cycle?.label ?? null}
+          cycleBased={payday.day > 1}
+          onCategoryClick={handleCategoryClick}
+        />
       </main>
 
-      {/* MODAL PROFIL: hanya Pengaturan + Keluar. Ubah foto, nama, password, dll ada di Pengaturan. */}
       {isProfileModalOpen && (
-        <div onClick={() => setIsProfileModalOpen(false)} className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div onClick={(e) => e.stopPropagation()} className="bg-gray-50 dark:bg-gray-800 rounded-3xl w-full max-w-xs relative overflow-hidden shadow-2xl">
-            <div className="pt-6 pb-12 flex flex-col items-center relative bg-cover bg-center" style={{ backgroundColor: profile?.theme_color || '#0f766e', ...(profile?.cover_url ? { backgroundImage: `url(${profile.cover_url})` } : {}) }}>
-              {profile?.cover_url && <div className="absolute inset-0 bg-black/25" />}
-              <button onClick={() => setIsProfileModalOpen(false)} aria-label="Tutup" className="absolute top-4 right-4 z-10 text-white/80 hover:text-white bg-black/20 rounded-full p-1"><X className="w-5 h-5" /></button>
-              <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 border-4 border-white shadow-md relative z-10 mt-2 flex items-center justify-center">
-                {profile?.avatar_url ? <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" /> : <User className="w-10 h-10 text-gray-400" />}
-              </div>
-            </div>
-            <div className="px-5 pb-5 -mt-6 text-center relative z-10">
-              <h2 className="text-lg font-bold text-gray-800 dark:text-white bg-white dark:bg-gray-700 rounded-xl py-2 shadow-sm mb-5 inline-block px-6 border border-gray-100 dark:border-gray-600">{profile?.nickname || profile?.full_name || user?.email?.split('@')[0]}</h2>
-              <div className="space-y-3">
-                <button onClick={() => { setIsProfileModalOpen(false); router.push('/settings'); }} className="glass glass-solid-teal w-full h-12 rounded-2xl font-bold text-sm active:scale-[0.98] transition-all flex items-center justify-center gap-2">
-                  <Settings className="w-4 h-4" /> Pengaturan
-                </button>
-                <button onClick={() => { setIsProfileModalOpen(false); showDialog('Keluar dari Celengin?', 'Kamu perlu masuk lagi nanti untuk membuka akunmu.', 'danger', handleLogout); }} className="glass glass-danger w-full h-12 rounded-2xl border font-bold text-sm active:scale-[0.98] transition-all flex items-center justify-center gap-2">
-                  <LogOut className="w-4 h-4" /> Keluar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ProfileModal
+          profile={profile}
+          displayName={displayName}
+          onClose={() => setIsProfileModalOpen(false)}
+          onSettings={() => { setIsProfileModalOpen(false); router.push('/settings'); }}
+          onLogout={() => { setIsProfileModalOpen(false); showDialog('Keluar dari Celengin?', 'Kamu perlu masuk lagi nanti untuk membuka akunmu.', 'danger', handleLogout); }}
+        />
       )}
+      {selectedCategory && <CategoryDetailModal name={selectedCategory} transactions={categoryDetails} onClose={() => setSelectedCategory(null)} />}
+      {showInfoJatah && <AllowanceInfoModal onClose={() => setShowInfoJatah(false)} />}
+      {showInfoStreak && <StreakInfoModal onClose={() => setShowInfoStreak(false)} />}
 
-      {selectedCategory && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative max-h-[80vh] flex flex-col transition-colors">
-            <button onClick={() => setSelectedCategory(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
-            <h2 className="text-lg font-bold text-center mb-1 text-gray-800 dark:text-white">Detail Kategori</h2>
-            <p className="text-xs text-center text-gray-500 dark:text-gray-400 mb-4">{selectedCategory}</p>
-            <div className="overflow-y-auto space-y-2 flex-1 pr-1">
-              {categoryDetails.length === 0 ? <p className="text-center text-xs text-gray-400 py-4">Tidak ada transaksi di bulan ini.</p> : 
-                categoryDetails.sort((a, b) => new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime()).map(tx => (
-                  <div key={tx.id} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-100 dark:border-gray-600">
-                    <div>
-                      <p className="text-xs font-bold text-gray-800 dark:text-gray-100">{tx.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}</p>
-                      <p className="text-[10px] text-gray-500 dark:text-gray-400">{new Date(tx.transaction_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                    </div>
-                    <p className={`font-bold text-sm ${tx.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>{formatRupiah(tx.amount)}</p>
-                  </div>
-                ))
-              }
-            </div>
-          </div>
-        </div>
-      )}
-      {/* MODAL EDUKASI JATAH HARIAN */}
-      {showInfoJatah && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative transition-colors">
-            <button onClick={() => setShowInfoJatah(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
-            <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-2">Apa itu Jatah Hari Ini?</h2>
-            <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
-              Angka ini adalah batas maksimal uang yang <strong>boleh kamu belanjakan hari ini</strong> agar tantangan hematmu tidak jebol.
-            </p>
-            <div className="bg-teal-50 dark:bg-teal-900/30 p-3 rounded-xl border border-teal-100 dark:border-teal-800 mb-4">
-              <p className="text-[11px] font-bold text-teal-800 dark:text-teal-300 mb-1">Rumus Perhitungan:</p>
-              <ul className="text-[10px] text-teal-700 dark:text-teal-400 space-y-1 list-disc pl-4">
-                <li>Total Batas Pengeluaran dibagi Total Hari Periode Tantangan.</li>
-                <li>Hasilnya jadi patokan harian.</li>
-                <li>Lalu dikurangi pengeluaran yang sudah kamu catat hari ini.</li>
-              </ul>
-            </div>
-            <p className="text-[10px] text-gray-500 dark:text-gray-400 text-center">
-              Data diambil dari target yang sedang kamu aktifkan sebagai <strong>Tantangan Utama</strong>.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL EDUKASI STREAK */}
-      {showInfoStreak && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative transition-colors">
-            <button onClick={() => setShowInfoStreak(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
-            <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-2">Apa itu Streak Hemat?</h2>
-            <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
-              Streak adalah penghitung <strong>berapa hari berturut-turut</strong> kamu berhasil mengendalikan pengeluaran di bawah jatah harian.
-            </p>
-            <div className="bg-orange-50 dark:bg-orange-900/30 p-3 rounded-xl border border-orange-100 dark:border-orange-800 mb-4">
-              <p className="text-[11px] font-bold text-orange-800 dark:text-orange-300 mb-1">Cara Kerjanya:</p>
-              <ul className="text-[10px] text-orange-700 dark:text-orange-400 space-y-1 list-disc pl-4">
-                <li>Setiap hari sistem mengecek pengeluaranmu.</li>
-                <li>Jika belanja &le; Jatah Harian, streak bertambah +1.</li>
-                <li>Jika kamu <em>overbudget</em> sehari saja, streak akan <strong>reset kembali ke 0</strong>.</li>
-              </ul>
-            </div>
-            <p className="text-[10px] text-gray-500 dark:text-gray-400 text-center">
-              Semakin panjang streak-mu, semakin sehat keuanganmu! 🔥
-            </p>
-          </div>
-        </div>
-      )}
       <TransactionDetailModal tx={detailTx} onClose={() => setDetailTx(null)} />
       <TransactionModal isOpen={isTxModalOpen} onClose={() => { setIsTxModalOpen(false); setTxDate(undefined); }} onSuccess={() => fetchData()} showDialog={showDialog} initialType={txType} initialDate={txDate} />
       <CustomDialog isOpen={dialog.isOpen} onClose={closeDialog} title={dialog.title} message={dialog.msg} type={dialog.type} onConfirm={dialog.onConfirm} />

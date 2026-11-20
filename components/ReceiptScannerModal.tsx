@@ -88,10 +88,10 @@ export default function ReceiptScannerModal({ isOpen, onClose, onSuccess }: { is
         {!preview ? (
           <div 
             onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-teal-200 bg-teal-50 rounded-2xl h-48 flex flex-col items-center justify-center cursor-pointer hover:bg-teal-100 transition-colors"
+            className="border-2 border-dashed border-sky-200 bg-sky-50 rounded-2xl h-48 flex flex-col items-center justify-center cursor-pointer hover:bg-sky-100 transition-colors"
           >
-            <Upload className="w-8 h-8 text-teal-500 mb-2" />
-            <p className="text-sm text-teal-700 font-semibold">Upload Foto Struk</p>
+            <Upload className="w-8 h-8 text-sky-500 mb-2" />
+            <p className="text-sm text-sky-700 font-semibold">Upload Foto Struk</p>
             <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileChange} />
           </div>
         ) : (

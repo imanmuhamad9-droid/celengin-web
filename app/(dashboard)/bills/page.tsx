@@ -26,7 +26,7 @@ const BILL_FREQ_OPTIONS = [
   { value: 'yearly', label: 'Tahunan' },
 ];
 const DEFAULT_CATEGORIES = ['🏠 Tagihan', '📌 Lainnya'];
-const inputCls = 'w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm focus:ring-2 focus:ring-teal-500';
+const inputCls = 'w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm focus:ring-2 focus:ring-sky-500';
 
 const INCOME_LIKE = /gaji|bonus|thr|pemasukan|income|dividen|bunga|salary|upah|honor/i;
 
@@ -211,7 +211,7 @@ export default function BillsPage() {
 
         {missingTable && <div className="bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 text-xs p-3 rounded-xl border border-red-100 dark:border-red-800">Tabel bills belum ada. Jalankan 01_fitur_baru.sql di Supabase.</div>}
 
-        <div className="rounded-3xl p-6 text-white shadow-lg bg-teal-700">
+        <div className="rounded-3xl p-6 text-white shadow-lg bg-sky-700">
           <p className="text-white/80 text-xs font-medium mb-1">Tagihan 30 hari ke depan</p>
           <h3 className="text-3xl font-extrabold mb-3">{formatRupiah(next30)}</h3>
           <div className="flex gap-6 text-sm">

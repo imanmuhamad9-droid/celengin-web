@@ -83,9 +83,9 @@ export default function ReceiptScanner({ onResult, showDialog, multiple = false 
   };
 
   return (
-    <div className="rounded-2xl border border-teal-200 dark:border-teal-800 bg-teal-50/60 dark:bg-teal-900/20 p-3">
+    <div className="rounded-2xl border border-sky-200 dark:border-sky-800 bg-sky-50/60 dark:bg-sky-900/20 p-3">
       <div className="flex items-start gap-2.5">
-        <div className="w-9 h-9 shrink-0 rounded-xl glass text-teal-600 dark:text-teal-400 flex items-center justify-center shadow-sm"><ScanLine className="w-5 h-5" /></div>
+        <div className="w-9 h-9 shrink-0 rounded-xl glass text-sky-600 dark:text-sky-400 flex items-center justify-center shadow-sm"><ScanLine className="w-5 h-5" /></div>
         <div className="min-w-0">
           <p className="text-sm font-bold text-gray-800 dark:text-gray-100">Scan struk</p>
           <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-snug">{multiple ? 'Tiap foto jadi satu catatan baru, item dan harga terisi otomatis. Dari galeri bisa pilih beberapa foto sekaligus. Hasilnya bisa kamu perbaiki. Gratis, foto tidak dikirim ke mana-mana.' : 'Foto struknya, item dan harga terisi otomatis. Hasilnya bisa kamu perbaiki. Gratis, foto tidak dikirim ke mana-mana.'}</p>
@@ -97,12 +97,12 @@ export default function ReceiptScanner({ onResult, showDialog, multiple = false 
 
       {busy ? (
         <div className="mt-3">
-          <div className="flex items-center justify-between text-[11px] font-bold text-teal-700 dark:text-teal-300 mb-1.5">
-            <span className="flex items-center gap-1.5"><span className="w-3.5 h-3.5 rounded-full border-2 border-teal-300 border-t-teal-700 animate-spin inline-block" /> {STAGE_LABEL[stage]}{queue ? ` (struk ${queue.i} dari ${queue.n})` : ''}</span>
+          <div className="flex items-center justify-between text-[11px] font-bold text-sky-700 dark:text-sky-300 mb-1.5">
+            <span className="flex items-center gap-1.5"><span className="w-3.5 h-3.5 rounded-full border-2 border-sky-300 border-t-sky-700 animate-spin inline-block" /> {STAGE_LABEL[stage]}{queue ? ` (struk ${queue.i} dari ${queue.n})` : ''}</span>
             <span>{percent}%</span>
           </div>
           <div className="h-2 rounded-full bg-white dark:bg-gray-700 overflow-hidden">
-            <div className="h-full bg-teal-600 rounded-full transition-all duration-300" style={{ width: `${percent}%` }} />
+            <div className="h-full bg-sky-600 rounded-full transition-all duration-300" style={{ width: `${percent}%` }} />
           </div>
           {stage === 'download' && <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1.5">Pertama kali butuh mengunduh data bahasa (beberapa MB). Berikutnya jauh lebih cepat.</p>}
         </div>
@@ -115,7 +115,7 @@ export default function ReceiptScanner({ onResult, showDialog, multiple = false 
 
       {!busy && rawText && (
         <div className="mt-2.5">
-          <button type="button" onClick={() => setShowRaw((v) => !v)} className="text-[10px] font-bold text-teal-700 dark:text-teal-300 underline underline-offset-2">{showRaw ? 'Sembunyikan teks yang terbaca' : 'Lihat teks yang terbaca'}</button>
+          <button type="button" onClick={() => setShowRaw((v) => !v)} className="text-[10px] font-bold text-sky-700 dark:text-sky-300 underline underline-offset-2">{showRaw ? 'Sembunyikan teks yang terbaca' : 'Lihat teks yang terbaca'}</button>
           {showRaw && <pre className="mt-1.5 max-h-40 overflow-auto whitespace-pre-wrap break-words text-[10px] leading-snug glass glass-sheet text-gray-600 dark:text-gray-300 rounded-xl p-2.5 border border-gray-100 dark:border-gray-700">{rawText}</pre>}
         </div>
       )}

@@ -71,7 +71,7 @@ export default function BadgesPage() {
         {/* KARTU LEVEL: foto profil + sampul profil sebagai latar. Lapisan gelap tipis menjaga tulisan tetap terbaca di sampul apa pun. */}
         <div
           className="rounded-3xl p-6 text-white shadow-lg relative overflow-hidden bg-cover bg-center"
-          style={{ backgroundColor: profile?.theme_color || '#0f766e', ...(profile?.cover_url ? { backgroundImage: `url(${profile.cover_url})` } : {}) }}
+          style={{ backgroundColor: profile?.theme_color || '#0369a1', ...(profile?.cover_url ? { backgroundImage: `url(${profile.cover_url})` } : {}) }}
         >
           {profile?.cover_url && <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/45 to-black/60" />}
           <div className="relative z-10 [text-shadow:0_1px_3px_rgba(0,0,0,0.45)]">
@@ -102,16 +102,16 @@ export default function BadgesPage() {
             const val = Math.min(progress[b.key] || 0, b.target);
             const pct = (val / b.target) * 100;
             return (
-              <div key={b.key} className={`glass p-4 rounded-3xl border shadow-sm transition-colors relative ${got ? 'border-teal-200 dark:border-teal-800' : 'border-gray-100 dark:border-gray-700'}`}>
-                {got && <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-teal-500 text-white flex items-center justify-center"><Check className="w-3 h-3" /></span>}
+              <div key={b.key} className={`glass p-4 rounded-3xl border shadow-sm transition-colors relative ${got ? 'border-sky-200 dark:border-sky-800' : 'border-gray-100 dark:border-gray-700'}`}>
+                {got && <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-sky-500 text-white flex items-center justify-center"><Check className="w-3 h-3" /></span>}
                 <div className={`text-4xl mb-2 transition-all ${got ? '' : 'grayscale opacity-50'}`}>{b.emoji}</div>
                 <p className={`font-bold text-sm ${got ? 'text-gray-800 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>{b.title}</p>
                 <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1 leading-snug min-h-[28px]">{b.desc}</p>
                 {got ? (
-                  <p className="text-[10px] font-bold text-teal-600 dark:text-teal-400 mt-2">Diraih {formatDateID(got.slice(0, 10))}</p>
+                  <p className="text-[10px] font-bold text-sky-600 dark:text-sky-400 mt-2">Diraih {formatDateID(got.slice(0, 10))}</p>
                 ) : (
                   <div className="mt-2">
-                    <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden"><div className="h-1.5 rounded-full bg-teal-500" style={{ width: `${pct}%` }}></div></div>
+                    <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden"><div className="h-1.5 rounded-full bg-sky-500" style={{ width: `${pct}%` }}></div></div>
                     <p className="text-[10px] text-gray-400 mt-1">{val}/{b.target} {b.unit}</p>
                   </div>
                 )}

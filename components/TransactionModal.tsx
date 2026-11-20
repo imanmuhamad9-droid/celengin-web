@@ -16,6 +16,7 @@ import { Btn, Toggle, RowActions } from '@/components/ui';
 import { recognizeReceipt, overallPercent } from '@/lib/receiptOcr';
 import { parseReceiptText } from '@/lib/receiptParser';
 
+import SegmentedControl from '@/components/SegmentedControl';
 type TxRow = {
   id: string;
   type: 'income' | 'expense';
@@ -262,10 +263,11 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
           <div className="p-4 overflow-y-auto space-y-4 flex-1 bg-gray-50 dark:bg-gray-900 transition-colors">
             
             {canScan && (
-            <div className="flex p-1 rounded-2xl bg-teal-500/10 border border-teal-500/20">
-              <button type="button" onClick={() => setInputMode('manual')} className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition-all active:scale-95 ${activeMode === 'manual' ? 'glass glass-teal' : 'text-gray-600 dark:text-gray-300'}`}>Ketik Manual</button>
-              <button type="button" onClick={() => setInputMode('scan')} className={`flex-1 py-2 rounded-xl text-xs font-extrabold transition-all active:scale-95 ${inputMode === 'scan' ? 'glass glass-teal' : 'text-gray-600 dark:text-gray-300'}`}>Scan Struk</button>
-            </div>
+            <SegmentedControl
+              options={[{ value: 'manual', label: 'Ketik Manual' }, { value: 'scan', label: 'Scan Struk' }]}
+              value={activeMode}
+              onChange={(v) => setInputMode(v as 'manual' | 'scan')}
+            />
             )}
 
             {inputMode === 'scan' && canScan && (
@@ -274,8 +276,8 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
                 <p className="text-xs text-gray-500 dark:text-gray-400">Foto atau unggah struk, nominal dan tanggal terisi otomatis. Hasilnya tetap bisa kamu periksa dan ubah sebelum disimpan.</p>
                 {scanning ? (
                   <div className="py-4 flex flex-col items-center gap-2">
-                    <Loader2 className="w-6 h-6 text-teal-600 animate-spin" />
-                    <p className="text-xs font-bold text-teal-700 dark:text-teal-400">Membaca struk{scanPct > 0 ? ` ${scanPct}%` : '...'}</p>
+                    <Loader2 className="w-6 h-6 text-sky-600 animate-spin" />
+                    <p className="text-xs font-bold text-sky-700 dark:text-sky-400">Membaca struk{scanPct > 0 ? ` ${scanPct}%` : '...'}</p>
                     <p className="text-[10px] text-gray-400">Pertama kali bisa agak lama karena pemindai dimuat.</p>
                   </div>
                 ) : (
@@ -336,7 +338,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
                     value={tx.amountDisplay} 
                     onChange={(e) => handleAmountChange(tx.id, e)} 
                     placeholder="0" 
-                    className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 text-sm font-bold transition-colors" 
+                    className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 text-sm font-bold transition-colors" 
                     required 
                   />
                 </div>
@@ -358,7 +360,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
                     onChange={(e) => updateRow(tx.id, 'notes', e.target.value)}
                     placeholder="Keterangan (opsional), cth: beli pulsa buat ibu"
                     maxLength={200}
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 text-sm transition-colors"
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 text-sm transition-colors"
                   />
                 </div>
 
@@ -375,10 +377,10 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
                 </div>
 
                 {tx.isRoutine && (
-                  <div className="mt-3 p-3 bg-teal-50 dark:bg-teal-900/20 rounded-xl">
-                    <p className="text-[10px] font-bold text-teal-700 dark:text-teal-400 mb-2">Tercatat otomatis, ulangi:</p>
+                  <div className="mt-3 p-3 bg-sky-50 dark:bg-sky-900/20 rounded-xl">
+                    <p className="text-[10px] font-bold text-sky-700 dark:text-sky-400 mb-2">Tercatat otomatis, ulangi:</p>
                     <FrequencyPicker value={tx.frequency} onChange={(v) => updateRow(tx.id, 'frequency', v)} />
-                    <p className="text-[9px] text-teal-700/70 dark:text-teal-400/70 mt-2">Kamu tidak perlu mencatat lagi. Kelola di Tagihan → Transaksi Rutin.</p>
+                    <p className="text-[9px] text-sky-700/70 dark:text-sky-400/70 mt-2">Kamu tidak perlu mencatat lagi. Kelola di Tagihan → Transaksi Rutin.</p>
                   </div>
                 )}
               </div>
@@ -407,7 +409,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
             <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4 text-center">Kelola Kategori</h2>
             
             <div className="flex items-center gap-1.5 mb-4 bg-gray-50 dark:bg-gray-700 p-2 rounded-xl border border-gray-100 dark:border-gray-600 w-full">
-              <input type="text" value={newPresetLabel} onChange={(e) => setNewPresetLabel(e.target.value)} className="flex-1 min-w-0 h-10 border border-gray-300 dark:border-gray-500 rounded-lg px-2 text-sm glass text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 transition-all" placeholder="Nama..." />
+              <input type="text" value={newPresetLabel} onChange={(e) => setNewPresetLabel(e.target.value)} className="flex-1 min-w-0 h-10 border border-gray-300 dark:border-gray-500 rounded-lg px-2 text-sm glass text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 transition-all" placeholder="Nama..." />
               <Btn variant="primary" size="md" onClick={handleSavePreset} className="shrink-0">{editingPresetId ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}{editingPresetId ? 'Update' : 'Tambah'}</Btn>
             </div>
 

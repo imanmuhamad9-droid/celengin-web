@@ -166,16 +166,16 @@ export default function DreamPlannerPage() {
 
         {/* REFERENSI: kemampuan menabung dari uangmu sendiri */}
         {cap && (
-          <div className="rounded-3xl p-4 bg-teal-500/10 dark:bg-teal-400/10 border border-teal-500/20 dark:border-teal-400/20">
+          <div className="glass rounded-3xl p-4">
             <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-              <p className="text-[11px] font-extrabold text-teal-800 dark:text-teal-300 uppercase">Kemampuan menabungmu</p>
+              <TrendingUp className="w-4 h-4 text-sky-600 dark:text-sky-400" />
+              <p className="text-[11px] font-extrabold text-sky-800 dark:text-sky-300 uppercase">Kemampuan menabungmu</p>
             </div>
             {cap.months === 0 ? (
               <p className="text-xs text-gray-600 dark:text-gray-300">Belum ada transaksi. Catat pemasukan dan pengeluaranmu dulu supaya saran menabung bisa dihitung dari uangmu sendiri.</p>
             ) : (
               <>
-                <p className={`text-2xl font-extrabold ${cap.income - cap.expense >= 0 ? 'text-teal-700 dark:text-teal-300' : 'text-red-500'}`}>{formatRupiah(Math.round(Math.abs(cap.income - cap.expense)))}<span className="text-xs font-bold text-gray-500 dark:text-gray-400"> / periode gajian</span></p>
+                <p className={`text-2xl font-extrabold ${cap.income - cap.expense >= 0 ? 'text-sky-700 dark:text-sky-300' : 'text-red-500'}`}>{formatRupiah(Math.round(Math.abs(cap.income - cap.expense)))}<span className="text-xs font-bold text-gray-500 dark:text-gray-400"> / periode gajian</span></p>
                 <p className="text-[11px] text-gray-600 dark:text-gray-300 mt-0.5">
                   {cap.income - cap.expense >= 0 ? 'Rata-rata sisa uangmu tiap periode gajian' : 'Rata-rata pengeluaranmu melebihi pemasukan tiap periode gajian'}, dihitung dari {cap.months} periode gajian transaksimu.
                 </p>
@@ -192,11 +192,11 @@ export default function DreamPlannerPage() {
             const done = remainingAmount <= 0;
 
             return (
-              <div key={goal.id} className="glass p-5 rounded-3xl border border-teal-100 dark:border-teal-900/30 shadow-sm transition-colors">
+              <div key={goal.id} className="glass p-5 rounded-3xl border border-sky-100 dark:border-sky-900/30 shadow-sm transition-colors">
                 <div className="flex justify-between items-start gap-3 mb-4">
                   <div className="min-w-0">
                     {daysLeft !== null && (
-                      <span className="inline-block text-[10px] font-bold px-2.5 py-1 rounded-lg bg-teal-500/10 text-teal-700 dark:text-teal-300">H-{daysLeft < 0 ? 0 : daysLeft}</span>
+                      <span className="inline-block text-[10px] font-bold px-2.5 py-1 rounded-lg bg-sky-500/10 text-sky-700 dark:text-sky-300">H-{daysLeft < 0 ? 0 : daysLeft}</span>
                     )}
                     <h3 className="font-extrabold text-gray-900 dark:text-white text-lg mt-1.5 truncate">{goal.title}</h3>
                   </div>
@@ -204,10 +204,10 @@ export default function DreamPlannerPage() {
                 </div>
 
                 <div className="flex items-center gap-4 mb-4">
-                  <ProgressRing percent={percentage} color={done ? '#22c55e' : '#14b8a6'} />
+                  <ProgressRing percent={percentage} color={done ? '#22c55e' : '#0ea5e9'} />
                   <div className="min-w-0 flex-1">
                     <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase">Terkumpul</p>
-                    <p className="font-extrabold text-xl text-teal-600 dark:text-teal-400">{formatRupiah(goal.current_amount)}</p>
+                    <p className="font-extrabold text-xl text-sky-600 dark:text-sky-400">{formatRupiah(goal.current_amount)}</p>
                     <p className="text-[11px] text-gray-500 dark:text-gray-400">dari {formatRupiah(goal.target_amount)}</p>
                     <p className="text-xs font-extrabold text-gray-800 dark:text-gray-100 mt-1.5">{done ? 'Target tercapai 🎉' : `Kurang ${formatRupiah(remainingAmount)} lagi`}</p>
                     {goal.target_date && <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">Target: {formatDateID(goal.target_date)}</p>}
@@ -257,7 +257,7 @@ export default function DreamPlannerPage() {
                 <div className="space-y-4">
                   <div className="bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-4 border border-gray-100 dark:border-gray-600">
                     <p className="text-[10px] font-bold text-gray-400 uppercase">Kurang</p>
-                    <p className="text-2xl font-extrabold text-teal-600 dark:text-teal-400">{formatRupiah(remaining)}</p>
+                    <p className="text-2xl font-extrabold text-sky-600 dark:text-sky-400">{formatRupiah(remaining)}</p>
                   </div>
 
                   <div>

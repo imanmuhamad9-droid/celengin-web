@@ -98,14 +98,14 @@ export default function RegisterPage() {
       <AuthShell
         title="Cek emailmu dulu ya"
         subtitle="Satu langkah lagi sebelum bisa masuk."
-        icon={<div className="w-16 h-16 mb-4 rounded-2xl bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center"><Mail className="w-8 h-8 text-teal-600 dark:text-teal-400" /></div>}
-        footer={<>Sudah verifikasi? <Link href="/login" className="text-teal-600 dark:text-teal-400 font-bold hover:underline">Masuk di sini</Link></>}
+        icon={<div className="w-16 h-16 mb-4 rounded-2xl bg-sky-50 dark:bg-sky-900/30 flex items-center justify-center"><Mail className="w-8 h-8 text-sky-600 dark:text-sky-400" /></div>}
+        footer={<>Sudah verifikasi? <Link href="/login" className="text-sky-600 dark:text-sky-400 font-bold hover:underline">Masuk di sini</Link></>}
       >
-        <div className="rounded-2xl bg-teal-50 dark:bg-teal-900/20 border border-teal-100 dark:border-teal-800 p-4 text-sm text-gray-700 dark:text-gray-200 leading-relaxed">
+        <div className="rounded-2xl bg-sky-50 dark:bg-sky-900/20 border border-sky-100 dark:border-sky-800 p-4 text-sm text-gray-700 dark:text-gray-200 leading-relaxed">
           Kami sudah mengirim link verifikasi ke <span className="font-bold text-gray-900 dark:text-white break-all">{email}</span>. Klik link di email itu untuk mengaktifkan akun. <span className="font-bold">Kamu belum bisa masuk sebelum email diverifikasi.</span>
         </div>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-3 text-center">Tidak ketemu? Cek folder Spam atau Promosi.</p>
-        {resendMsg && <p className="text-xs font-semibold text-teal-700 dark:text-teal-300 mt-2 text-center">{resendMsg}</p>}
+        {resendMsg && <p className="text-xs font-semibold text-sky-700 dark:text-sky-300 mt-2 text-center">{resendMsg}</p>}
         <div className="space-y-3 mt-5">
           <button onClick={handleResend} disabled={cooldown > 0} className={authBtnSoft}>
             {cooldown > 0 ? `Kirim ulang email (${cooldown}d)` : 'Kirim ulang email'}
@@ -120,7 +120,7 @@ export default function RegisterPage() {
     <AuthShell
       title="Daftar Celengin"
       subtitle="Mulai atur uangmu dengan santai."
-      footer={<>Sudah punya akun? <Link href="/login" className="text-teal-600 dark:text-teal-400 font-bold hover:underline">Masuk di sini</Link></>}
+      footer={<>Sudah punya akun? <Link href="/login" className="text-sky-600 dark:text-sky-400 font-bold hover:underline">Masuk di sini</Link></>}
     >
       {errorMsg && <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs p-3 rounded-2xl mb-4 border border-red-100 dark:border-red-800/40">{errorMsg}</div>}
 

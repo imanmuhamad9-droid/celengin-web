@@ -335,7 +335,7 @@ export default function SharedSpacePage() {
             {pendingInvites.map(invite => (
               <div key={invite.id} className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-2xl flex flex-col gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="bg-white dark:bg-gray-700 p-2 rounded-full shadow-sm"><Mail className="w-5 h-5 text-teal-600 dark:text-teal-400" /></div>
+                  <div className="bg-white dark:bg-gray-700 p-2 rounded-full shadow-sm"><Mail className="w-5 h-5 text-sky-600 dark:text-sky-400" /></div>
                   <div>
                     <p className="text-xs text-gray-600 dark:text-gray-300">Kamu diundang ke target:</p>
                     <p className="font-bold text-gray-800 dark:text-white text-sm">{invite.couple_goals?.title}</p>
@@ -473,7 +473,7 @@ export default function SharedSpacePage() {
               <button onClick={() => setUpdateAction('out')} className={`flex-1 py-2 rounded-xl text-xs font-bold border-2 flex items-center justify-center gap-1 transition-all ${updateAction === 'out' ? 'glass glass-danger' : 'border-gray-100 dark:border-gray-700 text-gray-400'}`}><ArrowUpCircle className="w-4 h-4" /> Uang Keluar</button>
             </div>
             <form onSubmit={handleUpdateAmount} className="space-y-4">
-              <input type="text" inputMode="numeric" value={updateAmountDisplay} onChange={handleUpdateAmountChange} required className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm font-bold focus:ring-2 focus:ring-teal-500" placeholder="Nominal (Rp)" />
+              <input type="text" inputMode="numeric" value={updateAmountDisplay} onChange={handleUpdateAmountChange} required className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl text-sm font-bold focus:ring-2 focus:ring-sky-500" placeholder="Nominal (Rp)" />
               <Btn type="submit" variant={updateAction === 'in' ? 'success' : 'red'} size="md" full className="mt-2">Simpan Transaksi</Btn>
             </form>
           </div>
@@ -508,7 +508,7 @@ export default function SharedSpacePage() {
               </div>
 
               <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
-                <p className="text-[10px] font-bold text-teal-600 dark:text-teal-400 mb-2 uppercase">Info Rekening (Opsional)</p>
+                <p className="text-[10px] font-bold text-sky-600 dark:text-sky-400 mb-2 uppercase">Info Rekening (Opsional)</p>
                 <div className="space-y-2">
                   <select value={bankName} onChange={e => setBankName(e.target.value)} className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm">
                     <option value="">Pilih Bank / E-Wallet</option>
@@ -532,7 +532,7 @@ export default function SharedSpacePage() {
             <h2 className="text-lg font-bold text-center mb-2 text-gray-800 dark:text-white">Undang Anggota</h2>
             <p className="text-xs text-center text-gray-500 dark:text-gray-400 mb-4">Masukkan email untuk bergabung ke target <span className="font-bold">{selectedGoal.title}</span>.</p>
             <form onSubmit={handleInvite} className="space-y-4">
-              <input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} required className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm focus:ring-2 focus:ring-teal-500" placeholder="email@contoh.com" />
+              <input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} required className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm focus:ring-2 focus:ring-sky-500" placeholder="email@contoh.com" />
               <Btn type="submit" variant="primary" size="md" full className="mt-2" disabled={inviteLoading}>{inviteLoading ? 'Mengundang...' : 'Kirim Undangan'}</Btn>
             </form>
           </div>

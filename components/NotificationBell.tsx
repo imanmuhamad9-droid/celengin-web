@@ -37,7 +37,7 @@ function LocalIcon({ icon, cls }: { icon: LocalNotif['icon']; cls: string }) {
 }
 
 function KindIcon({ kind }: { kind: string }) {
-  const cls = 'w-5 h-5 text-teal-600 dark:text-teal-400';
+  const cls = 'w-5 h-5 text-sky-600 dark:text-sky-400';
   if (kind === 'split_invite') return <Users2 className={cls} />;
   if (kind === 'gantian_invite' || kind === 'gantian_reminder') return <ArrowLeftRight className={cls} />;
   if (kind === 'couple_invite') return <HeartHandshake className={cls} />;
@@ -148,7 +148,7 @@ export default function NotificationBell({ userId, local }: Props) {
       <button
         onClick={openPanel}
         aria-label={badge > 0 ? `Notifikasi, ${badge} belum dibaca` : 'Notifikasi'}
-        className="glass relative w-9 h-9 rounded-full flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-teal-600 transition-all active:scale-95"
+        className="glass relative w-9 h-9 rounded-full flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-sky-600 transition-all active:scale-95"
       >
         <Bell className="w-5 h-5" />
         {badge > 0 && (
@@ -195,13 +195,13 @@ export default function NotificationBell({ userId, local }: Props) {
                     <div
                       key={n.id}
                       onClick={() => handleOpenItem(n)}
-                      className={`relative cursor-pointer rounded-2xl p-3 border transition-colors ${unread ? 'bg-teal-50/60 dark:bg-teal-900/20 border-teal-200 dark:border-teal-800' : 'bg-gray-50 dark:bg-gray-800/60 border-transparent'}`}
+                      className={`relative cursor-pointer rounded-2xl p-3 border transition-colors ${unread ? 'bg-sky-50/60 dark:bg-sky-900/20 border-sky-200 dark:border-sky-800' : 'bg-gray-50 dark:bg-gray-800/60 border-transparent'}`}
                     >
                       <div className="flex items-start gap-3 pr-6">
                         <div className="w-9 h-9 shrink-0 rounded-xl glass flex items-center justify-center shadow-sm"><KindIcon kind={n.kind} /></div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
-                            {unread && <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0" />}
+                            {unread && <span className="w-2 h-2 rounded-full bg-sky-500 shrink-0" />}
                             <p className="text-xs font-bold text-gray-800 dark:text-gray-100">{n.title}</p>
                             <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-auto shrink-0">{now ? timeAgo(n.created_at, now) : ''}</span>
                           </div>
@@ -226,7 +226,7 @@ export default function NotificationBell({ userId, local }: Props) {
                             </div>
                           )}
                           {res && (
-                            <p className={`text-[11px] font-bold mt-2 ${res === 'accepted' ? 'text-teal-700 dark:text-teal-300' : 'text-gray-500 dark:text-gray-400'}`}>
+                            <p className={`text-[11px] font-bold mt-2 ${res === 'accepted' ? 'text-sky-700 dark:text-sky-300' : 'text-gray-500 dark:text-gray-400'}`}>
                               {res === 'accepted' ? '✓ Undangan diterima' : 'Undangan ditolak'}
                             </p>
                           )}

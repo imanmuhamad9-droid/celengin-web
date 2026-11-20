@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ImageIcon, Minus, Plus, RotateCcw, Move, Upload } from 'lucide-react';
 
+import SegmentedControl from '@/components/SegmentedControl';
 // Pengaturan background Kartu Saldo. Pratinjau memakai CSS yang sama dengan kartu di Home
 // (background-size = zoom x 100%, background-position dalam persen), jadi hasilnya sama persis.
 export type BgSide = 'safe' | 'low';
@@ -59,14 +60,14 @@ export default function CardBgEditor({ safe, low, uploading, onChange, onPick }:
   };
   const onUp = () => { drag.current = null; };
 
-  const tabCls = (on: boolean) => `flex-1 h-9 rounded-lg text-xs font-bold transition-all ${on ? 'bg-white dark:bg-gray-600 text-teal-700 dark:text-teal-300 shadow-sm' : 'text-gray-500 dark:text-gray-300'}`;
-
   return (
     <div>
-      <div className="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-xl mb-3">
-        <button type="button" onClick={() => setSide('safe')} className={tabCls(side === 'safe')}>Saat saldo aman</button>
-        <button type="button" onClick={() => setSide('low')} className={tabCls(side === 'low')}>Saat saldo menipis</button>
-      </div>
+      <SegmentedControl
+        className="mb-3"
+        options={[{ value: 'safe', label: 'Saat saldo aman' }, { value: 'low', label: 'Saat saldo menipis' }]}
+        value={side}
+        onChange={setSide}
+      />
 
       {!slot.url ? (
         <button type="button" onClick={() => onPick(side)} className="glass glass-teal w-full border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-gray-500 dark:text-gray-300 transition-all text-xs font-semibold gap-1" style={{ aspectRatio: '1.9 / 1' }}>
@@ -76,7 +77,7 @@ export default function CardBgEditor({ safe, low, uploading, onChange, onPick }:
         <>
           <div
             ref={boxRef}
-            className="relative w-full rounded-2xl overflow-hidden bg-teal-700 touch-none cursor-grab active:cursor-grabbing select-none"
+            className="relative w-full rounded-2xl overflow-hidden bg-sky-700 touch-none cursor-grab active:cursor-grabbing select-none"
             style={{ aspectRatio: '1.9 / 1' }}
             onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
           >
@@ -92,7 +93,7 @@ export default function CardBgEditor({ safe, low, uploading, onChange, onPick }:
 
           <div className="flex items-center gap-3 mt-3">
             <button type="button" onClick={() => setZoom(zoom - 0.2)} aria-label="Perkecil" className="glass w-9 h-9 shrink-0 rounded-xl text-gray-600 dark:text-gray-200 flex items-center justify-center"><Minus className="w-4 h-4" /></button>
-            <input type="range" min={1} max={3} step={0.05} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} className="flex-1 accent-teal-600" aria-label="Zoom" />
+            <input type="range" min={1} max={3} step={0.05} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} className="flex-1 accent-sky-600" aria-label="Zoom" />
             <button type="button" onClick={() => setZoom(zoom + 0.2)} aria-label="Perbesar" className="glass w-9 h-9 shrink-0 rounded-xl text-gray-600 dark:text-gray-200 flex items-center justify-center"><Plus className="w-4 h-4" /></button>
           </div>
 

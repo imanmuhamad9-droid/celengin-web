@@ -88,7 +88,7 @@ export default function WalletsPage() {
 
       <main className="max-w-md mx-auto px-4 mt-3 space-y-4">
         {!tableOk && (
-          <div className="glass glass-teal rounded-3xl p-4 text-xs leading-relaxed">
+          <div className="glass rounded-3xl p-4 text-xs leading-relaxed">
             <p className="font-bold mb-1">Dompet belum bisa dimuat</p>
             <p>Tabel dompet belum ada di database. Jalankan <strong>sql/02_dompet.sql</strong> di Supabase SQL Editor, lalu muat ulang halaman ini.</p>
           </div>

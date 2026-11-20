@@ -54,7 +54,7 @@ export default function OfflineSync() {
   if (!text) return null;
   return (
     <div role="status" aria-live="polite" className="fixed top-2 inset-x-0 z-[60] flex justify-center pointer-events-none px-4">
-      <span className={`rounded-full px-3 py-1.5 text-xs font-bold shadow-lg text-white ${sentMsg ? 'bg-teal-600' : 'bg-amber-500'}`}>{text}</span>
+      <span className={`rounded-full px-3 py-1.5 text-xs font-bold shadow-lg text-white ${sentMsg ? 'bg-sky-600' : 'bg-amber-500'}`}>{text}</span>
     </div>
   );
 }

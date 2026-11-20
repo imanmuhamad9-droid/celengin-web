@@ -132,7 +132,7 @@ export default function AppHeader({ title, onBack, topRight, action, z = 'z-50',
 
       {info && infoOpen && (
         <div className="max-w-md mx-auto px-4 pt-1">
-          <div className="glass glass-teal relative rounded-3xl p-4">
+          <div className="glass relative rounded-3xl p-4">
             <button onClick={closeInfo} aria-label="Sembunyikan penjelasan" className="absolute top-3 right-3 text-[color:var(--text-muted)]"><X className="w-4 h-4" /></button>
             <p className="text-xs font-bold mb-1 pr-6" style={{ color: 'var(--text-main)' }}>{info.heading}</p>
             <p className="text-[11px] leading-relaxed text-[color:var(--text-muted)]">{info.body}</p>

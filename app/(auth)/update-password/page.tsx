@@ -41,7 +41,7 @@ export default function UpdatePasswordPage() {
     <AuthShell
       title="Buat Password Baru"
       subtitle="Pilih password yang kuat dan mudah kamu ingat."
-      icon={<div className="w-16 h-16 mb-4 rounded-2xl bg-teal-600 flex items-center justify-center shadow-md"><KeyRound className="w-8 h-8 text-white" /></div>}
+      icon={<div className="w-16 h-16 mb-4 rounded-2xl bg-sky-600 flex items-center justify-center shadow-md"><KeyRound className="w-8 h-8 text-white" /></div>}
     >
       {msg.text && (
         <div className={`text-xs p-3 rounded-2xl mb-4 border ${msg.type === 'error' ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-100 dark:border-red-800/40' : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-100 dark:border-green-800/40'}`}>

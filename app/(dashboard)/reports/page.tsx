@@ -15,6 +15,7 @@ import SubTabs, { RIWAYAT_TABS } from '@/components/SubTabs';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import { buildReportPdf, savePdf } from '@/lib/pdfReport';
 
+import SegmentedControl from '@/components/SegmentedControl';
 const PERIODS: { id: Period; label: string }[] = [
   { id: 'week', label: 'Mingguan' },
   { id: 'month', label: 'Bulanan' },
@@ -69,7 +70,7 @@ export default function ReportsPage() {
   const noun = period === 'week' ? 'minggu' : period === 'month' ? 'bulan' : 'tahun';
 
   const maxBar = Math.max(10000, ...cur.series.map((s) => Math.max(s.income, s.expense)));
-  const ringColor = !health ? '#9ca3af' : health.score >= 80 ? '#10b981' : health.score >= 60 ? '#14b8a6' : health.score >= 40 ? '#f59e0b' : '#ef4444';
+  const ringColor = !health ? '#9ca3af' : health.score >= 80 ? '#10b981' : health.score >= 60 ? '#0ea5e9' : health.score >= 40 ? '#f59e0b' : '#ef4444';
 
   const walletName = (id?: string | null) => {
     const w = wallets.find((x) => x.id === id);
@@ -115,20 +116,16 @@ export default function ReportsPage() {
         <SubTabs items={RIWAYAT_TABS} />
 
         {/* Pilih periode */}
-        <div className="flex gap-2">
-          {PERIODS.map((p) => (
-            <button key={p.id} onClick={() => setPeriod(p.id)} className={`flex-1 py-2 rounded-xl text-xs font-bold border-2 transition-all ${period === p.id ? 'glass glass-teal' : 'glass text-gray-500 dark:text-gray-400'}`}>{p.label}</button>
-          ))}
-        </div>
+        <SegmentedControl options={PERIODS.map((p) => ({ value: p.id, label: p.label }))} value={period} onChange={setPeriod} />
 
         <div className="flex items-center justify-between glass rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm px-3 py-2">
-          <button onClick={() => setAnchor(shiftAnchor(period, anchor, -1, payday))} className="glass p-1.5 rounded-md text-gray-500 hover:text-teal-600"><ChevronLeft className="w-4 h-4" /></button>
+          <button onClick={() => setAnchor(shiftAnchor(period, anchor, -1, payday))} className="glass p-1.5 rounded-md text-gray-500 hover:text-sky-600"><ChevronLeft className="w-4 h-4" /></button>
           <span className="text-sm font-bold text-gray-800 dark:text-gray-100">{range.label}</span>
-          <button disabled={!canGoNext} onClick={() => setAnchor(shiftAnchor(period, anchor, 1, payday))} className="glass p-1.5 rounded-md text-gray-500 hover:text-teal-600 disabled:opacity-30"><ChevronRight className="w-4 h-4" /></button>
+          <button disabled={!canGoNext} onClick={() => setAnchor(shiftAnchor(period, anchor, 1, payday))} className="glass p-1.5 rounded-md text-gray-500 hover:text-sky-600 disabled:opacity-30"><ChevronRight className="w-4 h-4" /></button>
         </div>
 
         {/* Ringkasan */}
-        <div className="rounded-3xl p-6 text-white shadow-lg bg-teal-700">
+        <div className="rounded-3xl p-6 text-white shadow-lg bg-sky-700">
           <p className="text-white/80 text-xs font-medium mb-1">Selisih {noun} ini</p>
           <h3 className={`text-3xl font-extrabold mb-4 ${cur.net < 0 ? 'text-red-200' : ''}`}>{cur.net < 0 ? '-' : ''}{formatRupiah(Math.abs(cur.net))}</h3>
           <div className="flex gap-6 text-sm">
@@ -155,7 +152,7 @@ export default function ReportsPage() {
             {/* Skor kesehatan */}
             {health && (
               <div className="glass p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors relative">
-                <button onClick={() => setShowHealthInfo(true)} className="absolute top-4 right-4 text-gray-400 hover:text-teal-600 dark:hover:text-teal-400"><Info className="w-4 h-4" /></button>
+                <button onClick={() => setShowHealthInfo(true)} className="absolute top-4 right-4 text-gray-400 hover:text-sky-600 dark:hover:text-sky-400"><Info className="w-4 h-4" /></button>
                 <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100 mb-4">Skor Kesehatan Keuangan</h3>
                 <div className="flex items-center gap-5">
                   <div className="relative w-20 h-20 rounded-full flex items-center justify-center shrink-0" style={{ background: `conic-gradient(${ringColor} ${health.score}%, #e5e7eb 0)` }}>
@@ -272,11 +269,11 @@ export default function ReportsPage() {
             <button onClick={() => setShowHealthInfo(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-2">Apa itu Skor Kesehatan?</h2>
             <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mb-4">Angka 0-100 yang merangkum seberapa sehat keuanganmu di periode ini.</p>
-            <div className="bg-teal-50 dark:bg-teal-900/30 p-3 rounded-xl border border-teal-100 dark:border-teal-800 mb-4 space-y-2">
+            <div className="bg-sky-50 dark:bg-sky-900/30 p-3 rounded-xl border border-sky-100 dark:border-sky-800 mb-4 space-y-2">
               {health.parts.map((p) => (
                 <div key={p.name}>
-                  <div className="flex justify-between text-[11px] font-bold text-teal-800 dark:text-teal-300"><span>{p.name}</span><span>{p.got}/{p.max}</span></div>
-                  <div className="w-full bg-white dark:bg-gray-700 rounded-full h-1.5 mt-1 overflow-hidden"><div className="h-1.5 rounded-full bg-teal-500" style={{ width: `${(p.got / p.max) * 100}%` }}></div></div>
+                  <div className="flex justify-between text-[11px] font-bold text-sky-800 dark:text-sky-300"><span>{p.name}</span><span>{p.got}/{p.max}</span></div>
+                  <div className="w-full bg-white dark:bg-gray-700 rounded-full h-1.5 mt-1 overflow-hidden"><div className="h-1.5 rounded-full bg-sky-500" style={{ width: `${(p.got / p.max) * 100}%` }}></div></div>
                 </div>
               ))}
             </div>

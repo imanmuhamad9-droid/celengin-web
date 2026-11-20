@@ -14,7 +14,7 @@ export interface AttentionItem {
 const TONE: Record<AttentionItem['tone'], string> = {
   warning: 'bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800/40 text-amber-800 dark:text-amber-300',
   danger: 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800/40 text-red-800 dark:text-red-300',
-  praise: 'bg-teal-50 dark:bg-teal-900/20 border-teal-100 dark:border-teal-800/40 text-teal-800 dark:text-teal-300',
+  praise: 'bg-sky-50 dark:bg-sky-900/20 border-sky-100 dark:border-sky-800/40 text-sky-800 dark:text-sky-300',
 };
 
 // Baris kartu "Perlu perhatian". Tidak menampilkan apa pun bila tidak ada isi.
@@ -28,7 +28,7 @@ export default function AttentionStrip({ items }: { items: AttentionItem[] }) {
       <div className="flex justify-between items-center mb-2">
         <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Perlu perhatian</p>
         {billCount > 0 && (
-          <button onClick={() => router.push('/bills')} className="text-[10px] font-bold text-teal-600 dark:text-teal-400">Semua tagihan</button>
+          <button onClick={() => router.push('/bills')} className="text-[10px] font-bold text-sky-600 dark:text-sky-400">Semua tagihan</button>
         )}
       </div>
       <div className="flex gap-3 overflow-x-auto pb-1 hide-scrollbar snap-x">

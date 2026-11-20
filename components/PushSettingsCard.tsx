@@ -159,7 +159,7 @@ export default function PushSettingsCard({ showDialog }: { showDialog: ShowDialo
       {/* Pasang aplikasi */}
       <div className="flex items-center justify-between gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-2xl border border-gray-100 dark:border-gray-600 mb-3">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0"><Smartphone className="w-4 h-4" /></div>
+          <div className="w-9 h-9 rounded-xl bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0"><Smartphone className="w-4 h-4" /></div>
           <div className="min-w-0">
             <p className="text-xs font-bold text-gray-800 dark:text-gray-100">Pasang Aplikasi</p>
             <p className="text-[10px] text-gray-500 dark:text-gray-400">
