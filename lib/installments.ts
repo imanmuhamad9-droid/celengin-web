@@ -227,32 +227,27 @@ export function projectNext(g: InstGroup, items: InstItem[], payments: InstPayme
 }
 
 /**
- * Tagihan 3 bulan berurutan untuk semua bucket. Bulan pertama = bulan tagihan paling awal yang sedang ditunggu
- * (bisa Desember bila lembar tagihannya jatuh tempo Desember). Per bucket:
+ * Tagihan satu bucket di bulan ym, dilihat dari bulan kalender `calendarMonth`:
  * bulan tagihannya = yang belum dibayar; bulan setelahnya = perkiraan (termasuk sisa/bunga bila sudah bayar sebagian);
- * bulan sesudahnya lagi = cicilan yang jatuh di bulan itu saja.
+ * bulan sesudahnya lagi = cicilan yang jatuh di bulan itu saja; bulan sebelumnya = 0.
  */
+export function groupMonthTotal(g: InstGroup, items: InstItem[], payments: InstPayment[], calendarMonth: string, ym: string): number {
+  const gm = activeMonth(g, calendarMonth);
+  if (ym < gm) return 0;
+  if (ym === gm) return groupStatus(g, items, payments, gm).remaining;
+  if (ym === addMonthKey(gm, 1)) return projectNext(g, items, payments, gm).total;
+  return dueIn(items, ym);
+}
+
+/** Tagihan 3 bulan berurutan untuk semua bucket, mulai dari bulan tagihan paling awal yang sedang ditunggu. */
 export function upcomingTotals(
   groups: InstGroup[],
   itemsOf: (gid: string) => InstItem[],
   paysOf: (gid: string) => InstPayment[],
   calendarMonth: string,
 ): { months: [string, string, string]; totals: [number, number, number] } {
-  const active = groups.map((g) => activeMonth(g, calendarMonth));
-  const m0 = active.length > 0 ? active.reduce((a, b) => (a < b ? a : b)) : calendarMonth;
+  const m0 = groups.length > 0 ? groups.map((g) => activeMonth(g, calendarMonth)).reduce((a, b) => (a < b ? a : b)) : calendarMonth;
   const months: [string, string, string] = [m0, addMonthKey(m0, 1), addMonthKey(m0, 2)];
-  const totals: [number, number, number] = [0, 0, 0];
-  groups.forEach((g, gi) => {
-    const items = itemsOf(g.id);
-    const pays = paysOf(g.id);
-    const gm = active[gi];
-    const nextTotal = projectNext(g, items, pays, gm).total;
-    months.forEach((x, i) => {
-      if (x < gm) return;
-      if (x === gm) totals[i] += groupStatus(g, items, pays, gm).remaining;
-      else if (x === addMonthKey(gm, 1)) totals[i] += nextTotal;
-      else totals[i] += dueIn(items, x);
-    });
-  });
+  const totals = months.map((ym) => groups.reduce((sum, g) => sum + groupMonthTotal(g, itemsOf(g.id), paysOf(g.id), calendarMonth, ym), 0)) as [number, number, number];
   return { months, totals };
 }

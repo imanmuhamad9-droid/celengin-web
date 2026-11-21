@@ -35,6 +35,15 @@ export const MENU_INFO: Record<string, MenuInfo> = {
       'Angka tiap bulan disimpan otomatis, jadi grafiknya terisi seiring waktu.',
     ],
   },
+  Simulasi: {
+    heading: 'Simulasi: untuk apa menu ini?',
+    body: 'Kalkulator rencana uang: gajimu dikurangi cicilan, tagihan, utang, dan tabungan, lalu kelihatan sisa yang bisa dipakai tiap bulan dan tiap hari. Cocok untuk mencoba "bagaimana kalau" sebelum mengambil cicilan baru.',
+    points: [
+      'Angka cicilan, tagihan, dan transaksi rutin bisa diambil otomatis dari data aplikasi, lalu kamu ubah sesukamu.',
+      'Matikan sebuah baris untuk melihat hasilnya tanpa baris itu. Tidak ada data aplikasi yang berubah.',
+      'Tiap rencana tersimpan sebagai riwayat, jadi bisa dibuka dan diedit lagi nanti.',
+    ],
+  },
   Cicilan: {
     heading: 'Cicilan: untuk apa menu ini?',
     body: 'Catat semua cicilan yang punya tenor: kartu kredit, paylater, KTA, dan sejenisnya. Kelompokkan per bank atau merek, isi tiap barangnya, lalu kamu tahu berapa yang harus dibayar bulan ini dan bulan-bulan berikutnya.',

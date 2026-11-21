@@ -23,6 +23,7 @@ export const EXPORT_TABLES: { table: string; ownerColumn: string }[] = [
   { table: 'couple_goals', ownerColumn: 'created_by' },
   { table: 'couple_transactions', ownerColumn: 'user_id' },
   { table: 'split_groups', ownerColumn: 'user_id' },
+  { table: 'simulations', ownerColumn: 'user_id' },
 ];
 
 const PAGE = 1000;

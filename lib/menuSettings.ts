@@ -3,10 +3,10 @@
 // Gagal di profil (kolom belum ada) = diabaikan; pengaturan tetap jalan di perangkat ini.
 import { useSyncExternalStore } from 'react';
 import type { ComponentType } from 'react';
-import { CreditCard, History, Landmark, PieChart, Receipt, ShieldCheck, Target, Trophy, Wallet } from 'lucide-react';
+import { Calculator, CreditCard, History, Landmark, PieChart, Receipt, ShieldCheck, Target, Trophy, Wallet } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 
-export type ExtraMenuKey = 'riwayat' | 'tagihan' | 'pencapaian' | 'dompet' | 'darurat' | 'anggaran' | 'kekayaan' | 'cicilan' | 'tantangan';
+export type ExtraMenuKey = 'riwayat' | 'tagihan' | 'pencapaian' | 'dompet' | 'darurat' | 'anggaran' | 'kekayaan' | 'cicilan' | 'tantangan' | 'simulasi';
 
 export interface ExtraMenuDef {
   key: ExtraMenuKey;
@@ -27,6 +27,7 @@ export const EXTRA_MENUS: ExtraMenuDef[] = [
   { key: 'darurat', label: 'Dana Darurat', desc: 'Target otomatis dari pengeluaranmu dan progres menabungnya', href: '/emergency-fund', group: 'fitur', Icon: ShieldCheck },
   { key: 'anggaran', label: 'Anggaran', desc: 'Batas bulanan per kategori pengeluaran', href: '/budgets', group: 'fitur', Icon: PieChart },
   { key: 'kekayaan', label: 'Kekayaan Bersih', desc: 'Aset dikurangi utang, dengan grafik per bulan', href: '/net-worth', group: 'fitur', Icon: Landmark },
+  { key: 'simulasi', label: 'Simulasi', desc: 'Hitung gaji dikurangi cicilan, tagihan, dan utang, untuk beberapa bulan ke depan', href: '/simulasi', group: 'fitur', Icon: Calculator },
   { key: 'cicilan', label: 'Cicilan', desc: 'Catat cicilan kartu kredit, paylater, dan KTA per bank, lalu lihat tagihan bulan ini dan bulan depan', href: '/installments', group: 'fitur', Icon: CreditCard },
 ];
 
