@@ -131,7 +131,8 @@ export default function Calculator({ userId }: { userId: string }) {
 
   return (
     <div className="space-y-4">
-      <GlassCard padded={false} className="px-5 py-6 min-h-[150px] flex flex-col justify-center">
+      <GlassCard padded={false} className="px-5 pt-5 pb-4 min-h-[160px] flex flex-col justify-between">
+        <div>
         {editingId && (
           <div className="flex items-center justify-between gap-2 mb-2 rounded-xl px-3 py-1.5 glass-teal glass text-[11px] font-bold">
             <span className="flex items-center gap-1.5"><Pencil className="w-3.5 h-3.5" /> Mengedit hitungan dari riwayat. Tekan = untuk menyimpan.</span>
@@ -159,7 +160,8 @@ export default function Calculator({ userId }: { userId: string }) {
             {caret === chars.length && <span ref={caretRef} aria-hidden="true" className="inline-block w-[2.5px] h-[0.95em] rounded-full bg-[color:var(--teal-primary)] animate-pulse -mx-[1px]" />}
           </div>
         </div>
-        <div className="flex items-center justify-between gap-2 mt-1.5">
+        </div>
+        <div className="flex items-center justify-between gap-2 mt-3">
           <div className="flex items-center gap-1.5">
             <button type="button" onClick={() => setCaret((c) => Math.max(0, c - 1))} aria-label="Geser kursor ke kiri" className="glass glass-pressable w-8 h-8 rounded-full flex items-center justify-center text-[color:var(--text-muted)]"><ChevronLeft className="w-4 h-4" /></button>
             <button type="button" onClick={() => setCaret((c) => Math.min(expr.length, c + 1))} aria-label="Geser kursor ke kanan" className="glass glass-pressable w-8 h-8 rounded-full flex items-center justify-center text-[color:var(--text-muted)]"><ChevronRight className="w-4 h-4" /></button>
