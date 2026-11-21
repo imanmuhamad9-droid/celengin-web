@@ -130,8 +130,8 @@ export default function Calculator({ userId }: { userId: string }) {
   };
 
   return (
-    <div className="space-y-4">
-      <GlassCard padded={false} className="px-5 pt-5 pb-4 min-h-[160px] flex flex-col justify-between">
+    <div className="space-y-3">
+      <GlassCard padded={false} className="px-5 pt-3.5 pb-3 min-h-[104px] flex flex-col justify-between">
         <div>
         {editingId && (
           <div className="flex items-center justify-between gap-2 mb-2 rounded-xl px-3 py-1.5 glass-teal glass text-[11px] font-bold">
@@ -161,7 +161,7 @@ export default function Calculator({ userId }: { userId: string }) {
           </div>
         </div>
         </div>
-        <div className="flex items-center justify-between gap-2 mt-3">
+        <div className="flex items-center justify-between gap-2 mt-2">
           <div className="flex items-center gap-1.5">
             <button type="button" onClick={() => setCaret((c) => Math.max(0, c - 1))} aria-label="Geser kursor ke kiri" className="glass glass-pressable w-8 h-8 rounded-full flex items-center justify-center text-[color:var(--text-muted)]"><ChevronLeft className="w-4 h-4" /></button>
             <button type="button" onClick={() => setCaret((c) => Math.min(expr.length, c + 1))} aria-label="Geser kursor ke kanan" className="glass glass-pressable w-8 h-8 rounded-full flex items-center justify-center text-[color:var(--text-muted)]"><ChevronRight className="w-4 h-4" /></button>
@@ -172,9 +172,9 @@ export default function Calculator({ userId }: { userId: string }) {
         </div>
       </GlassCard>
 
-      <GlassCard>
+      <GlassCard padded={false} className="px-4 py-2.5">
         <SectionToggle title="Ambil dari datamu" open={chipsOpen} onToggle={toggleChips} />
-        {chipsOpen && <div className="mt-3">
+        {chipsOpen && <div className="mt-2.5">
         {failed && <p className="text-[11px] text-[color:var(--text-muted)]">Data belum bisa diambil. Kalkulator tetap bisa dipakai.</p>}
         {!failed && !data && <p className="text-[11px] text-[color:var(--text-muted)]">Mengambil data...</p>}
         {data && chips.length === 0 && <p className="text-[11px] text-[color:var(--text-muted)]">Belum ada cicilan, tagihan, atau transaksi rutin yang tercatat.</p>}
@@ -182,26 +182,25 @@ export default function Calculator({ userId }: { userId: string }) {
           <>
             <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
               {chips.map((c) => (
-                <button key={c.key} type="button" onClick={() => setEdit(insertNumberAt(expr, caret, Math.round(c.amount)))} className="glass glass-teal glass-pressable shrink-0 rounded-2xl px-3 py-2 text-left">
+                <button key={c.key} type="button" onClick={() => setEdit(insertNumberAt(expr, caret, Math.round(c.amount)))} className="glass glass-teal glass-pressable shrink-0 rounded-2xl px-3 py-1.5 text-left">
                   <span className="block text-[10px] font-semibold opacity-80 max-w-[130px] truncate">{c.label}</span>
                   <span className="block text-xs font-extrabold">{formatExpr(numToExpr(Math.round(c.amount)))}</span>
                 </button>
               ))}
             </div>
-            <p className="text-[10px] mt-1.5 text-[color:var(--text-muted)]">Ketuk untuk memasukkan angkanya ke hitungan.</p>
           </>
         )}
         </div>}
       </GlassCard>
 
-      <div className="grid grid-cols-4 gap-2.5">
+      <div className="grid grid-cols-4 gap-2">
         {KEYS.map(([text, key, style]) => (
           <button
             key={key}
             type="button"
             onClick={() => press(key)}
             aria-label={key === 'BACK' ? 'Hapus satu karakter' : key === 'C' ? 'Bersihkan' : undefined}
-            className={`glass-pressable h-14 rounded-2xl text-lg font-extrabold flex items-center justify-center ${
+            className={`glass-pressable h-12 rounded-2xl text-lg font-extrabold flex items-center justify-center ${
               style === 'eq' ? 'glass glass-solid-teal' : style === 'op' ? 'glass glass-teal' : 'glass'
             }`}
             style={style === 'num' || style === 'fn' ? { color: 'var(--text-main)' } : undefined}
