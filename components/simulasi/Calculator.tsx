@@ -131,7 +131,7 @@ export default function Calculator({ userId }: { userId: string }) {
 
   return (
     <div className="space-y-4">
-      <GlassCard>
+      <GlassCard padded={false} className="px-5 py-6 min-h-[150px] flex flex-col justify-center">
         {editingId && (
           <div className="flex items-center justify-between gap-2 mb-2 rounded-xl px-3 py-1.5 glass-teal glass text-[11px] font-bold">
             <span className="flex items-center gap-1.5"><Pencil className="w-3.5 h-3.5" /> Mengedit hitungan dari riwayat. Tekan = untuk menyimpan.</span>
@@ -147,7 +147,7 @@ export default function Calculator({ userId }: { userId: string }) {
           onClick={() => setCaret(expr.length)}
           className="relative overflow-x-auto hide-scrollbar cursor-text"
         >
-          <div className="inline-flex min-w-full justify-end items-center whitespace-nowrap text-4xl font-extrabold tracking-tight leading-[1.25] select-none" style={{ color: 'var(--text-main)' }}>
+          <div className="inline-flex min-w-full justify-end items-center whitespace-nowrap text-[26px] font-extrabold tracking-tight leading-[1.3] select-none" style={{ color: 'var(--text-main)' }}>
             {expr === '' && <span className="opacity-40">0</span>}
             {chars.map((c, i) => (
               <span key={i} className="inline-flex items-center">
