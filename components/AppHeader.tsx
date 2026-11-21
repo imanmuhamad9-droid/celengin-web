@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Info, RefreshCw, Settings, User, X } from 'lucide-react';
 import { MENU_INFO } from '@/lib/menuInfo';
 import { supabase } from '@/lib/supabaseClient';
+import { useRefresh } from '@/components/RefreshProvider';
 
 type Props = {
   /** Nama menu yang sedang dibuka. Dipakai untuk penjelasan ⓘ dan subjudul halaman non-menu (mis. Pengaturan). */
@@ -33,7 +34,7 @@ export default function AppHeader({ title, onBack, topRight, action, z = 'z-50',
   const info = key ? MENU_INFO[key] : undefined;
   const [infoOpen, setInfoOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
+  const { refresh, refreshing, stale } = useRefresh();
   const [avatar, setAvatar] = useState<string | null>(avatarCache ?? null);
 
   useEffect(() => {
@@ -100,21 +101,22 @@ export default function AppHeader({ title, onBack, topRight, action, z = 'z-50',
             </button>
           </div>
 
-          <div className="shrink-0 flex items-center gap-2">
+          <div className="shrink-0 flex items-center gap-1.5">
             <button
-              onClick={() => { setRefreshing(true); window.location.reload(); }}
+              onClick={refresh}
               disabled={refreshing}
-              aria-label="Muat ulang halaman"
-              className="glass glass-pressable w-10 h-10 rounded-full flex items-center justify-center text-[color:var(--text-muted)]"
+              aria-label={stale ? 'Muat ulang halaman (data sudah lama)' : 'Muat ulang halaman'}
+              className="glass glass-pressable relative w-9 h-9 rounded-full flex items-center justify-center text-[color:var(--text-muted)]"
             >
-              <RefreshCw className={`w-[18px] h-[18px] ${refreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-[17px] h-[17px] ${refreshing ? 'animate-spin' : ''}`} />
+              {stale && !refreshing && <span aria-hidden="true" className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[color:var(--teal-primary)] ring-2 ring-white dark:ring-gray-900" />}
             </button>
             {topRight}
-            <button onClick={() => router.push('/settings')} aria-label="Pengaturan" className="glass glass-pressable w-10 h-10 rounded-full flex items-center justify-center text-[color:var(--text-muted)]">
-              <Settings className="w-[18px] h-[18px]" />
+            <button onClick={() => router.push('/settings')} aria-label="Pengaturan" className="glass glass-pressable w-9 h-9 rounded-full flex items-center justify-center text-[color:var(--text-muted)]">
+              <Settings className="w-[17px] h-[17px]" />
             </button>
-            <button onClick={onAvatarClick ?? (() => router.push('/settings'))} aria-label="Profil" className="glass glass-pressable w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-[color:var(--text-muted)]">
-              {avatar ? <img src={avatar} alt="Foto profil" className="w-full h-full object-cover" /> : <User className="w-[18px] h-[18px]" />}
+            <button onClick={onAvatarClick ?? (() => router.push('/settings'))} aria-label="Profil" className="glass glass-pressable w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-[color:var(--text-muted)]">
+              {avatar ? <img src={avatar} alt="Foto profil" className="w-full h-full object-cover" /> : <User className="w-[17px] h-[17px]" />}
             </button>
           </div>
         </div>

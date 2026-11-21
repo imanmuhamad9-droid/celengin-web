@@ -21,6 +21,7 @@
 }
 
 body {
+  overscroll-behavior-y: contain; /* tarik-untuk-segarkan dikendalikan aplikasi, bukan browser */
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;

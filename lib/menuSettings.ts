@@ -33,6 +33,8 @@ export const EXTRA_MENUS: ExtraMenuDef[] = [
 
 const LS_KEY = 'celengin:extra-menus';
 const CHANGED_EVENT = 'celengin:extra-menus-changed';
+/** Bawaan sebelum pengguna pernah mengatur Menu Tambahan. Mematikan semuanya tersimpan sebagai [] dan menang atas bawaan ini. */
+const DEFAULT_MENUS: ExtraMenuKey[] = ['laporan'];
 const EMPTY: ExtraMenuKey[] = [];
 const VALID = new Set<string>(EXTRA_MENUS.map((m) => m.key));
 
@@ -48,13 +50,13 @@ export function parseExtraMenus(raw: unknown): ExtraMenuKey[] | null {
 
 // Snapshot dibuat stabil (objek yang sama selama isi penyimpanan tidak berubah) untuk useSyncExternalStore
 let cacheRaw: string | null = null;
-let cacheVal: ExtraMenuKey[] = EMPTY;
+let cacheVal: ExtraMenuKey[] = DEFAULT_MENUS;
 function snapshot(): ExtraMenuKey[] {
   let raw: string | null = null;
   try { raw = localStorage.getItem(LS_KEY); } catch { raw = null; }
   if (raw === cacheRaw) return cacheVal;
   cacheRaw = raw;
-  try { cacheVal = raw ? parseExtraMenus(JSON.parse(raw)) ?? EMPTY : EMPTY; } catch { cacheVal = EMPTY; }
+  try { cacheVal = raw ? parseExtraMenus(JSON.parse(raw)) ?? DEFAULT_MENUS : DEFAULT_MENUS; } catch { cacheVal = DEFAULT_MENUS; }
   return cacheVal;
 }
 function subscribe(cb: () => void) {
@@ -66,9 +68,9 @@ function subscribe(cb: () => void) {
   };
 }
 
-/** Menu tambahan yang sedang dinyalakan (kosong = strip Menu Cepat disembunyikan). */
+/** Menu tambahan yang sedang dinyalakan (kosong = strip Menu Cepat disembunyikan). Belum pernah diatur = Laporan saja. */
 export function useExtraMenus(): ExtraMenuKey[] {
-  return useSyncExternalStore(subscribe, snapshot, () => EMPTY);
+  return useSyncExternalStore(subscribe, snapshot, () => DEFAULT_MENUS);
 }
 
 export async function saveExtraMenus(userId: string | null, keys: ExtraMenuKey[]) {

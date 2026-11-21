@@ -222,7 +222,7 @@ export default function PlanEditor({ data, onChange, userId, showDialog, onSave,
       )}
 
       {/* Bilah bawah: total tetap terlihat tanpa perlu menggulir ke atas */}
-      <div className="sticky z-[45]" style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)' }}>
+      <div className="sticky z-[45]" style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 84px)' }}>
         <div className="glass glass-sheet rounded-3xl px-4 py-3 flex items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-[10px] font-semibold text-[color:var(--text-muted)] truncate">Sisa {monthName(data.month)}</p>

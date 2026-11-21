@@ -11,7 +11,7 @@ import CustomDialog from './CustomDialog';
 
 type NavLink = { key: string; label: string; href: string; img: string; also?: string[] };
 
-// Bottom bar kaca melayang simetris: 3 menu | tombol Catat (+) di tengah | 3 menu.
+// Bottom bar menempel di dasar layar, simetris: 3 menu | tombol Catat (+) timbul di tengah | 3 menu.
 // Ikon tidak dipilih = abu (grayscale) tembus pandang; dipilih = warna penuh (teal).
 const ITEMS: NavLink[] = [
   { key: 'home', label: 'Home', href: '/dashboard', img: '/nav-icons/home.png' },
@@ -137,7 +137,7 @@ export default function BottomNav() {
         onClick={() => handleSelect(item)}
         aria-label={item.label}
         aria-current={active ? 'page' : undefined}
-        className={`glass-pressable relative z-10 min-w-0 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-full ${active ? 'text-[color:var(--teal-primary)]' : 'text-[color:var(--text-muted)]'}`}
+        className={`glass-pressable relative z-10 min-w-0 flex flex-col items-center justify-center gap-0.5 pt-2.5 pb-1.5 ${active ? 'text-[color:var(--teal-primary)]' : 'text-[color:var(--text-muted)]'}`}
       >
         <img src={item.img} alt="" className={`w-6 h-6 object-contain transition-all duration-300 ${active ? '' : 'grayscale opacity-55'}`} />
         <span className="text-[9.5px] font-bold whitespace-nowrap">{item.label}</span>
@@ -155,26 +155,29 @@ export default function BottomNav() {
       {!isModalOpen && (
         <nav
           aria-label="Menu utama"
-          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 14px)' }}
-          className="fixed left-1/2 -translate-x-1/2 z-[56] w-[calc(100%-24px)] max-w-[400px]"
+          className="fixed bottom-0 left-1/2 -translate-x-1/2 z-[56] w-full max-w-md"
         >
-          <div className="glass rounded-full px-2 py-1.5">
-            <div className="relative grid items-center" style={{ gridTemplateColumns: `repeat(${HALF}, 1fr) ${CENTER_W}px repeat(${HALF}, 1fr)` }}>
+          {/* Bar menempel di dasar layar: sudut atas membulat, sisanya rata dengan tepi layar */}
+          <div
+            className="glass rounded-t-[26px] rounded-b-none border-x-0 border-b-0 px-1"
+            style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 4px)', boxShadow: '0 -6px 24px rgba(15, 23, 42, 0.08)' }}
+          >
+            <div className="relative grid items-end" style={{ gridTemplateColumns: `repeat(${HALF}, 1fr) ${CENTER_W}px repeat(${HALF}, 1fr)` }}>
               {curIdx >= 0 && (
                 <span
                   aria-hidden="true"
-                  className="absolute inset-y-0 left-0 transition-transform duration-300 ease-[cubic-bezier(0.34,1.3,0.64,1)]"
+                  className="absolute top-0 left-0 transition-transform duration-300 ease-[cubic-bezier(0.34,1.3,0.64,1)]"
                   style={{ width: `calc((100% - ${CENTER_W}px) / ${ITEMS.length})`, transform: `translateX(calc(${pos * 100}% + ${pos >= HALF ? CENTER_W : 0}px))` }}
                 >
-                  <span className="block h-full mx-0.5 rounded-full" style={{ background: 'rgba(2, 132, 199, 0.14)', boxShadow: 'inset 0 0 0 1px rgba(2, 132, 199, 0.30)' }} />
+                  <span className="mx-auto block w-8 h-[3px] rounded-b-full" style={{ background: 'var(--teal-primary)' }} />
                 </span>
               )}
               {ITEMS.slice(0, HALF).map(renderItem)}
-              <div className="flex justify-center">
+              <div className="flex justify-center self-start">
                 <button
                   onClick={runCatat}
                   aria-label={entry?.long || 'Catat transaksi'}
-                  className="glass glass-solid-teal glass-pressable w-14 h-14 -translate-y-3 rounded-full flex items-center justify-center"
+                  className="glass glass-solid-teal glass-pressable w-14 h-14 -translate-y-5 rounded-full flex items-center justify-center ring-4 ring-[color:var(--bg-main)]"
                 >
                   <Plus className="w-6 h-6" strokeWidth={2.8} />
                 </button>
