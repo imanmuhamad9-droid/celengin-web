@@ -88,6 +88,7 @@ export default function Calculator({ userId }: { userId: string }) {
   const result = evaluate(expr);
   const hasOperation = /[+\-*/%]/.test(expr.replace(/^-/, ''));
   const shown = formatExpr(expr);
+  const pieces = expr.match(/-?\d[\d.]*%?[+\-*/]?|[+\-*/]/g) ?? [];
   // Hasil otomatis hanya muncul bila ada operasi, jadi angka tunggal tidak diulang dua kali
   const showPreview = result !== null && hasOperation;
 
@@ -116,13 +117,15 @@ export default function Calculator({ userId }: { userId: string }) {
             <button type="button" onClick={() => { setEditingId(null); setExpr(''); }} aria-label="Batal mengedit"><X className="w-4 h-4" /></button>
           </div>
         )}
-        <p
-          className={`text-right font-extrabold tracking-tight break-all leading-tight ${shown.length > 22 ? 'text-2xl' : shown.length > 13 ? 'text-3xl' : 'text-5xl'}`}
+        {/* Tiap angka (beserta operator di belakangnya) satu paket: baris baru hanya terjadi di antara paket */}
+        <div
+          className={`flex flex-wrap justify-end font-extrabold tracking-tight leading-tight ${shown.length > 22 ? 'text-2xl' : shown.length > 13 ? 'text-3xl' : 'text-5xl'}`}
           style={{ color: 'var(--text-main)' }}
           aria-live="polite"
+          aria-label={shown || '0'}
         >
-          {shown || '0'}
-        </p>
+          {pieces.length === 0 ? <span>0</span> : pieces.map((p, i) => <span key={i} className="whitespace-nowrap">{formatExpr(p)}</span>)}
+        </div>
         <p className="text-right text-sm font-semibold mt-1.5 min-h-[20px] break-all text-[color:var(--text-muted)]">
           {showPreview ? `= ${formatExpr(numToExpr(result as number))}` : ' '}
         </p>
