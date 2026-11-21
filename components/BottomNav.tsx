@@ -19,7 +19,7 @@ const ITEMS: NavLink[] = [
   { key: 'bareng', label: 'Kolektif', href: '/couple', img: '/nav-icons/kolektif.png' },
   { key: 'splitbill', label: 'Split Bill', href: '/splitbill', img: '/nav-icons/splitbill.png', also: ['/gantian'] },
   { key: 'cicilan', label: 'Cicilan', href: '/installments', img: '/nav-icons/cicilan.png' },
-  { key: 'laporan', label: 'Laporan', href: '/reports', img: '/nav-icons/laporan.png', also: ['/transactions', '/bills'] },
+  { key: 'simulasi', label: 'Simulasi', href: '/simulasi', img: '/nav-icons/simulasi.png' },
 ];
 const HALF = ITEMS.length / 2;
 const CENTER_W = 64; // lebar kolom tombol Catat (px)

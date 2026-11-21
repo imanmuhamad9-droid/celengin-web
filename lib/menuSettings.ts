@@ -3,10 +3,10 @@
 // Gagal di profil (kolom belum ada) = diabaikan; pengaturan tetap jalan di perangkat ini.
 import { useSyncExternalStore } from 'react';
 import type { ComponentType } from 'react';
-import { Calculator, CreditCard, History, Landmark, PieChart, Receipt, ShieldCheck, Target, Trophy, Wallet } from 'lucide-react';
+import { BarChart3, CreditCard, History, Landmark, PieChart, Receipt, ShieldCheck, Target, Trophy, Wallet } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 
-export type ExtraMenuKey = 'riwayat' | 'tagihan' | 'pencapaian' | 'dompet' | 'darurat' | 'anggaran' | 'kekayaan' | 'cicilan' | 'tantangan' | 'simulasi';
+export type ExtraMenuKey = 'riwayat' | 'tagihan' | 'pencapaian' | 'dompet' | 'darurat' | 'anggaran' | 'kekayaan' | 'cicilan' | 'tantangan' | 'laporan';
 
 export interface ExtraMenuDef {
   key: ExtraMenuKey;
@@ -19,6 +19,7 @@ export interface ExtraMenuDef {
 }
 
 export const EXTRA_MENUS: ExtraMenuDef[] = [
+  { key: 'laporan', label: 'Laporan', desc: 'Ke mana uangmu pergi, per minggu, bulan, atau siklus gajian. Bisa diunduh PDF atau Excel', href: '/reports', group: 'menu', Icon: BarChart3 },
   { key: 'riwayat', label: 'Riwayat', desc: 'Semua transaksi', href: '/transactions', group: 'menu', Icon: History },
   { key: 'tagihan', label: 'Tagihan', desc: 'Pengingat tagihan dan rutin', href: '/bills', group: 'menu', Icon: Receipt },
   { key: 'tantangan', label: 'Tantangan', desc: 'Batas pengeluaran harian, mingguan, atau bulanan', href: '/spending-challenge', group: 'menu', Icon: Target },
@@ -27,7 +28,6 @@ export const EXTRA_MENUS: ExtraMenuDef[] = [
   { key: 'darurat', label: 'Dana Darurat', desc: 'Target otomatis dari pengeluaranmu dan progres menabungnya', href: '/emergency-fund', group: 'fitur', Icon: ShieldCheck },
   { key: 'anggaran', label: 'Anggaran', desc: 'Batas bulanan per kategori pengeluaran', href: '/budgets', group: 'fitur', Icon: PieChart },
   { key: 'kekayaan', label: 'Kekayaan Bersih', desc: 'Aset dikurangi utang, dengan grafik per bulan', href: '/net-worth', group: 'fitur', Icon: Landmark },
-  { key: 'simulasi', label: 'Simulasi', desc: 'Hitung gaji dikurangi cicilan, tagihan, dan utang, untuk beberapa bulan ke depan', href: '/simulasi', group: 'fitur', Icon: Calculator },
   { key: 'cicilan', label: 'Cicilan', desc: 'Catat cicilan kartu kredit, paylater, dan KTA per bank, lalu lihat tagihan bulan ini dan bulan depan', href: '/installments', group: 'fitur', Icon: CreditCard },
 ];
 
