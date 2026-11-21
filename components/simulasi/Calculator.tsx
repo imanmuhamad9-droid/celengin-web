@@ -1,7 +1,7 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
-import { Delete, Pencil, Trash2, X } from 'lucide-react';
-import { evaluate, formatExpr, insertNumber, numToExpr, pressKey } from '@/lib/calc';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight, Delete, Pencil, Trash2, X } from 'lucide-react';
+import { backspaceAt, displayChars, evaluate, formatExpr, insertNumberAt, numToExpr, pressKeyAt } from '@/lib/calc';
 import { toLocalDateStr } from '@/lib/utils';
 import { activeMonth, addMonthKey, groupMonthTotal } from '@/lib/installments';
 import { billAmount, installmentTotal, loadBills, loadInstallments, loadRules, ruleAmount, type InstData } from '@/lib/simulasiData';
@@ -40,6 +40,11 @@ const KEYS: [string, string, 'fn' | 'op' | 'num' | 'eq'][] = [
 // Kalkulator biasa dengan tombol pintas angka dari datamu (gaji, cicilan, tagihan), supaya tidak bolak-balik menu.
 export default function Calculator({ userId }: { userId: string }) {
   const [expr, setExpr] = useState('');
+  const [caret, setCaret] = useState(0);
+  const lineRef = useRef<HTMLDivElement>(null);
+  const caretRef = useRef<HTMLSpanElement>(null);
+  const setEdit = (e: { expr: string; caret: number }) => { setExpr(e.expr); setCaret(e.caret); };
+  const load = (text: string) => setEdit({ expr: text, caret: text.length });
   const [history, setHistory] = useState<HistoryItem[]>(readHistory);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [chipsOpen, setChipsOpen] = useState<boolean>(() => { try { return localStorage.getItem('celengin:calc-chips-open') === '1'; } catch { return false; } });
@@ -87,14 +92,23 @@ export default function Calculator({ userId }: { userId: string }) {
 
   const result = evaluate(expr);
   const hasOperation = /[+\-*/%]/.test(expr.replace(/^-/, ''));
-  const shown = formatExpr(expr);
-  const pieces = expr.match(/-?\d[\d.]*%?[+\-*/]?|[+\-*/]/g) ?? [];
+  const chars = displayChars(expr);
   // Hasil otomatis hanya muncul bila ada operasi, jadi angka tunggal tidak diulang dua kali
   const showPreview = result !== null && hasOperation;
 
+  // Menjaga kursor tetap terlihat: bila rumus lebih panjang dari layar, baris bergeser; sisanya bisa digeser dengan jari
+  useEffect(() => {
+    const box = lineRef.current;
+    const el = caretRef.current;
+    if (!box || !el) return;
+    const left = el.offsetLeft;
+    if (left < box.scrollLeft + 24) box.scrollLeft = Math.max(0, left - 24);
+    else if (left + el.offsetWidth > box.scrollLeft + box.clientWidth - 24) box.scrollLeft = left + el.offsetWidth - box.clientWidth + 24;
+  }, [expr, caret]);
+
   const press = (key: string) => {
-    if (key === 'C') return setExpr('');
-    if (key === 'BACK') return setExpr((e) => e.slice(0, -1));
+    if (key === 'C') return setEdit({ expr: '', caret: 0 });
+    if (key === 'BACK') return setEdit(backspaceAt(expr, caret));
     if (key === '=') {
       if (result === null) return;
       if (editingId) {
@@ -103,9 +117,16 @@ export default function Calculator({ userId }: { userId: string }) {
       } else if (hasOperation) {
         saveHistory([{ id: newId(), expr, result, at: new Date().toISOString() }, ...history].slice(0, HISTORY_MAX));
       }
-      return setExpr(numToExpr(result));
+      return load(numToExpr(result));
     }
-    setExpr((e) => pressKey(e, key));
+    setEdit(pressKeyAt(expr, caret, key));
+  };
+
+  // Ketuk sebuah karakter: kursor pindah ke kiri atau kanannya, tergantung sisi yang diketuk
+  const tapChar = (i: number, e: React.MouseEvent<HTMLSpanElement>) => {
+    e.stopPropagation();
+    const r = e.currentTarget.getBoundingClientRect();
+    setCaret(e.clientX < r.left + r.width / 2 ? i : i + 1);
   };
 
   return (
@@ -114,21 +135,39 @@ export default function Calculator({ userId }: { userId: string }) {
         {editingId && (
           <div className="flex items-center justify-between gap-2 mb-2 rounded-xl px-3 py-1.5 glass-teal glass text-[11px] font-bold">
             <span className="flex items-center gap-1.5"><Pencil className="w-3.5 h-3.5" /> Mengedit hitungan dari riwayat. Tekan = untuk menyimpan.</span>
-            <button type="button" onClick={() => { setEditingId(null); setExpr(''); }} aria-label="Batal mengedit"><X className="w-4 h-4" /></button>
+            <button type="button" onClick={() => { setEditingId(null); load(''); }} aria-label="Batal mengedit"><X className="w-4 h-4" /></button>
           </div>
         )}
-        {/* Tiap angka (beserta operator di belakangnya) satu paket: baris baru hanya terjadi di antara paket */}
+        {/* Satu baris: rumus panjang bergeser ke kiri, geser dengan jari untuk melihat bagian depan, ketuk untuk memindah kursor */}
         <div
-          className={`flex flex-wrap justify-end font-extrabold tracking-tight leading-tight ${shown.length > 22 ? 'text-2xl' : shown.length > 13 ? 'text-3xl' : 'text-5xl'}`}
-          style={{ color: 'var(--text-main)' }}
-          aria-live="polite"
-          aria-label={shown || '0'}
+          ref={lineRef}
+          role="textbox"
+          aria-readonly="true"
+          aria-label={expr ? formatExpr(expr) : '0'}
+          onClick={() => setCaret(expr.length)}
+          className="relative overflow-x-auto hide-scrollbar cursor-text"
         >
-          {pieces.length === 0 ? <span>0</span> : pieces.map((p, i) => <span key={i} className="whitespace-nowrap">{formatExpr(p)}</span>)}
+          <div className="inline-flex min-w-full justify-end items-center whitespace-nowrap text-4xl font-extrabold tracking-tight leading-[1.25] select-none" style={{ color: 'var(--text-main)' }}>
+            {expr === '' && <span className="opacity-40">0</span>}
+            {chars.map((c, i) => (
+              <span key={i} className="inline-flex items-center">
+                {caret === i && <span ref={caretRef} aria-hidden="true" className="inline-block w-[2.5px] h-[0.95em] rounded-full bg-[color:var(--teal-primary)] animate-pulse -mx-[1px]" />}
+                <span onClick={(e) => tapChar(i, e)}>{c.ch}</span>
+                {c.sep && <span aria-hidden="true" className="opacity-80">.</span>}
+              </span>
+            ))}
+            {caret === chars.length && <span ref={caretRef} aria-hidden="true" className="inline-block w-[2.5px] h-[0.95em] rounded-full bg-[color:var(--teal-primary)] animate-pulse -mx-[1px]" />}
+          </div>
         </div>
-        <p className="text-right text-sm font-semibold mt-1.5 min-h-[20px] break-all text-[color:var(--text-muted)]">
-          {showPreview ? `= ${formatExpr(numToExpr(result as number))}` : ' '}
-        </p>
+        <div className="flex items-center justify-between gap-2 mt-1.5">
+          <div className="flex items-center gap-1.5">
+            <button type="button" onClick={() => setCaret((c) => Math.max(0, c - 1))} aria-label="Geser kursor ke kiri" className="glass glass-pressable w-8 h-8 rounded-full flex items-center justify-center text-[color:var(--text-muted)]"><ChevronLeft className="w-4 h-4" /></button>
+            <button type="button" onClick={() => setCaret((c) => Math.min(expr.length, c + 1))} aria-label="Geser kursor ke kanan" className="glass glass-pressable w-8 h-8 rounded-full flex items-center justify-center text-[color:var(--text-muted)]"><ChevronRight className="w-4 h-4" /></button>
+          </div>
+          <p className="text-right text-sm font-semibold min-h-[20px] truncate text-[color:var(--text-muted)]">
+            {showPreview ? `= ${formatExpr(numToExpr(result as number))}` : ' '}
+          </p>
+        </div>
       </GlassCard>
 
       <GlassCard>
@@ -141,7 +180,7 @@ export default function Calculator({ userId }: { userId: string }) {
           <>
             <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
               {chips.map((c) => (
-                <button key={c.key} type="button" onClick={() => setExpr((e) => insertNumber(e, Math.round(c.amount)))} className="glass glass-teal glass-pressable shrink-0 rounded-2xl px-3 py-2 text-left">
+                <button key={c.key} type="button" onClick={() => setEdit(insertNumberAt(expr, caret, Math.round(c.amount)))} className="glass glass-teal glass-pressable shrink-0 rounded-2xl px-3 py-2 text-left">
                   <span className="block text-[10px] font-semibold opacity-80 max-w-[130px] truncate">{c.label}</span>
                   <span className="block text-xs font-extrabold">{formatExpr(numToExpr(Math.round(c.amount)))}</span>
                 </button>
@@ -179,13 +218,13 @@ export default function Calculator({ userId }: { userId: string }) {
           <div className="max-h-72 overflow-y-auto divide-y divide-black/[0.07] dark:divide-white/10">
             {history.map((h) => (
               <div key={h.id} className={`flex items-center gap-2 py-2 ${editingId === h.id ? 'text-[color:var(--teal-primary)]' : ''}`}>
-                <button type="button" onClick={() => { setExpr(h.expr); setEditingId(h.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="flex-1 min-w-0 text-left" aria-label="Edit hitungan ini">
+                <button type="button" onClick={() => { load(h.expr); setEditingId(h.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="flex-1 min-w-0 text-left" aria-label="Edit hitungan ini">
                   <span className="block text-xs truncate text-[color:var(--text-muted)]">{formatExpr(h.expr)}</span>
                   <span className="block text-sm font-extrabold" style={{ color: 'var(--text-main)' }}>= {formatExpr(numToExpr(h.result))}</span>
                   <span className="block text-[10px] text-[color:var(--text-muted)]">{new Date(h.at).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
                 </button>
-                <button type="button" onClick={() => setExpr((e) => insertNumber(e, h.result))} className="glass glass-teal glass-pressable shrink-0 px-2.5 h-8 rounded-full text-[11px] font-bold">Pakai hasil</button>
-                <button type="button" onClick={() => { saveHistory(history.filter((x) => x.id !== h.id)); if (editingId === h.id) { setEditingId(null); setExpr(''); } }} aria-label="Hapus dari riwayat" className="shrink-0 text-[color:var(--text-muted)]"><Trash2 className="w-4 h-4" /></button>
+                <button type="button" onClick={() => setEdit(insertNumberAt(expr, caret, h.result))} className="glass glass-teal glass-pressable shrink-0 px-2.5 h-8 rounded-full text-[11px] font-bold">Pakai hasil</button>
+                <button type="button" onClick={() => { saveHistory(history.filter((x) => x.id !== h.id)); if (editingId === h.id) { setEditingId(null); load(''); } }} aria-label="Hapus dari riwayat" className="shrink-0 text-[color:var(--text-muted)]"><Trash2 className="w-4 h-4" /></button>
               </div>
             ))}
           </div>

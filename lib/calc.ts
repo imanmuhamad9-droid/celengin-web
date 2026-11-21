@@ -94,3 +94,64 @@ export function formatExpr(expr: string): string {
     .replace(/\d+(\.\d*)?/g, (m) => { const [i, d] = m.split('.'); return fmtInt(i) + (d !== undefined ? ',' + d : ''); })
     .replace(/\*/g, '×').replace(/\//g, '÷').replace(/-/g, '−');
 }
+
+// ---- Pengeditan di posisi kursor (caret = jumlah karakter di kiri kursor) ----
+
+export interface Edit { expr: string; caret: number }
+
+/** Menekan satu tombol di posisi kursor; bagian di kanan kursor tidak dihapus. */
+export function pressKeyAt(expr: string, caret: number, key: string): Edit {
+  const c = Math.max(0, Math.min(caret, expr.length));
+  const before = expr.slice(0, c);
+  let after = expr.slice(c);
+
+  if (key === '.') {
+    const numberAround = (before.split(/[+\-*/]/).pop() ?? '') + (after.match(/^[\d.]*/)?.[0] ?? '');
+    if (numberAround.includes('.')) return { expr, caret: c };
+  }
+  if (key === '%' && /^[\d.%]/.test(after)) return { expr, caret: c };
+
+  const nextBefore = pressKey(before, key);
+  if (nextBefore === before) return { expr, caret: c };
+  // operator baru menggantikan operator di kanan kursor, supaya tidak jadi dua operator berurutan
+  if (isOp(key) && isOp(nextBefore.slice(-1)) && after !== '' && isOp(after[0])) after = after.slice(1);
+  return { expr: nextBefore + after, caret: nextBefore.length };
+}
+
+/** Menghapus satu karakter di kiri kursor. Operator yang jadi berurutan dirapikan. */
+export function backspaceAt(expr: string, caret: number): Edit {
+  const c = Math.max(0, Math.min(caret, expr.length));
+  if (c === 0) return { expr, caret: 0 };
+  let next = expr.slice(0, c - 1) + expr.slice(c);
+  let nc = c - 1;
+  const collapsed = next.replace(/[+\-*/]{2,}/g, (run, offset: number) => (offset === 0 && run === '-' ? run : run.slice(-1)));
+  if (collapsed.length !== next.length) { nc = Math.min(nc, collapsed.length); next = collapsed; }
+  return { expr: next, caret: nc };
+}
+
+/** Memasukkan angka dari data di kursor: angka yang tersentuh kursor diganti. */
+export function insertNumberAt(expr: string, caret: number, n: number): Edit {
+  const c = Math.max(0, Math.min(caret, expr.length));
+  const text = numToExpr(n);
+  const before = expr.slice(0, c).replace(/\d*\.?\d+%?$|\d+\.$/, '');
+  const after = expr.slice(c).replace(/^[\d.]*%?/, '');
+  return { expr: before + text + after, caret: before.length + text.length };
+}
+
+/** Teks ekspresi per karakter untuk tampilan: simbol yang dipakai dan apakah di kanannya ada pemisah ribuan. */
+export function displayChars(expr: string): { ch: string; sep: boolean }[] {
+  const out = expr.split('').map((c) => ({ ch: c === '*' ? '×' : c === '/' ? '÷' : c === '-' ? '−' : c === '.' ? ',' : c, sep: false }));
+  // pemisah ribuan hanya untuk bagian bulat angka (sebelum titik desimal)
+  let i = 0;
+  while (i < expr.length) {
+    if (/\d/.test(expr[i])) {
+      let j = i;
+      while (j < expr.length && /\d/.test(expr[j])) j++;
+      const len = j - i;
+      if (expr[i - 1] !== '.' ) for (let k = i; k < j - 1; k++) if ((j - k - 1) % 3 === 0 && len > 3) out[k].sep = true;
+      // angka desimal (didahului titik) tidak diberi pemisah
+      i = j;
+    } else i++;
+  }
+  return out;
+}
