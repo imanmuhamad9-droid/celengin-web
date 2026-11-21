@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Pencil, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
-import { formatRupiah, parseRupiahInput, toLocalDateStr, formatDateID } from '@/lib/utils';
+import { formatRupiah, parseRupiahInput, rupiahDisplay, toLocalDateStr, formatDateID } from '@/lib/utils';
 import {
   InstGroup, InstItem, InstKind, InstPayment, KIND_LABEL,
   BANK_PRESETS, NextProjection, activeMonth,
@@ -32,7 +32,7 @@ function MoneyInput({ value, onChange, placeholder = '0' }: { value: number; onC
   return (
     <input
       inputMode="numeric"
-      value={value > 0 ? parseRupiahInput(String(value)).display : ''}
+      value={value > 0 ? rupiahDisplay(value) : ''}
       onChange={(e) => onChange(parseRupiahInput(e.target.value).raw)}
       placeholder={placeholder}
       className={`${inputCls} font-bold`}

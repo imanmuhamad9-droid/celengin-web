@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
-import { formatRupiah, parseRupiahInput, toLocalDateStr } from '@/lib/utils';
+import { formatRupiah, parseRupiahInput, rupiahDisplay, toLocalDateStr } from '@/lib/utils';
 import { listWallets } from '@/lib/wallets';
 import { NW_INCLUDE_DEFAULT, NetItem, NwAuto, monthKey, netWorthTotals, parseNwInclude } from '@/lib/finance';
 import { createPref } from '@/lib/localPref';
@@ -229,7 +229,7 @@ function ItemForm({ item, userId, onClose, onSaved, showDialog }: {
   const [name, setName] = useState(item?.name ?? '');
   const startAmount = item ? Math.round(Number(item.amount)) : 0;
   const [raw, setRaw] = useState(startAmount);
-  const [display, setDisplay] = useState(startAmount > 0 ? parseRupiahInput(String(startAmount)).display : '');
+  const [display, setDisplay] = useState(startAmount > 0 ? rupiahDisplay(startAmount) : '');
   const [note, setNote] = useState(item?.note ?? '');
   const [busy, setBusy] = useState(false);
 

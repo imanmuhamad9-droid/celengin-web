@@ -20,6 +20,9 @@ export function toLocalDateStr(d: Date = new Date()): string {
   return `${y}-${m}-${day}`;
 }
 
+/** Angka -> tampilan ribuan id-ID, dibulatkan ke rupiah. Memakai ini (bukan parseRupiahInput(String(n))) agar desimal tidak dibaca sebagai digit tambahan. */
+export const rupiahDisplay = (n: number): string => new Intl.NumberFormat('id-ID').format(Math.round(n) || 0);
+
 /** Ubah input teks menjadi angka + tampilan berformat Rupiah (id-ID). */
 export function parseRupiahInput(value: string): { raw: number; display: string } {
   const digits = value.replace(/\D/g, '');

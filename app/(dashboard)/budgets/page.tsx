@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
-import { formatRupiah, parseRupiahInput, toLocalDateStr } from '@/lib/utils';
+import { formatRupiah, parseRupiahInput, rupiahDisplay, toLocalDateStr } from '@/lib/utils';
 import { Cycle, cycleFor, paydayRuleFrom, shiftCycle, type PaydayRule } from '@/lib/cycle';
 import { BudgetRow, budgetUsage, catLabel, normCat } from '@/lib/finance';
 import { useCatatAction } from '@/lib/catatAction';
@@ -176,7 +176,7 @@ function BudgetForm({ state, userId, suggestions, onClose, onSaved, showDialog }
   const [category, setCategory] = useState(state.category);
   const initial = editing ? Math.round(Number(editing.monthly_limit)) : 0;
   const [raw, setRaw] = useState(initial);
-  const [display, setDisplay] = useState(initial > 0 ? parseRupiahInput(String(initial)).display : '');
+  const [display, setDisplay] = useState(initial > 0 ? rupiahDisplay(initial) : '');
   const [busy, setBusy] = useState(false);
 
   const save = async (e: React.FormEvent) => {

@@ -68,3 +68,10 @@ describe('membaca data dari database', () => {
     expect(parseSimData(null, '2026-11')).toEqual({ month: '2026-11', rows: [] });
   });
 });
+
+describe('angka desimal tidak boleh membengkak', () => {
+  it('rowAmount dibulatkan ke rupiah', () => {
+    expect(rowAmount({ id: 'a', group: 'duty', label: 'x', amount: 0, on: true, by: { '2027-01': 3388134.01 } }, '2027-01')).toBe(3388134);
+    expect(rowAmount({ id: 'a', group: 'duty', label: 'x', amount: 1234.6, on: true }, '2027-01')).toBe(1235);
+  });
+});

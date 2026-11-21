@@ -45,7 +45,7 @@ export function daysInMonth(ym: string): number {
 /** Jumlah sebuah baris di bulan ym: nilai khusus bulan itu bila ada, kalau tidak jumlah bawaan. */
 export const rowAmount = (row: SimRow, ym: string): number => {
   const v = row.by?.[ym];
-  return typeof v === 'number' && Number.isFinite(v) ? v : row.amount;
+  return Math.round(typeof v === 'number' && Number.isFinite(v) ? v : row.amount);
 };
 
 export function totalsFor(rows: SimRow[], ym: string): SimTotals {

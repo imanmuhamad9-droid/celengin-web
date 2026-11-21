@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Plus, Trash2, Wand2 } from 'lucide-react';
-import { formatRupiah, parseRupiahInput } from '@/lib/utils';
+import { formatRupiah, parseRupiahInput, rupiahDisplay } from '@/lib/utils';
 import { toLocalDateStr } from '@/lib/utils';
 import { installmentTotal, loadBills, loadInstallments, loadRules, billAmount, ruleAmount } from '@/lib/simulasiData';
 import {
@@ -25,7 +25,7 @@ function MoneyField({ value, onChange, compact = false, label }: { value: number
     <input
       inputMode="numeric"
       aria-label={label}
-      value={value > 0 ? parseRupiahInput(String(value)).display : ''}
+      value={value > 0 ? rupiahDisplay(value) : ''}
       onChange={(e) => onChange(parseRupiahInput(e.target.value).raw)}
       placeholder="0"
       className={`${inputCls} text-right font-bold ${compact ? '!h-9 !px-2 text-xs !w-[104px]' : '!w-36'}`}
@@ -79,7 +79,7 @@ export default function PlanEditor({ data, onChange, userId, showDialog, onSave,
     }
   };
   const autoRow = (group: SimGroup, label: string, auto: string, fn: (ym: string) => number): SimRow =>
-    ({ id: newRowId(), group, label, amount: fn(data.month), by: byMonths(horizon, fn), on: true, auto });
+    ({ id: newRowId(), group, label, amount: Math.round(fn(data.month)), by: byMonths(horizon, (ym) => Math.round(fn(ym))), on: true, auto });
 
   const importRules = (type: 'income' | 'expense') => run(`rule-${type}`, async () => {
     const rules = await loadRules(userId, type);
@@ -178,7 +178,7 @@ export default function PlanEditor({ data, onChange, userId, showDialog, onSave,
             <table className="w-full text-xs border-separate border-spacing-0">
               <thead>
                 <tr>
-                  <th className="sticky left-0 z-10 glass-sheet text-left px-3 py-2.5 font-bold text-[color:var(--text-muted)] min-w-[110px]">Bulan</th>
+                  <th className="sticky left-0 z-10 glass-sheet text-left px-3 py-2.5 font-bold text-[color:var(--text-muted)] min-w-[130px]">Bulan</th>
                   {months.map((m) => <th key={m} className="px-2 py-2.5 font-bold text-right text-[color:var(--text-muted)]">{monthShort(m)}</th>)}
                 </tr>
               </thead>
@@ -192,7 +192,8 @@ export default function PlanEditor({ data, onChange, userId, showDialog, onSave,
                         <td className="sticky left-0 z-10 glass-sheet px-3 py-1">
                           <div className="flex items-center gap-1.5">
                             <input type="checkbox" checked={r.on} onChange={(e) => patch(r.id, { on: e.target.checked })} aria-label={`Ikut hitung ${r.label || 'baris'}`} className="w-3.5 h-3.5 shrink-0 accent-sky-600" />
-                            <input value={r.label} onChange={(e) => patch(r.id, { label: e.target.value })} placeholder="Nama" aria-label="Nama baris" className="w-[84px] min-w-0 bg-transparent outline-none font-semibold text-[color:var(--text-main)] truncate" />
+                            <input value={r.label} onChange={(e) => patch(r.id, { label: e.target.value })} placeholder="Nama" aria-label="Nama baris" className="w-[72px] min-w-0 bg-transparent outline-none font-semibold text-[color:var(--text-main)] truncate" />
+                            <button type="button" onClick={() => removeRow(r.id)} aria-label={`Hapus baris ${r.label || ''}`.trim()} className="shrink-0 text-[color:var(--text-muted)]"><Trash2 className="w-3.5 h-3.5" /></button>
                           </div>
                         </td>
                         {months.map((m) => (
