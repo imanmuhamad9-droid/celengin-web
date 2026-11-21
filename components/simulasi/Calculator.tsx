@@ -2,11 +2,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Delete, Pencil, Trash2, X } from 'lucide-react';
 import { evaluate, formatExpr, insertNumber, numToExpr, pressKey } from '@/lib/calc';
-import { formatRupiah, toLocalDateStr } from '@/lib/utils';
+import { toLocalDateStr } from '@/lib/utils';
 import { activeMonth, addMonthKey, groupMonthTotal } from '@/lib/installments';
 import { billAmount, installmentTotal, loadBills, loadInstallments, loadRules, ruleAmount, type InstData } from '@/lib/simulasiData';
 import type { Bill, RecurringRule } from '@/lib/types';
 import GlassCard from '@/components/GlassCard';
+import SectionToggle from '@/components/SectionToggle';
 
 interface Chip { key: string; label: string; amount: number }
 interface HistoryItem { id: string; expr: string; result: number; at: string }
@@ -41,6 +42,11 @@ export default function Calculator({ userId }: { userId: string }) {
   const [expr, setExpr] = useState('');
   const [history, setHistory] = useState<HistoryItem[]>(readHistory);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [chipsOpen, setChipsOpen] = useState<boolean>(() => { try { return localStorage.getItem('celengin:calc-chips-open') === '1'; } catch { return false; } });
+  const toggleChips = () => setChipsOpen((v) => {
+    try { localStorage.setItem('celengin:calc-chips-open', v ? '0' : '1'); } catch { /* abaikan */ }
+    return !v;
+  });
   const [data, setData] = useState<Loaded | null>(null);
   const [failed, setFailed] = useState(false);
   const [cur] = useState(() => toLocalDateStr(new Date()).slice(0, 7));
@@ -81,6 +87,9 @@ export default function Calculator({ userId }: { userId: string }) {
 
   const result = evaluate(expr);
   const hasOperation = /[+\-*/%]/.test(expr.replace(/^-/, ''));
+  const shown = formatExpr(expr);
+  // Hasil otomatis hanya muncul bila ada operasi, jadi angka tunggal tidak diulang dua kali
+  const showPreview = result !== null && hasOperation;
 
   const press = (key: string) => {
     if (key === 'C') return setExpr('');
@@ -107,15 +116,21 @@ export default function Calculator({ userId }: { userId: string }) {
             <button type="button" onClick={() => { setEditingId(null); setExpr(''); }} aria-label="Batal mengedit"><X className="w-4 h-4" /></button>
           </div>
         )}
-        <div className="min-h-[28px] text-right text-sm break-all text-[color:var(--text-muted)]" aria-live="polite">{expr ? formatExpr(expr) : ' '}</div>
-        <p className="text-right text-4xl font-extrabold tracking-tight mt-1 break-all" style={{ color: 'var(--text-main)' }}>
-          {result === null ? (expr ? formatExpr(expr.replace(/[+\-*/.]+$/, '')) || '0' : '0') : formatExpr(numToExpr(result))}
+        <p
+          className={`text-right font-extrabold tracking-tight break-all leading-tight ${shown.length > 22 ? 'text-2xl' : shown.length > 13 ? 'text-3xl' : 'text-5xl'}`}
+          style={{ color: 'var(--text-main)' }}
+          aria-live="polite"
+        >
+          {shown || '0'}
         </p>
-        {result !== null && Math.abs(result) >= 1000 && <p className="text-right text-xs mt-1 text-[color:var(--text-muted)]">{formatRupiah(Math.round(result))}</p>}
+        <p className="text-right text-sm font-semibold mt-1.5 min-h-[20px] break-all text-[color:var(--text-muted)]">
+          {showPreview ? `= ${formatExpr(numToExpr(result as number))}` : ' '}
+        </p>
       </GlassCard>
 
       <GlassCard>
-        <p className="text-xs font-bold mb-2" style={{ color: 'var(--text-main)' }}>Ambil dari datamu</p>
+        <SectionToggle title="Ambil dari datamu" open={chipsOpen} onToggle={toggleChips} />
+        {chipsOpen && <div className="mt-3">
         {failed && <p className="text-[11px] text-[color:var(--text-muted)]">Data belum bisa diambil. Kalkulator tetap bisa dipakai.</p>}
         {!failed && !data && <p className="text-[11px] text-[color:var(--text-muted)]">Mengambil data...</p>}
         {data && chips.length === 0 && <p className="text-[11px] text-[color:var(--text-muted)]">Belum ada cicilan, tagihan, atau transaksi rutin yang tercatat.</p>}
@@ -125,13 +140,14 @@ export default function Calculator({ userId }: { userId: string }) {
               {chips.map((c) => (
                 <button key={c.key} type="button" onClick={() => setExpr((e) => insertNumber(e, Math.round(c.amount)))} className="glass glass-teal glass-pressable shrink-0 rounded-2xl px-3 py-2 text-left">
                   <span className="block text-[10px] font-semibold opacity-80 max-w-[130px] truncate">{c.label}</span>
-                  <span className="block text-xs font-extrabold">{formatRupiah(Math.round(c.amount))}</span>
+                  <span className="block text-xs font-extrabold">{formatExpr(numToExpr(Math.round(c.amount)))}</span>
                 </button>
               ))}
             </div>
             <p className="text-[10px] mt-1.5 text-[color:var(--text-muted)]">Ketuk untuk memasukkan angkanya ke hitungan.</p>
           </>
         )}
+        </div>}
       </GlassCard>
 
       <div className="grid grid-cols-4 gap-2.5">
