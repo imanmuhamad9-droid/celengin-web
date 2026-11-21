@@ -3,7 +3,6 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import PwaRegister from "@/components/PwaRegister";
 import MoneyRain from "@/components/MoneyRain";
-import AutoRefresh from "@/components/AutoRefresh";
 import AppBackground from "@/components/AppBackground";
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-jakarta", display: "swap" });
@@ -60,7 +59,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={`${jakarta.className} bg-[var(--bg-main)] text-gray-800 dark:text-gray-100 antialiased transition-colors duration-300`}>
         <PwaRegister />
-        <AutoRefresh />
         <MoneyRain />
         <div className="mx-auto max-w-md min-h-screen shadow-2xl relative isolate transition-colors duration-300 bg-[var(--bg-main)]">
           <AppBackground />

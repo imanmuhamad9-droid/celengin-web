@@ -1,14 +1,11 @@
 'use client';
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Plus, Trash2, Wand2 } from 'lucide-react';
-import { supabase } from '@/lib/supabaseClient';
 import { formatRupiah, parseRupiahInput } from '@/lib/utils';
 import { toLocalDateStr } from '@/lib/utils';
-import { groupMonthTotal } from '@/lib/installments';
-import type { Bill, RecurringRule } from '@/lib/types';
-import type { InstGroup, InstItem, InstPayment } from '@/lib/installments';
+import { installmentTotal, loadBills, loadInstallments, loadRules, billAmount, ruleAmount } from '@/lib/simulasiData';
 import {
-  GROUP_LABEL, addMonthKey, amountIn, byMonths, daysInMonth, levelOf, mergeAutoRows, newRowId, perDay, rowAmount, totalsFor,
+  GROUP_LABEL, addMonthKey, byMonths, daysInMonth, levelOf, mergeAutoRows, newRowId, perDay, rowAmount, totalsFor,
   type SimData, type SimGroup, type SimRow,
 } from '@/lib/simulasi';
 import GlassCard from '@/components/GlassCard';
@@ -43,11 +40,14 @@ const LEVEL_STYLE = {
 } as const;
 
 // Editor satu rencana: tampilan 1 bulan (daftar) dan 3 bulan (tabel). Semua perubahan lewat onChange; menyimpan urusan halaman.
-export default function PlanEditor({ data, onChange, userId, showDialog }: {
+export default function PlanEditor({ data, onChange, userId, showDialog, onSave, saving, dirty }: {
   data: SimData;
   onChange: (d: SimData) => void;
   userId: string;
   showDialog: ShowDialog;
+  onSave: () => void;
+  saving: boolean;
+  dirty: boolean;
 }) {
   const [view, setView] = useState<'1' | '3'>('1');
   const [busy, setBusy] = useState<string | null>(null);
@@ -78,43 +78,26 @@ export default function PlanEditor({ data, onChange, userId, showDialog }: {
       setBusy(null);
     }
   };
-  const ruleRows = (rules: RecurringRule[], group: SimGroup): SimRow[] =>
-    rules.map((r) => {
-      const rec = { amount: Number(r.amount), frequency: r.frequency, date: r.start_date } as const;
-      return { id: newRowId(), group, label: r.merchant_name, amount: amountIn(rec, data.month), by: byMonths(horizon, (ym) => amountIn(rec, ym)), on: true, auto: `rule:${r.id}` };
-    });
+  const autoRow = (group: SimGroup, label: string, auto: string, fn: (ym: string) => number): SimRow =>
+    ({ id: newRowId(), group, label, amount: fn(data.month), by: byMonths(horizon, fn), on: true, auto });
 
   const importRules = (type: 'income' | 'expense') => run(`rule-${type}`, async () => {
-    const { data: rules, error } = await supabase.from('recurring_rules').select('*').eq('user_id', userId).eq('type', type).eq('is_active', true);
-    if (error) throw error;
-    if (!rules || rules.length === 0) return type === 'income' ? 'Belum ada transaksi rutin pemasukan (mis. gaji). Atur di Pengaturan > Transaksi Rutin, atau tambah baris sendiri.' : 'Belum ada transaksi rutin pengeluaran.';
-    return ruleRows(rules as RecurringRule[], type === 'income' ? 'income' : 'duty');
+    const rules = await loadRules(userId, type);
+    if (rules.length === 0) return type === 'income' ? 'Belum ada transaksi rutin pemasukan (mis. gaji). Atur di Pengaturan > Transaksi Rutin, atau tambah baris sendiri.' : 'Belum ada transaksi rutin pengeluaran.';
+    return rules.map((r) => autoRow(type === 'income' ? 'income' : 'duty', r.merchant_name, `rule:${r.id}`, (ym) => ruleAmount(r, ym)));
   });
 
   const importBills = () => run('bills', async () => {
-    const { data: bills, error } = await supabase.from('bills').select('*').eq('user_id', userId).eq('is_active', true);
-    if (error) throw error;
-    if (!bills || bills.length === 0) return 'Belum ada tagihan aktif.';
-    return (bills as Bill[]).map((b): SimRow => {
-      const rec = { amount: Number(b.amount), frequency: b.frequency, date: b.due_date } as const;
-      return { id: newRowId(), group: 'duty', label: b.name, amount: amountIn(rec, data.month), by: byMonths(horizon, (ym) => amountIn(rec, ym)), on: true, auto: `bill:${b.id}` };
-    });
+    const bills = await loadBills(userId);
+    if (bills.length === 0) return 'Belum ada tagihan aktif.';
+    return bills.map((b) => autoRow('duty', b.name, `bill:${b.id}`, (ym) => billAmount(b, ym)));
   });
 
   const importInstallments = () => run('cicilan', async () => {
-    const g = await supabase.from('installment_groups').select('*').eq('user_id', userId);
-    if (g.error) throw g.error;
-    const groups = (g.data || []) as InstGroup[];
-    if (groups.length === 0) return 'Belum ada bucket cicilan.';
-    const [it, pm] = await Promise.all([
-      supabase.from('installments').select('*').eq('user_id', userId),
-      supabase.from('installment_payments').select('*').eq('user_id', userId),
-    ]);
-    const items = (it.data || []) as InstItem[];
-    const pays = (pm.data || []) as InstPayment[];
+    const inst = await loadInstallments(userId);
+    if (inst.groups.length === 0) return 'Belum ada bucket cicilan.';
     const cur = toLocalDateStr(new Date()).slice(0, 7);
-    const total = (ym: string) => groups.reduce((s, gr) => s + groupMonthTotal(gr, items.filter((x) => x.group_id === gr.id), pays.filter((x) => x.group_id === gr.id), cur, ym), 0);
-    return [{ id: newRowId(), group: 'duty', label: 'Cicilan', amount: total(data.month), by: byMonths(horizon, total), on: true, auto: 'cicilan' }];
+    return [autoRow('duty', 'Cicilan', 'cicilan', (ym) => installmentTotal(inst, cur, ym))];
   });
 
   // ---- Hasil ----
@@ -237,6 +220,20 @@ export default function PlanEditor({ data, onChange, userId, showDialog }: {
           <p className="text-[10px] px-3 pb-3 text-[color:var(--text-muted)]">Ketik di kolom sebuah bulan untuk mengubah jumlah bulan itu saja. Geser ke samping bila tabel terpotong.</p>
         </GlassCard>
       )}
+
+      {/* Bilah bawah: total tetap terlihat tanpa perlu menggulir ke atas */}
+      <div className="sticky z-[45]" style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)' }}>
+        <div className="glass glass-sheet rounded-3xl px-4 py-3 flex items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-semibold text-[color:var(--text-muted)] truncate">Sisa {monthName(data.month)}</p>
+            <p className="text-lg font-extrabold leading-tight truncate" style={{ color: LEVEL_STYLE[lv].color }}>{t0.left < 0 ? '-' : ''}{formatRupiah(Math.abs(t0.left))}</p>
+            <p className="text-[10px] text-[color:var(--text-muted)] truncate">{t0.left > 0 ? `≈ ${formatRupiah(perDay(t0.left, data.month))} per hari` : 'Tidak ada sisa'}</p>
+          </div>
+          <button type="button" onClick={onSave} disabled={saving || !dirty} className="glass glass-solid-teal shrink-0 h-11 px-5 rounded-2xl font-bold text-sm disabled:opacity-50">
+            {saving ? 'Menyimpan...' : dirty ? 'Simpan' : 'Tersimpan ✓'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

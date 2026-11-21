@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Info, Settings, User, X } from 'lucide-react';
+import { ArrowLeft, Info, RefreshCw, Settings, User, X } from 'lucide-react';
 import { MENU_INFO } from '@/lib/menuInfo';
 import { supabase } from '@/lib/supabaseClient';
 
@@ -33,6 +33,7 @@ export default function AppHeader({ title, onBack, topRight, action, z = 'z-50',
   const info = key ? MENU_INFO[key] : undefined;
   const [infoOpen, setInfoOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [avatar, setAvatar] = useState<string | null>(avatarCache ?? null);
 
   useEffect(() => {
@@ -100,6 +101,14 @@ export default function AppHeader({ title, onBack, topRight, action, z = 'z-50',
           </div>
 
           <div className="shrink-0 flex items-center gap-2">
+            <button
+              onClick={() => { setRefreshing(true); window.location.reload(); }}
+              disabled={refreshing}
+              aria-label="Muat ulang halaman"
+              className="glass glass-pressable w-10 h-10 rounded-full flex items-center justify-center text-[color:var(--text-muted)]"
+            >
+              <RefreshCw className={`w-[18px] h-[18px] ${refreshing ? 'animate-spin' : ''}`} />
+            </button>
             {topRight}
             <button onClick={() => router.push('/settings')} aria-label="Pengaturan" className="glass glass-pressable w-10 h-10 rounded-full flex items-center justify-center text-[color:var(--text-muted)]">
               <Settings className="w-[18px] h-[18px]" />

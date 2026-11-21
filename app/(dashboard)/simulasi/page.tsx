@@ -13,6 +13,8 @@ import GlassCard from '@/components/GlassCard';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import { SqlNotice } from '@/components/FinUI';
 import PlanEditor from '@/components/simulasi/PlanEditor';
+import Calculator from '@/components/simulasi/Calculator';
+import SegmentedControl from '@/components/SegmentedControl';
 
 interface SimRecord { id: string; name: string; data: unknown; updated_at: string | null }
 interface Draft { id: string | null; name: string; data: SimData }
@@ -30,6 +32,7 @@ export default function SimulasiPage() {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saved, setSaved] = useState(''); // snapshot terakhir yang tersimpan, untuk tahu ada perubahan atau tidak
   const [saving, setSaving] = useState(false);
+  const [tab, setTab] = useState<'rencana' | 'kalkulator'>('rencana');
 
   const [dialog, setDialog] = useState({ isOpen: false, title: '', msg: '', type: 'info' as 'info' | 'success' | 'danger', onConfirm: undefined as (() => void) | undefined });
   const showDialog = (title: string, msg: string, type: 'info' | 'success' | 'danger', onConfirm?: () => void) => setDialog({ isOpen: true, title, msg, type, onConfirm });
@@ -104,9 +107,15 @@ export default function SimulasiPage() {
       <AppHeader title="Simulasi" onBack={draft ? leave : undefined} />
 
       <main className="max-w-md mx-auto px-4 mt-3 space-y-4">
-        {!tableOk && <SqlNotice file="sql/08_simulasi.sql" />}
+        {!draft && (
+          <SegmentedControl options={[{ value: 'rencana', label: 'Rencana' }, { value: 'kalkulator', label: 'Kalkulator' }]} value={tab} onChange={setTab} />
+        )}
 
-        {tableOk && !draft && (
+        {!draft && tab === 'kalkulator' && <Calculator userId={userId} />}
+
+        {!tableOk && !draft && tab === 'rencana' && <SqlNotice file="sql/08_simulasi.sql" />}
+
+        {tableOk && !draft && tab === 'rencana' && (
           <>
             <button type="button" onClick={startNew} className="glass glass-solid-teal w-full h-12 rounded-2xl font-bold text-sm flex items-center justify-center gap-2">
               <Plus className="w-4 h-4" strokeWidth={2.6} /> Buat rencana baru
@@ -150,12 +159,7 @@ export default function SimulasiPage() {
               aria-label="Nama rencana"
               className="glass w-full h-11 px-4 rounded-2xl text-base font-extrabold outline-none focus:ring-2 focus:ring-[color:var(--teal-primary)] text-[color:var(--text-main)]"
             />
-            <PlanEditor data={draft.data} onChange={(data) => setDraft({ ...draft, data })} userId={userId} showDialog={showDialog} />
-            <div className="sticky z-[45] flex gap-2" style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 96px)' }}>
-              <button type="button" onClick={() => void save()} disabled={saving || !dirty} className="glass glass-solid-teal flex-1 h-12 rounded-2xl font-bold text-sm disabled:opacity-50">
-                {saving ? 'Menyimpan...' : dirty ? 'Simpan rencana' : 'Tersimpan ✓'}
-              </button>
-            </div>
+            <PlanEditor data={draft.data} onChange={(data) => setDraft({ ...draft, data })} userId={userId} showDialog={showDialog} onSave={() => void save()} saving={saving} dirty={dirty} />
           </>
         )}
       </main>
