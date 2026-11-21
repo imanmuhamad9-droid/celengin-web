@@ -102,8 +102,8 @@ export default function Calculator({ userId }: { userId: string }) {
     const el = caretRef.current;
     if (!box || !el) return;
     const left = el.offsetLeft;
-    if (left < box.scrollLeft + 24) box.scrollLeft = Math.max(0, left - 24);
-    else if (left + el.offsetWidth > box.scrollLeft + box.clientWidth - 24) box.scrollLeft = left + el.offsetWidth - box.clientWidth + 24;
+    if (left < box.scrollLeft + 36) box.scrollLeft = Math.max(0, left - 36);
+    else if (left + el.offsetWidth > box.scrollLeft + box.clientWidth - 36) box.scrollLeft = left + el.offsetWidth - box.clientWidth + 36;
   }, [expr, caret]);
 
   const press = (key: string) => {
@@ -145,9 +145,9 @@ export default function Calculator({ userId }: { userId: string }) {
           aria-readonly="true"
           aria-label={expr ? formatExpr(expr) : '0'}
           onClick={() => setCaret(expr.length)}
-          className="relative overflow-x-auto hide-scrollbar cursor-text"
+          className="relative -mx-5 overflow-x-auto hide-scrollbar cursor-text [mask-image:linear-gradient(to_right,transparent,black_20px)] [-webkit-mask-image:linear-gradient(to_right,transparent,black_20px)]"
         >
-          <div className="inline-flex min-w-full justify-end items-center whitespace-nowrap text-[26px] font-extrabold tracking-tight leading-[1.3] select-none" style={{ color: 'var(--text-main)' }}>
+          <div className="inline-flex min-w-full justify-end items-center whitespace-nowrap px-5 text-[26px] font-extrabold tracking-tight leading-[1.3] select-none" style={{ color: 'var(--text-main)' }}>
             {expr === '' && <span className="opacity-40">0</span>}
             {chars.map((c, i) => (
               <span key={i} className="inline-flex items-center">
