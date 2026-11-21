@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BANK_PRESETS, activeMonth, addMonthKey, calcMonthly, dueDateOf, forecast, groupStatus, installmentNo, lastMonth, monthPlan, projectNext, totalRemaining, type InstGroup, type InstItem, type InstPayment } from '@/lib/installments';
+import { BANK_PRESETS, activeMonth, addMonthKey, calcMonthly, dueDateOf, forecast, groupStatus, installmentNo, lastMonth, monthPlan, projectNext, totalRemaining, upcomingTotals, type InstGroup, type InstItem, type InstPayment } from '@/lib/installments';
 
 const item = (o: Partial<InstItem> = {}): InstItem => ({
   id: 'i', group_id: 'g', name: 'Barang', principal: 0, rate_pct: 0, tenor: 3,
@@ -125,5 +125,25 @@ describe('prediksi bulan depan per bank', () => {
     const items = [item({ monthly_amount: 100_000, tenor: 3, start_month: '2026-12', track_from: '2026-12' })];
     const r = projectNext(g({ interest_pct: 2 }), items, [], '2026-12', 40_000);
     expect(r).toMatchObject({ remaining: 60_000, interest: 1_200, newInstallments: 100_000, total: 161_200 });
+  });
+});
+
+describe('tagihan 3 bulan berurutan', () => {
+  const g: InstGroup = { id: 'g', name: 'Kartu', kind: 'cc', due_day: 7 };
+  it('tanpa bucket: bulan kalender, semua nol', () => {
+    const r = upcomingTotals([], () => [], () => [], '2026-11');
+    expect(r.months).toEqual(['2026-11', '2026-12', '2027-01']);
+    expect(r.totals).toEqual([0, 0, 0]);
+  });
+  it('belum bayar: bulan 1 = sisa, bulan 2 dan 3 = cicilan jatuh di bulan itu', () => {
+    const it = item({ tenor: 4, start_month: '2026-11' }); // Nov, Des, Jan, Feb
+    const r = upcomingTotals([g], () => [it], () => [], '2026-11');
+    expect(r.months).toEqual(['2026-11', '2026-12', '2027-01']);
+    expect(r.totals).toEqual([100_000, 100_000, 100_000]);
+  });
+  it('cicilan berakhir: bulan setelahnya nol', () => {
+    const it = item({ tenor: 2, start_month: '2026-11' }); // Nov, Des
+    const r = upcomingTotals([g], () => [it], () => [], '2026-11');
+    expect(r.totals).toEqual([100_000, 100_000, 0]);
   });
 });

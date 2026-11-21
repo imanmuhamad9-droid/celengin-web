@@ -225,3 +225,34 @@ export function projectNext(g: InstGroup, items: InstItem[], payments: InstPayme
   const newInstallments = dueIn(items, next);
   return { month: next, remaining, interest, lateFee, newInstallments, total: remaining + interest + lateFee + newInstallments, minDue: st.minDue, belowMin, hasPayment };
 }
+
+/**
+ * Tagihan 3 bulan berurutan untuk semua bucket. Bulan pertama = bulan tagihan paling awal yang sedang ditunggu
+ * (bisa Desember bila lembar tagihannya jatuh tempo Desember). Per bucket:
+ * bulan tagihannya = yang belum dibayar; bulan setelahnya = perkiraan (termasuk sisa/bunga bila sudah bayar sebagian);
+ * bulan sesudahnya lagi = cicilan yang jatuh di bulan itu saja.
+ */
+export function upcomingTotals(
+  groups: InstGroup[],
+  itemsOf: (gid: string) => InstItem[],
+  paysOf: (gid: string) => InstPayment[],
+  calendarMonth: string,
+): { months: [string, string, string]; totals: [number, number, number] } {
+  const active = groups.map((g) => activeMonth(g, calendarMonth));
+  const m0 = active.length > 0 ? active.reduce((a, b) => (a < b ? a : b)) : calendarMonth;
+  const months: [string, string, string] = [m0, addMonthKey(m0, 1), addMonthKey(m0, 2)];
+  const totals: [number, number, number] = [0, 0, 0];
+  groups.forEach((g, gi) => {
+    const items = itemsOf(g.id);
+    const pays = paysOf(g.id);
+    const gm = active[gi];
+    const nextTotal = projectNext(g, items, pays, gm).total;
+    months.forEach((x, i) => {
+      if (x < gm) return;
+      if (x === gm) totals[i] += groupStatus(g, items, pays, gm).remaining;
+      else if (x === addMonthKey(gm, 1)) totals[i] += nextTotal;
+      else totals[i] += dueIn(items, x);
+    });
+  });
+  return { months, totals };
+}

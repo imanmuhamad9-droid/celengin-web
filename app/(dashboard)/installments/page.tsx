@@ -7,7 +7,7 @@ import { formatRupiah, parseRupiahInput, toLocalDateStr, formatDateID } from '@/
 import {
   InstGroup, InstItem, InstKind, InstPayment, KIND_LABEL,
   BANK_PRESETS, NextProjection, activeMonth,
-  addMonthKey, calcMonthly, defaultTrackFrom, dueDateOf, forecast, groupStatus, installmentNo, lastMonth, projectNext, totalRemaining,
+  addMonthKey, calcMonthly, defaultTrackFrom, dueDateOf, forecast, groupStatus, installmentNo, lastMonth, projectNext, upcomingTotals,
 } from '@/lib/installments';
 import { diffDays } from '@/lib/recurring';
 import { useCatatAction } from '@/lib/catatAction';
@@ -82,13 +82,12 @@ export default function InstallmentsPage() {
   if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
 
   const cur = today.slice(0, 7);
-  const next = addMonthKey(cur, 1);
   const itemsOf = (gid: string) => items.filter((i) => i.group_id === gid);
   const paysOf = (gid: string) => payments.filter((p) => p.group_id === gid);
 
-  const totalNow = groups.reduce((s, g) => s + groupStatus(g, itemsOf(g.id), paysOf(g.id), activeMonth(g, cur)).remaining, 0);
-  const totalNext = groups.reduce((s, g) => s + projectNext(g, itemsOf(g.id), paysOf(g.id), activeMonth(g, cur)).total, 0);
-  const totalLeft = groups.reduce((s, g) => s + totalRemaining(itemsOf(g.id), paysOf(g.id)), 0);
+  const { months: upMonths, totals: upTotals } = upcomingTotals(groups, itemsOf, paysOf, cur);
+  const upName = (ym: string) => new Date(Number(ym.slice(0, 4)), Number(ym.slice(5, 7)) - 1, 1)
+    .toLocaleDateString('id-ID', ym.slice(0, 4) === upMonths[0].slice(0, 4) ? { month: 'long' } : { month: 'long', year: 'numeric' });
 
   const remove = (table: 'installment_groups' | 'installments' | 'installment_payments', id: string, title: string, msg: string) =>
     showDialog(title, msg, 'danger', async () => {
@@ -106,19 +105,19 @@ export default function InstallmentsPage() {
 
         {tableOk && (
           <GlassCard>
-            <p className="text-xs font-semibold text-[color:var(--text-muted)]">Belum dibayar</p>
-            <p className="text-3xl font-extrabold tracking-tight mt-1" style={{ color: 'var(--text-main)' }}>{formatRupiah(totalNow)}</p>
+            <p className="text-xs font-semibold text-[color:var(--text-muted)]">Tagihan {upName(upMonths[0])} (belum dibayar)</p>
+            <p className="text-3xl font-extrabold tracking-tight mt-1" style={{ color: 'var(--text-main)' }}>{formatRupiah(upTotals[0])}</p>
             <div className="grid grid-cols-2 gap-2.5 mt-4">
               <div className="rounded-2xl px-3.5 py-2.5 bg-white/30 dark:bg-white/5 border border-white/40 dark:border-white/10">
-                <p className="text-[11px] font-semibold text-[color:var(--text-muted)]">Tagihan berikutnya</p>
-                <p className="text-sm font-extrabold mt-0.5" style={{ color: 'var(--text-main)' }}>{formatRupiah(totalNext)}</p>
+                <p className="text-[11px] font-semibold text-[color:var(--text-muted)]">Tagihan {upName(upMonths[1])}</p>
+                <p className="text-sm font-extrabold mt-0.5" style={{ color: 'var(--text-main)' }}>{formatRupiah(upTotals[1])}</p>
               </div>
               <div className="rounded-2xl px-3.5 py-2.5 bg-white/30 dark:bg-white/5 border border-white/40 dark:border-white/10">
-                <p className="text-[11px] font-semibold text-[color:var(--text-muted)]">Sisa semua cicilan</p>
-                <p className="text-sm font-extrabold mt-0.5" style={{ color: 'var(--text-main)' }}>{formatRupiah(totalLeft)}</p>
+                <p className="text-[11px] font-semibold text-[color:var(--text-muted)]">Tagihan {upName(upMonths[2])}</p>
+                <p className="text-sm font-extrabold mt-0.5" style={{ color: 'var(--text-main)' }}>{formatRupiah(upTotals[2])}</p>
               </div>
             </div>
-            <p className="text-[10px] mt-2 text-[color:var(--text-muted)]">Tagihan berikutnya hanya cicilan yang jatuh di bulan itu. Kalau kamu bayar sebagian, sisanya (dan bunga atau denda bila ada) otomatis ditambahkan. Belanja non-cicilan belum termasuk.</p>
+            <p className="text-[10px] mt-2 text-[color:var(--text-muted)]">Bulan pertama = yang belum kamu bayar. Bulan kedua = cicilan yang jatuh di bulan itu, ditambah sisa (dan bunga atau denda bila ada) kalau kamu bayar sebagian. Bulan ketiga = cicilan yang jatuh di bulan itu saja. Belanja non-cicilan belum termasuk.</p>
           </GlassCard>
         )}
 

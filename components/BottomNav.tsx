@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { CreditCard, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { NOTIF_EVENT, emitNotifChanged, fetchUnreadCount } from '@/lib/notifications';
 import { syncExtraMenusFromProfile } from '@/lib/menuSettings';
@@ -9,7 +9,7 @@ import { useCatatEntry } from '@/lib/catatAction';
 import TransactionModal from './TransactionModal';
 import CustomDialog from './CustomDialog';
 
-type NavLink = { key: string; label: string; href: string; img?: string; Icon?: typeof CreditCard; also?: string[] };
+type NavLink = { key: string; label: string; href: string; img: string; also?: string[] };
 
 // Bottom bar kaca melayang simetris: 3 menu | tombol Catat (+) di tengah | 3 menu.
 // Ikon tidak dipilih = abu (grayscale) tembus pandang; dipilih = warna penuh (teal).
@@ -18,7 +18,7 @@ const ITEMS: NavLink[] = [
   { key: 'impian', label: 'Impian', href: '/dream-planner', img: '/nav-icons/impian.png' },
   { key: 'bareng', label: 'Kolektif', href: '/couple', img: '/nav-icons/kolektif.png' },
   { key: 'splitbill', label: 'Split Bill', href: '/splitbill', img: '/nav-icons/splitbill.png', also: ['/gantian'] },
-  { key: 'cicilan', label: 'Cicilan', href: '/installments', Icon: CreditCard },
+  { key: 'cicilan', label: 'Cicilan', href: '/installments', img: '/nav-icons/cicilan.png' },
   { key: 'laporan', label: 'Laporan', href: '/reports', img: '/nav-icons/laporan.png', also: ['/transactions', '/bills'] },
 ];
 const HALF = ITEMS.length / 2;
@@ -139,11 +139,7 @@ export default function BottomNav() {
         aria-current={active ? 'page' : undefined}
         className={`glass-pressable relative z-10 min-w-0 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-full ${active ? 'text-[color:var(--teal-primary)]' : 'text-[color:var(--text-muted)]'}`}
       >
-        {item.img ? (
-          <img src={item.img} alt="" className={`w-6 h-6 object-contain transition-all duration-300 ${active ? '' : 'grayscale opacity-55'}`} />
-        ) : item.Icon ? (
-          <item.Icon className={`w-6 h-6 transition-all duration-300 ${active ? '' : 'opacity-55'}`} strokeWidth={2} />
-        ) : null}
+        <img src={item.img} alt="" className={`w-6 h-6 object-contain transition-all duration-300 ${active ? '' : 'grayscale opacity-55'}`} />
         <span className="text-[9.5px] font-bold whitespace-nowrap">{item.label}</span>
         {showDot && (
           <span className="glass glass-danger absolute top-0 right-1.5 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-bold flex items-center justify-center">
