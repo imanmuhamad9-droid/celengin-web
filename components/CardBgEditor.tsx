@@ -3,8 +3,9 @@ import { useEffect, useRef, useState } from 'react';
 import { ImageIcon, Minus, Plus, RotateCcw, Move, Upload } from 'lucide-react';
 
 import SegmentedControl from '@/components/SegmentedControl';
+import CardBgLayer, { parseBgPos } from '@/components/CardBgLayer';
 // Pengaturan background Kartu Saldo. Pratinjau memakai CSS yang sama dengan kartu di Home
-// (background-size = zoom x 100%, background-position dalam persen), jadi hasilnya sama persis.
+// (gambar menutup penuh kotak, dikali zoom, posisi dalam persen), jadi hasilnya sama persis.
 export type BgSide = 'safe' | 'low';
 export interface BgSlot { url: string; pos: string; zoom: number }
 
@@ -16,11 +17,6 @@ interface Props {
   onPick: (side: BgSide) => void;
 }
 
-function parsePos(pos: string): [number, number] {
-  const m = (pos || '').match(/(-?\d+(?:\.\d+)?)%\s+(-?\d+(?:\.\d+)?)%/);
-  if (m) return [Number(m[1]), Number(m[2])];
-  return [50, 50];
-}
 const clamp = (v: number) => Math.min(100, Math.max(0, v));
 
 export default function CardBgEditor({ safe, low, uploading, onChange, onPick }: Props) {
@@ -38,7 +34,7 @@ export default function CardBgEditor({ safe, low, uploading, onChange, onPick }:
     im.src = slot.url;
   }, [slot.url]);
 
-  const [px, py] = parsePos(slot.pos);
+  const [px, py] = parseBgPos(slot.pos);
   const zoom = slot.zoom || 1;
   const setZoom = (z: number) => onChange(side, `${px}% ${py}%`, Math.min(3, Math.max(1, Math.round(z * 100) / 100)));
 
@@ -50,8 +46,9 @@ export default function CardBgEditor({ safe, low, uploading, onChange, onPick }:
     const d = drag.current; const el = boxRef.current;
     if (!d || !el || !nat) return;
     const r = el.getBoundingClientRect();
-    const scaledW = r.width * zoom;
-    const scaledH = scaledW * (nat.h / nat.w);
+    const cover = Math.max(r.width / nat.w, r.height / nat.h);
+    const scaledW = nat.w * cover * zoom;
+    const scaledH = nat.h * cover * zoom;
     const ovX = scaledW - r.width;
     const ovY = scaledH - r.height;
     const nx = ovX > 1 ? clamp(d.px - ((e.clientX - d.x) / ovX) * 100) : d.px;
@@ -81,7 +78,7 @@ export default function CardBgEditor({ safe, low, uploading, onChange, onPick }:
             style={{ aspectRatio: '1.9 / 1' }}
             onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
           >
-            <div className="absolute inset-0" style={{ backgroundImage: `url(${slot.url})`, backgroundSize: `${zoom * 100}%`, backgroundPosition: `${px}% ${py}%`, backgroundRepeat: 'no-repeat' }} />
+            <CardBgLayer url={slot.url} pos={`${px}% ${py}%`} zoom={zoom} />
             <div className="absolute inset-0 bg-black/40" />
             <div className="absolute left-3 top-3 flex items-center gap-1 text-[10px] text-white bg-black/40 px-2.5 py-1 rounded-full pointer-events-none"><Move className="w-3 h-3" /> Geser untuk atur posisi</div>
             <div className="absolute left-4 bottom-4 text-white pointer-events-none">

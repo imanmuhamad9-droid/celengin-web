@@ -5,6 +5,7 @@ import type { Profile } from '@/lib/types';
 import { formatRupiah } from '@/lib/utils';
 import GlassCard from '@/components/GlassCard';
 import GlassButton from '@/components/GlassButton';
+import CardBgLayer from '@/components/CardBgLayer';
 
 export interface DailyAllowance {
   /** Patokan per hari dari tantangan utama */
@@ -40,7 +41,7 @@ export default function BalanceCard({ profile, balance, totalIncome, totalExpens
     <GlassCard padded={false} className="relative overflow-hidden">
       {hasBg && (
         <>
-          <div className="absolute inset-0 z-0" style={{ backgroundImage: `url(${safe ? profile?.bg_safe_url : profile?.bg_low_url})`, backgroundSize: `${zoom * 100}%`, backgroundPosition: pos, backgroundRepeat: 'no-repeat' }} />
+          <CardBgLayer url={(safe ? profile?.bg_safe_url : profile?.bg_low_url) ?? ''} pos={pos} zoom={zoom} />
           <div className="absolute inset-0 z-0 bg-white/60 dark:bg-black/50" />
         </>
       )}
