@@ -153,14 +153,14 @@ export default function DreamPlannerPage() {
     return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   };
 
-  useCatatAction('Impian', 'Buat impian', () => setIsModalOpen(true));
+  useCatatAction('Dream', 'Buat dream', () => setIsModalOpen(true));
 
   if (isLoading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
 
 
   return (
     <div className="min-h-screen bg-[var(--page-bg)] pb-40 transition-colors">
-      <AppHeader title="Impian" />
+      <AppHeader title="Dream" />
 
       <main className="max-w-md mx-auto px-5 mt-4 space-y-4">
 
@@ -245,8 +245,8 @@ export default function DreamPlannerPage() {
         const monthsAtCapacity = surplus > 0 ? Math.ceil(remaining / surplus) : null;
         const row = 'flex justify-between gap-3 text-xs py-1.5';
         return (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative max-h-[85vh] overflow-y-auto transition-colors">
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
+            <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-6 relative max-h-[85vh] overflow-y-auto transition-colors">
               <button onClick={() => setEstimate(null)} aria-label="Tutup" className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
               <h2 className="text-lg font-extrabold text-center text-gray-800 dark:text-white">Perkiraan Menabung</h2>
               <p className="text-[11px] text-center text-gray-500 dark:text-gray-400 mb-4 truncate">{g.title}</p>
@@ -306,8 +306,8 @@ export default function DreamPlannerPage() {
       })()}
 
       {isDetailOpen && selectedGoal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative max-h-[80vh] flex flex-col transition-colors">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
+          <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-6 relative max-h-[80vh] flex flex-col transition-colors">
             <button onClick={() => setIsDetailOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-1 text-center">{selectedGoal.title}</h2>
             <p className="text-xs text-center text-gray-500 dark:text-gray-400 mb-4">Riwayat Tabungan</p>
@@ -331,20 +331,20 @@ export default function DreamPlannerPage() {
       )}
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative transition-colors">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
+          <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-6 relative transition-colors">
             <button onClick={() => setIsModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
-            <h2 className="text-lg font-bold text-center mb-4 text-gray-800 dark:text-white">Tambah Impian</h2>
+            <h2 className="text-lg font-bold text-center mb-4 text-gray-800 dark:text-white">Dream Baru</h2>
             <form onSubmit={handleAddGoal} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Impian</label>
-                <input type="text" placeholder="Cth: Liburan ke Bali" value={title} onChange={e => setTitle(e.target.value)} required className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm" />
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Impian apa</label>
+                <input type="text" value={title} onChange={e => setTitle(e.target.value)} required className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm" />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Target (Rp)</label>
-                <input type="text" inputMode="numeric" placeholder="Nominal (Rp)" value={targetDisplay} onChange={handleTargetChange} required className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm font-bold" />
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Butuh berapa</label>
+                <input type="text" inputMode="numeric" value={targetDisplay} onChange={handleTargetChange} required className="w-full p-3 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl text-sm font-bold" />
               </div>
-              <DateField label="Kalender (tanggal target akan tercapai)" placeholder="Kalender" value={targetDate} onChange={setTargetDate} />
+              <DateField label="Target tanggal (boleh dikosongkan)" value={targetDate} onChange={setTargetDate} />
               <button type="submit" className="glass glass-solid-teal w-full font-bold py-3 rounded-xl mt-2">Simpan</button>
             </form>
           </div>

@@ -65,13 +65,13 @@ function Form({ onClose, userId, wallet, currentDefaultId, onSaved, showDialog }
   return (
     <form onSubmit={save}>
       <Sheet
-        title={wallet ? 'Ubah Dompet' : 'Tambah Dompet'}
+        title={wallet ? 'Ubah Dompet' : 'Dompet Baru'}
         onClose={onClose}
         footer={<GlassButton type="submit" variant="primary" size="lg" full disabled={saving}><Save className="w-4 h-4" /> {saving ? 'Menyimpan...' : 'Simpan'}</GlassButton>}
       >
         <div>
-          <label className={labelCls}>Nama dompet</label>
-          <input value={name} maxLength={30} onChange={(e) => setName(e.target.value)} placeholder="Cth: BCA, GoPay, Dompet tunai" className={inputCls} />
+          <label className={labelCls}>Nama (BCA, GoPay, Tunai...)</label>
+          <input value={name} maxLength={30} onChange={(e) => setName(e.target.value)} className={inputCls} />
         </div>
         <div>
           <label className={labelCls}>Jenis</label>
@@ -86,9 +86,8 @@ function Form({ onClose, userId, wallet, currentDefaultId, onSaved, showDialog }
           </div>
         </div>
         <div>
-          <label className={labelCls}>Saldo awal (Rp)</label>
-          <input inputMode="numeric" value={balDisplay} onChange={(e) => { const p = parseRupiahInput(e.target.value); setBalRaw(p.raw); setBalDisplay(p.display); }} placeholder="0" className={`${inputCls} font-bold`} />
-          <p className="text-[10px] mt-1 text-[color:var(--text-muted)]">Uang yang sudah ada di dompet ini sebelum kamu mulai mencatat.</p>
+          <label className={labelCls}>Saldo sekarang</label>
+          <input inputMode="numeric" value={balDisplay} onChange={(e) => { const p = parseRupiahInput(e.target.value); setBalRaw(p.raw); setBalDisplay(p.display); }} className={`${inputCls} font-bold`} />
         </div>
         <button
           type="button"
@@ -96,8 +95,7 @@ function Form({ onClose, userId, wallet, currentDefaultId, onSaved, showDialog }
           onClick={() => setMakeDefault((v) => !v)}
           className={`w-full px-4 py-3 rounded-2xl text-xs font-bold text-left ${makeDefault ? chipOn : chipOff} disabled:opacity-70`}
         >
-          {makeDefault ? '✓ ' : ''}Jadikan dompet utama {wallet?.is_default ? '(sedang dipakai)' : ''}
-          <span className="block font-normal mt-0.5">Transaksi yang tidak memilih dompet masuk ke dompet utama.</span>
+          {makeDefault ? '✓ ' : ''}Jadikan utama {wallet?.is_default ? '(sedang dipakai)' : ''}
         </button>
       </Sheet>
     </form>

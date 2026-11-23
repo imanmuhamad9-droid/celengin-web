@@ -5,7 +5,8 @@ import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import { formatRupiah, toLocalDateStr } from '@/lib/utils';
 import { diffDays } from '@/lib/recurring';
-import { listWallets, Wallet } from '@/lib/wallets';
+import { listWallets, Wallet, WalletTransfer } from '@/lib/wallets';
+import WalletFormModal from '@/components/WalletFormModal';
 import { fetchBadgeContext, syncBadges } from '@/lib/badges';
 import TransactionModal from '@/components/TransactionModal';
 import TransactionDetailModal from '@/components/TransactionDetailModal';
@@ -33,6 +34,8 @@ export default function DashboardPage() {
   const [targets, setTargets] = useState<Target[]>([]);
   const [bills, setBills] = useState<Bill[]>([]);
   const [wallets, setWallets] = useState<Wallet[]>([]);
+  const [walletFormOpen, setWalletFormOpen] = useState(false);
+  const [transfers, setTransfers] = useState<WalletTransfer[]>([]);
   const badgeSynced = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -83,6 +86,8 @@ const [todayStr, setTodayStr] = useState('');
     // Dompet (kosong kalau fitur Dompet belum diaktifkan)
     const walletList = await listWallets(session.user.id, true);
     setWallets(walletList);
+    const { data: trData } = await supabase.from('wallet_transfers').select('*');
+    setTransfers((trData || []) as WalletTransfer[]);
 
     // Cek pencapaian (badge) sekali per kunjungan
     if (!badgeSynced.current && txData) {
@@ -346,6 +351,10 @@ const [todayStr, setTodayStr] = useState('');
           onToggleHidden={() => setIsBalanceHidden((v) => !v)}
           allowance={allowance}
           onInfoAllowance={() => setShowInfoJatah(true)}
+          wallets={wallets}
+          transactions={transactions}
+          transfers={transfers}
+          onAddWallet={() => setWalletFormOpen(true)}
         />
 
         {/* Perlu perhatian (hilang bila kosong) */}
@@ -389,6 +398,7 @@ const [todayStr, setTodayStr] = useState('');
       {showInfoJatah && <AllowanceInfoModal onClose={() => setShowInfoJatah(false)} />}
       {showInfoStreak && <StreakInfoModal onClose={() => setShowInfoStreak(false)} />}
 
+      {user && <WalletFormModal isOpen={walletFormOpen} onClose={() => setWalletFormOpen(false)} userId={user.id} wallet={null} currentDefaultId={wallets.find((w) => w.is_default)?.id ?? null} onSaved={() => fetchData()} showDialog={showDialog} />}
       <TransactionDetailModal tx={detailTx} onClose={() => setDetailTx(null)} />
       <TransactionModal isOpen={isTxModalOpen} onClose={() => { setIsTxModalOpen(false); setTxDate(undefined); }} onSuccess={() => fetchData()} showDialog={showDialog} initialType={txType} initialDate={txDate} />
       <CustomDialog isOpen={dialog.isOpen} onClose={closeDialog} title={dialog.title} message={dialog.msg} type={dialog.type} onConfirm={dialog.onConfirm} />

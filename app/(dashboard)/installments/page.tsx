@@ -28,13 +28,12 @@ const monthLabel = (ym: string) => new Date(Number(ym.slice(0, 4)), Number(ym.sl
 const monthShort = (ym: string) => new Date(Number(ym.slice(0, 4)), Number(ym.slice(5, 7)) - 1, 1).toLocaleDateString('id-ID', { month: 'short', year: '2-digit' });
 const KINDS = Object.keys(KIND_LABEL) as InstKind[];
 
-function MoneyInput({ value, onChange, placeholder = '0' }: { value: number; onChange: (n: number) => void; placeholder?: string }) {
+function MoneyInput({ value, onChange }: { value: number; onChange: (n: number) => void }) {
   return (
     <input
       inputMode="numeric"
       value={value > 0 ? rupiahDisplay(value) : ''}
       onChange={(e) => onChange(parseRupiahInput(e.target.value).raw)}
-      placeholder={placeholder}
       className={`${inputCls} font-bold`}
     />
   );
@@ -77,7 +76,15 @@ export default function InstallmentsPage() {
   }, [router]);
 
   useEffect(() => { void load(); }, [load]);
-  useCatatAction('Bucket', 'Tambah bucket cicilan', () => setGroupForm({ group: null }));
+  useCatatAction('Cicilan', 'Tambah kartu / pinjaman', () => setGroupForm({ group: null }));
+
+  // Kartu dibuka sebagai tampilan tersendiri; tombol Kembali (termasuk di HP) menutupnya
+  useEffect(() => {
+    const onPop = () => setOpenId(null);
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+  const openGroup = (id: string) => { setOpenId(id); setTab('bayar'); window.history.pushState({ cicilan: id }, ''); window.scrollTo(0, 0); };
 
   if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
 
@@ -93,17 +100,17 @@ export default function InstallmentsPage() {
     showDialog(title, msg, 'danger', async () => {
       const { error } = await supabase.from(table).delete().eq('id', id);
       if (error) showDialog('Gagal', error.message, 'danger');
-      else load();
+      else { if (table === 'installment_groups') setOpenId(null); load(); }
     });
 
   return (
     <div className="min-h-screen bg-[var(--page-bg)] pb-40 transition-colors">
-      <AppHeader title="Cicilan" />
+      <AppHeader title={groups.find((x) => x.id === openId)?.name ?? 'Cicilan'} infoKey="Cicilan" onBack={openId ? () => window.history.back() : undefined} />
 
       <main className="max-w-md mx-auto px-4 mt-3 space-y-4">
         {!tableOk && <SqlNotice file="sql/07_cicilan.sql" />}
 
-        {tableOk && (
+        {tableOk && !openId && (
           <GlassCard>
             <p className="text-xs font-semibold text-[color:var(--text-muted)]">Tagihan {upName(upMonths[0])} (belum dibayar)</p>
             <p className="text-3xl font-extrabold tracking-tight mt-1" style={{ color: 'var(--text-main)' }}>{formatRupiah(upTotals[0])}</p>
@@ -117,15 +124,14 @@ export default function InstallmentsPage() {
                 <p className="text-sm font-extrabold mt-0.5" style={{ color: 'var(--text-main)' }}>{formatRupiah(upTotals[2])}</p>
               </div>
             </div>
-            <p className="text-[10px] mt-2 text-[color:var(--text-muted)]">Bulan pertama = yang belum kamu bayar. Bulan kedua = cicilan yang jatuh di bulan itu, ditambah sisa (dan bunga atau denda bila ada) kalau kamu bayar sebagian. Bulan ketiga = cicilan yang jatuh di bulan itu saja. Belanja non-cicilan belum termasuk.</p>
           </GlassCard>
         )}
 
-        {tableOk && groups.length === 0 && (
-          <p className="text-xs px-1 text-[color:var(--text-muted)]">Belum ada. Buat bucket dulu, misalnya &quot;BCA Mastercard&quot; atau &quot;SPayLater&quot;, lalu isi cicilannya.</p>
+        {tableOk && !openId && groups.length === 0 && (
+          <p className="text-xs px-1 text-[color:var(--text-muted)]">Belum ada. Ketuk + untuk tambah kartu kredit, paylater, atau pinjaman.</p>
         )}
 
-        {groups.map((g) => {
+        {groups.filter((g) => !openId || g.id === openId).map((g) => {
           const gi = itemsOf(g.id);
           const gp = paysOf(g.id);
           const gm = activeMonth(g, cur); // bulan tagihan yang sedang ditunggu
@@ -144,7 +150,7 @@ export default function InstallmentsPage() {
 
           return (
             <GlassCard key={g.id}>
-              <button type="button" className="w-full text-left" onClick={() => { setOpenId(isOpen ? null : g.id); setTab('bayar'); }} aria-expanded={isOpen}>
+              <button type="button" className="w-full text-left" onClick={() => { if (!isOpen) openGroup(g.id); }} disabled={isOpen}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-sm font-bold truncate" style={{ color: 'var(--text-main)' }}>{g.name}</p>
@@ -179,7 +185,7 @@ export default function InstallmentsPage() {
 
                   {tab === 'isi' && (
                     <div className="space-y-2.5">
-                      {gi.length === 0 && <p className="text-xs text-[color:var(--text-muted)]">Belum ada cicilan di bucket ini.</p>}
+                      {gi.length === 0 && <p className="text-xs text-[color:var(--text-muted)]">Belum ada cicilan.</p>}
                       {gi.length > 0 && (
                         <div className="rounded-2xl divide-y divide-black/[0.07] dark:divide-white/10 bg-white/30 dark:bg-white/5 border border-white/40 dark:border-white/10 overflow-hidden">
                           {gi.map((i) => {
@@ -194,7 +200,7 @@ export default function InstallmentsPage() {
                                 </div>
                                 <p className="text-sm font-extrabold shrink-0" style={{ color: 'var(--text-main)' }}>{formatRupiah(Number(i.monthly_amount))}</p>
                                 <button type="button" aria-label={`Ubah ${i.name}`} onClick={() => setItemForm({ groupId: g.id, item: i })} className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-[color:var(--text-muted)] active:scale-90"><Pencil className="w-4 h-4" /></button>
-                                <button type="button" aria-label={`Hapus ${i.name}`} onClick={() => remove('installments', i.id, 'Hapus Cicilan?', `${i.name} akan dihapus dari bucket ini.`)} className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-red-500 active:scale-90"><Trash2 className="w-4 h-4" /></button>
+                                <button type="button" aria-label={`Hapus ${i.name}`} onClick={() => remove('installments', i.id, 'Hapus Cicilan?', `${i.name} akan dihapus.`)} className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-red-500 active:scale-90"><Trash2 className="w-4 h-4" /></button>
                               </div>
                             );
                           })}
@@ -251,7 +257,7 @@ export default function InstallmentsPage() {
 
                   {tab === 'jadwal' && (
                     <div>
-                      {gi.length === 0 && <p className="text-xs text-[color:var(--text-muted)]">Belum ada cicilan di bucket ini.</p>}
+                      {gi.length === 0 && <p className="text-xs text-[color:var(--text-muted)]">Belum ada cicilan.</p>}
                       {gi.length > 0 && (
                         <>
                           <div className="rounded-2xl divide-y divide-black/[0.07] dark:divide-white/10 bg-white/30 dark:bg-white/5 border border-white/40 dark:border-white/10 overflow-hidden">
@@ -269,8 +275,8 @@ export default function InstallmentsPage() {
                   )}
 
                   <div className="flex justify-end gap-2 pt-1">
-                    <GlassButton variant="teal" size="sm" onClick={() => setGroupForm({ group: g })}>Ubah bucket</GlassButton>
-                    <GlassButton variant="danger" size="sm" onClick={() => remove('installment_groups', g.id, 'Hapus Bucket?', `${g.name} beserta semua cicilan dan riwayat pembayarannya akan dihapus.`)}>Hapus</GlassButton>
+                    <GlassButton variant="teal" size="sm" onClick={() => setGroupForm({ group: g })}>Ubah</GlassButton>
+                    <GlassButton variant="danger" size="sm" onClick={() => remove('installment_groups', g.id, 'Hapus?', `${g.name} beserta semua cicilan dan riwayat pembayarannya akan dihapus.`)}>Hapus</GlassButton>
                   </div>
                 </div>
               )}
@@ -278,7 +284,7 @@ export default function InstallmentsPage() {
           );
         })}
 
-        {tableOk && <GlassButton variant="teal" size="lg" full className="border-dashed" onClick={() => setGroupForm({ group: null })}>+ Tambah bucket</GlassButton>}
+        {tableOk && !openId && <GlassButton variant="teal" size="lg" full className="border-dashed" onClick={() => setGroupForm({ group: null })}>+ Tambah kartu / pinjaman</GlassButton>}
       </main>
 
       {groupForm && <GroupForm key={groupForm.group?.id || 'new'} group={groupForm.group} userId={userId} onClose={() => setGroupForm(null)} onSaved={load} showDialog={showDialog} />}
@@ -345,7 +351,7 @@ function GroupForm({ group, userId, onClose, onSaved, showDialog }: {
     e.preventDefault();
     if (busy) return;
     const day = Number(dueDay);
-    if (!name.trim()) return showDialog('Data Belum Lengkap', 'Isi nama bucket.', 'danger');
+    if (!name.trim()) return showDialog('Data Belum Lengkap', 'Isi namanya dulu.', 'danger');
     if (!Number.isInteger(day) || day < 1 || day > 31) return showDialog('Tanggal Tidak Valid', 'Tanggal jatuh tempo harus 1 sampai 31.', 'danger');
     if (stmtTotal > 0 && !/^\d{4}-(0[1-9]|1[0-2])$/.test(stmtMonth)) return showDialog('Bulan Lembar Tagihan', 'Pilih bulan jatuh tempo lembar tagihan itu.', 'danger');
     setBusy(true);
@@ -366,11 +372,11 @@ function GroupForm({ group, userId, onClose, onSaved, showDialog }: {
 
   return (
     <form onSubmit={save}>
-      <Sheet title={group ? 'Ubah Bucket' : 'Tambah Bucket'} onClose={onClose}
+      <Sheet title={group ? 'Ubah' : 'Tambah Kartu / Pinjaman'} onClose={onClose}
         footer={<GlassButton type="submit" variant="primary" size="lg" full disabled={busy}>{busy ? 'Menyimpan...' : 'Simpan'}</GlassButton>}>
         <div>
           <label className={labelCls}>Nama</label>
-          <input value={name} maxLength={60} onChange={(e) => setName(e.target.value)} placeholder="Cth: BCA Mastercard, SPayLater, KTA Bank X" className={inputCls} />
+          <input value={name} maxLength={60} onChange={(e) => setName(e.target.value)} className={inputCls} />
         </div>
         <div>
           <label className={labelCls}>Jenis</label>
@@ -381,16 +387,15 @@ function GroupForm({ group, userId, onClose, onSaved, showDialog }: {
           </div>
         </div>
         <div>
-          <label className={labelCls}>Tanggal jatuh tempo tiap bulan</label>
-          <input inputMode="numeric" value={dueDay} maxLength={2} onChange={(e) => setDueDay(e.target.value.replace(/\D/g, ''))} placeholder="1 sampai 31" className={inputCls} />
-          <p className="text-[10px] mt-1 text-[color:var(--text-muted)]">Kalau bulannya lebih pendek, dipakai hari terakhir bulan itu.</p>
+          <label className={labelCls}>Tanggal jatuh tempo (1-31)</label>
+          <input inputMode="numeric" value={dueDay} maxLength={2} onChange={(e) => setDueDay(e.target.value.replace(/\D/g, ''))} className={inputCls} />
         </div>
 
-        <div className="glass rounded-2xl p-3.5 space-y-3">
-          <p className="text-xs font-bold" style={{ color: 'var(--text-main)' }}>Lembar tagihan terakhir (opsional)</p>
-          <p className="text-[10px] text-[color:var(--text-muted)]">Isi supaya sisa dan perkiraan bulan depan memakai total tagihan yang sebenarnya, termasuk belanja non-cicilan dan sisa tagihan lama.</p>
+        <details className="glass rounded-2xl p-3.5">
+          <summary className="text-xs font-bold cursor-pointer" style={{ color: 'var(--text-main)' }}>Isi dari tagihan bank (opsional)</summary>
+          <div className="space-y-3 mt-3">
           <div>
-            <label className={labelCls}>Total tagihan (Rp)</label>
+            <label className={labelCls}>Total tagihan</label>
             <MoneyInput value={stmtTotal} onChange={setStmtTotal} />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -399,50 +404,50 @@ function GroupForm({ group, userId, onClose, onSaved, showDialog }: {
               <input type="month" value={stmtMonth} onChange={(e) => setStmtMonth(e.target.value)} className={inputCls} />
             </div>
             <div>
-              <label className={labelCls}>Minimum di lembar (Rp)</label>
+              <label className={labelCls}>Bayar minimum (Rp)</label>
               <MoneyInput value={minPayment} onChange={setMinPayment} />
             </div>
           </div>
-        </div>
+          </div>
+        </details>
 
         <details className="glass rounded-2xl p-3.5">
-          <summary className="text-xs font-bold cursor-pointer" style={{ color: 'var(--text-main)' }}>Aturan bunga, minimum, dan denda</summary>
+          <summary className="text-xs font-bold cursor-pointer" style={{ color: 'var(--text-main)' }}>Bunga dan denda (opsional)</summary>
           <div className="space-y-3 mt-3">
             <div className="flex flex-wrap gap-2">
               {(Object.keys(BANK_PRESETS) as (keyof typeof BANK_PRESETS)[]).map((k) => (
                 <button key={k} type="button" onClick={() => applyPreset(k)} className={`px-3 py-1.5 rounded-full text-xs font-bold ${chipOff}`}>{BANK_PRESETS[k].label}</button>
               ))}
             </div>
-            <p className="text-[10px] text-[color:var(--text-muted)]">Bawaan BCA dan CIMB Niaga memakai aturan resmi yang berlaku sekarang: minimum 5% dan denda 1% (relaksasi Bank Indonesia sampai 31 Des 2026). Setelah itu bisa kembali ke aturan lama, jadi periksa lagi dan ubah di sini.</p>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={labelCls}>Bunga per bulan (%)</label>
-                <input inputMode="decimal" value={interest} maxLength={5} onChange={(e) => setInterest(e.target.value.replace(/[^0-9.,]/g, ''))} placeholder="0" className={inputCls} />
+                <label className={labelCls}>Bunga/bulan (%)</label>
+                <input inputMode="decimal" value={interest} maxLength={5} onChange={(e) => setInterest(e.target.value.replace(/[^0-9.,]/g, ''))} className={inputCls} />
               </div>
               <div>
                 <label className={labelCls}>Minimum bayar (%)</label>
-                <input inputMode="decimal" value={minPct} maxLength={5} onChange={(e) => setMinPct(e.target.value.replace(/[^0-9.,]/g, ''))} placeholder="0" className={inputCls} />
+                <input inputMode="decimal" value={minPct} maxLength={5} onChange={(e) => setMinPct(e.target.value.replace(/[^0-9.,]/g, ''))} className={inputCls} />
               </div>
             </div>
             <div>
-              <label className={labelCls}>Batas bawah minimum (Rp)</label>
+              <label className={labelCls}>Minimum terendah</label>
               <MoneyInput value={minFloor} onChange={setMinFloor} />
             </div>
             <label className="flex items-center gap-2 text-xs text-[color:var(--text-main)]">
               <input type="checkbox" checked={minWithInst} onChange={(e) => setMinWithInst(e.target.checked)} />
-              Minimum = cicilan bulan itu + persen dari sisanya (gaya BCA)
+              Minimum = cicilan + persen sisa (gaya BCA)
             </label>
             <div>
-              <label className={labelCls}>Denda telat (% dari tagihan)</label>
-              <input inputMode="decimal" value={feePct} maxLength={5} onChange={(e) => setFeePct(e.target.value.replace(/[^0-9.,]/g, ''))} placeholder="0" className={inputCls} />
+              <label className={labelCls}>Denda telat (%)</label>
+              <input inputMode="decimal" value={feePct} maxLength={5} onChange={(e) => setFeePct(e.target.value.replace(/[^0-9.,]/g, ''))} className={inputCls} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={labelCls}>Denda minimum (Rp)</label>
+                <label className={labelCls}>Denda terendah</label>
                 <MoneyInput value={feeMin} onChange={setFeeMin} />
               </div>
               <div>
-                <label className={labelCls}>Denda maksimum (Rp)</label>
+                <label className={labelCls}>Denda tertinggi</label>
                 <MoneyInput value={feeMax} onChange={setFeeMax} />
               </div>
             </div>
@@ -501,40 +506,39 @@ function ItemForm({ groupId, item, userId, defaultMonth, onClose, onSaved, showD
       <Sheet title={item ? 'Ubah Cicilan' : 'Tambah Cicilan'} onClose={onClose}
         footer={<GlassButton type="submit" variant="primary" size="lg" full disabled={busy}>{busy ? 'Menyimpan...' : 'Simpan'}</GlassButton>}>
         <div>
-          <label className={labelCls}>Barang / keterangan</label>
-          <input value={name} maxLength={60} onChange={(e) => setName(e.target.value)} placeholder="Cth: HP baru, tiket pesawat" className={inputCls} />
+          <label className={labelCls}>Cicilan apa</label>
+          <input value={name} maxLength={60} onChange={(e) => setName(e.target.value)} className={inputCls} />
         </div>
         <div>
-          <label className={labelCls}>Harga pokok (Rp)</label>
+          <label className={labelCls}>Harga</label>
           <MoneyInput value={principal} onChange={(n) => { setPrincipal(n); recalc(n, tenor, rate); }} />
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className={labelCls}>Tenor (bulan)</label>
-            <input inputMode="numeric" value={tenor} maxLength={3} onChange={(e) => { const v = e.target.value.replace(/\D/g, ''); setTenor(v); recalc(principal, v, rate); }} placeholder="12" className={inputCls} />
-          </div>
-          <div>
-            <label className={labelCls}>Bunga flat per bulan (%)</label>
-            <input inputMode="decimal" value={rate} maxLength={5} onChange={(e) => { const v = e.target.value.replace(/[^0-9.,]/g, ''); setRate(v); recalc(principal, tenor, v); }} placeholder="0" className={inputCls} />
-          </div>
+        <div>
+          <label className={labelCls}>Berapa bulan</label>
+          <input inputMode="numeric" value={tenor} maxLength={3} onChange={(e) => { const v = e.target.value.replace(/\D/g, ''); setTenor(v); recalc(principal, v, rate); }} className={inputCls} />
         </div>
         <div>
-          <label className={labelCls}>Cicilan per bulan (Rp)</label>
+          <label className={labelCls}>Per bulan</label>
           <MoneyInput value={monthly} onChange={(n) => { setMonthly(n); setManual(true); }} />
-          <p className="text-[10px] mt-1 text-[color:var(--text-muted)]">
-            {manual ? 'Diisi manual, sesuaikan dengan angka di tagihan banmu. ' : 'Dihitung otomatis. '}
-            {manual && <button type="button" className="underline" onClick={() => { setManual(false); setMonthly(calcMonthly(principal, Number(tenor) || 0, Number(rate.replace(',', '.')) || 0)); }}>Hitung otomatis lagi</button>}
-          </p>
+          {manual && <button type="button" className="text-[10px] mt-1 underline text-[color:var(--text-muted)]" onClick={() => { setManual(false); setMonthly(calcMonthly(principal, Number(tenor) || 0, Number(rate.replace(',', '.')) || 0)); }}>Hitung otomatis</button>}
         </div>
-        <div>
-          <label className={labelCls}>Bulan cicilan pertama</label>
-          <input type="month" value={startMonth} onChange={(e) => setStartMonth(e.target.value)} className={inputCls} />
-          <p className="text-[10px] mt-1 text-[color:var(--text-muted)]">Cicilan yang sudah berjalan? Pilih bulan pertamanya di masa lalu, nomor cicilan menyesuaikan. Yang sudah lewat sebelum bulan ini dianggap sudah kamu bayar.</p>
-        </div>
-        <div>
-          <label className={labelCls}>Catatan (opsional)</label>
-          <input value={note} maxLength={100} onChange={(e) => setNote(e.target.value)} className={inputCls} />
-        </div>
+        <details className="glass rounded-2xl p-3.5">
+          <summary className="text-xs font-bold cursor-pointer" style={{ color: 'var(--text-main)' }}>Bunga, bulan mulai, catatan</summary>
+          <div className="space-y-3 mt-3">
+            <div>
+              <label className={labelCls}>Bunga flat/bulan (%)</label>
+              <input inputMode="decimal" value={rate} maxLength={5} onChange={(e) => { const v = e.target.value.replace(/[^0-9.,]/g, ''); setRate(v); recalc(principal, tenor, v); }} className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Mulai bulan</label>
+              <input type="month" value={startMonth} onChange={(e) => setStartMonth(e.target.value)} className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Catatan</label>
+              <input value={note} maxLength={100} onChange={(e) => setNote(e.target.value)} className={inputCls} />
+            </div>
+          </div>
+        </details>
       </Sheet>
     </form>
   );
@@ -575,21 +579,21 @@ function PayForm({ group, items, payments, month, today, userId, onClose, onSave
   return (
     <form onSubmit={save}>
       <Sheet title={`Bayar ${group.name}`} onClose={onClose}
-        footer={<GlassButton type="submit" variant="primary" size="lg" full disabled={busy}>{busy ? 'Menyimpan...' : 'Simpan pembayaran'}</GlassButton>}>
+        footer={<GlassButton type="submit" variant="primary" size="lg" full disabled={busy}>{busy ? 'Menyimpan...' : 'Simpan'}</GlassButton>}>
         <div className="glass rounded-2xl px-3.5 py-3">
           <p className="text-[11px] text-[color:var(--text-muted)]">Sisa tagihan {monthLabel(month)}</p>
           <p className="text-lg font-extrabold" style={{ color: 'var(--text-main)' }}>{formatRupiah(payable)}</p>
         </div>
         <div>
-          <label className={labelCls}>Yang kamu bayar (Rp)</label>
+          <label className={labelCls}>Bayar berapa</label>
           <MoneyInput value={amount} onChange={setAmount} />
           <div className="flex gap-2 mt-2">
-            <button type="button" onClick={() => setAmount(Math.round(payable))} className={`px-3 py-1.5 rounded-full text-xs font-bold ${chipOff}`}>Lunas</button>
-            <button type="button" onClick={() => setAmount(Math.round(payable / 2))} className={`px-3 py-1.5 rounded-full text-xs font-bold ${chipOff}`}>Setengah</button>
+            <button type="button" onClick={() => setAmount(Math.round(payable))} className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap ${chipOff}`}>Lunas</button>
+            <button type="button" onClick={() => setAmount(Math.round(payable / 2))} className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap ${chipOff}`}>Setengah</button>
+            {st.minDue > 0 && (
+              <button type="button" onClick={() => setAmount(Math.min(payable, st.minDue))} className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap ${chipOff}`}>Minimum {formatRupiah(st.minDue)}</button>
+            )}
           </div>
-          {st.minDue > 0 && (
-            <button type="button" onClick={() => setAmount(Math.min(payable, st.minDue))} className={`mt-2 px-3 py-1.5 rounded-full text-xs font-bold ${chipOff}`}>Minimum {formatRupiah(st.minDue)}</button>
-          )}
         </div>
         <div className="glass glass-teal rounded-2xl px-3.5 py-3">
           <p className="text-[11px] font-semibold">Kalau kamu bayar {formatRupiah(amount)}, perkiraan {monthLabel(proj.month)}</p>
@@ -602,7 +606,7 @@ function PayForm({ group, items, payments, month, today, userId, onClose, onSave
         </div>
         <label className="flex items-center gap-2 text-xs text-[color:var(--text-main)]">
           <input type="checkbox" checked={asExpense} onChange={(e) => setAsExpense(e.target.checked)} />
-          Catat juga sebagai pengeluaran
+          Catat sebagai pengeluaran
         </label>
       </Sheet>
     </form>

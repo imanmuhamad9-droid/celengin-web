@@ -42,7 +42,7 @@ function allSelected(memberIds: string[]): Record<string, boolean> {
 export function newCatatan(opts: { date: string; paidBy: string; memberIds: string[] }): Catatan {
   return {
     key: nextKey('c'), source: 'manual', store: '', note: '', date: opts.date, paidBy: opts.paidBy,
-    split: 'items', items: [newItem([...opts.memberIds])],
+    split: 'nominal', items: [newItem([...opts.memberIds])],
     discount: emptyAdj(), service: emptyAdj(), tax: emptyAdj(), adjOpen: false,
     nName: '', nTotalDisplay: '', nTotal: 0, nMode: 'equal', nSelected: allSelected(opts.memberIds), nCustom: {},
   };
@@ -50,8 +50,8 @@ export function newCatatan(opts: { date: string; paidBy: string; memberIds: stri
 
 /** Catatan kosong yang belum disentuh (dipakai untuk menggantinya saat scan pertama masuk). */
 export function isBlank(c: Catatan): boolean {
-  return c.source === 'manual' && c.split === 'items' && !c.store.trim() && !c.note.trim()
-    && c.items.every((it) => !it.name.trim() && it.priceRaw === 0)
+  return c.source === 'manual' && !c.store.trim() && !c.note.trim()
+    && (c.split === 'items' ? c.items.every((it) => !it.name.trim() && it.priceRaw === 0) : !c.nName.trim() && c.nTotal === 0)
     && c.discount.raw === 0 && c.service.raw === 0 && c.tax.raw === 0;
 }
 

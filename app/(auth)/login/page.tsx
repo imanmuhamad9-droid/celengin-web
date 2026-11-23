@@ -119,8 +119,8 @@ export default function LoginPage() {
       </AuthShell>
 
       {isResetModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="glass glass-sheet rounded-[2rem] w-full max-w-sm p-6 relative border border-gray-100 dark:border-gray-700 shadow-2xl">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end justify-center">
+          <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-6 relative border border-gray-100 dark:border-gray-700 shadow-2xl">
             <button onClick={() => setIsResetModalOpen(false)} aria-label="Tutup" className="absolute top-4 right-4 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><X className="w-5 h-5" /></button>
             <h2 className="text-xl font-extrabold text-gray-900 dark:text-white text-center">Lupa Password?</h2>
             <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-1 mb-4">Masukkan email kamu, nanti kami kirim link untuk membuat password baru.</p>

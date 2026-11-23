@@ -235,8 +235,8 @@ export default function BillsPage() {
       </main>
 
       {isFormOpen && (
-        <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4">
-          <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative transition-colors max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 z-[70] flex items-end justify-center">
+          <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-6 relative transition-colors max-h-[90vh] overflow-y-auto">
             <button onClick={() => setIsFormOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-center mb-4 text-gray-800 dark:text-white">{editingId ? 'Edit Tagihan' : 'Tambah Tagihan'}</h2>
             <form onSubmit={handleSave} className="space-y-4">

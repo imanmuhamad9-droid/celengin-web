@@ -101,8 +101,8 @@ export default function PhotoCropper({ file, shape, aspect, outWidth, title, onC
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 z-[90] flex items-center justify-center p-4 backdrop-blur-sm">
-      <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-5 relative">
+    <div className="fixed inset-0 bg-black/70 z-[90] flex items-end justify-center backdrop-blur-sm">
+      <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-5 relative">
         <button onClick={onCancel} aria-label="Tutup" className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
         <h2 className="text-lg font-bold text-center text-gray-800 dark:text-white mb-1">{title}</h2>
         <p className="text-[11px] text-center text-gray-500 dark:text-gray-400 mb-4">Geser foto, lalu atur zoom sampai pas.</p>

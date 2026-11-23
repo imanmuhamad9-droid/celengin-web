@@ -20,7 +20,7 @@ export const SHORTCUTS: ShortcutDef[] = [
   { key: 'riwayat', label: 'Riwayat', desc: 'Semua transaksi', href: '/transactions', Icon: History, img: '/menu-icons/riwayat.png' },
   { key: 'laporan', label: 'Laporan', desc: 'Grafik, insight, PDF', href: '/reports', Icon: BarChart3, img: '/menu-icons/laporan.png' },
   { key: 'tagihan', label: 'Tagihan', desc: 'Pengingat tagihan & rutin', href: '/bills', Icon: Receipt, img: '/menu-icons/tagihan.png' },
-  { key: 'split', label: 'Bayarin', desc: 'Patungan & utang teman', href: '/splitbill', Icon: ArrowLeftRight, img: '/menu-icons/gantian.png' },
+  { key: 'split', label: 'Gantian', desc: 'Bayar gantian dengan teman', href: '/gantian', Icon: ArrowLeftRight, img: '/menu-icons/gantian.png' },
 ];
 
 export const MAX_FAVS = 4;

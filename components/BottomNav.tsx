@@ -15,9 +15,9 @@ type NavLink = { key: string; label: string; href: string; img: string; also?: s
 // Ikon tidak dipilih = abu (grayscale) tembus pandang; dipilih = warna penuh (teal).
 const ITEMS: NavLink[] = [
   { key: 'home', label: 'Home', href: '/dashboard', img: '/nav-icons/home.png' },
-  { key: 'impian', label: 'Impian', href: '/dream-planner', img: '/nav-icons/impian.png' },
-  { key: 'bareng', label: 'Kolektif', href: '/couple', img: '/nav-icons/kolektif.png' },
-  { key: 'splitbill', label: 'Split Bill', href: '/splitbill', img: '/nav-icons/splitbill.png', also: ['/gantian'] },
+  { key: 'gantian', label: 'Gantian', href: '/gantian', img: '/menu-icons/gantian.png' },
+  { key: 'splitbill', label: 'Split Bill', href: '/splitbill', img: '/nav-icons/splitbill.png' },
+  { key: 'impian', label: 'Dream', href: '/dream-planner', img: '/nav-icons/impian.png' },
   { key: 'cicilan', label: 'Cicilan', href: '/installments', img: '/nav-icons/cicilan.png' },
   { key: 'simulasi', label: 'Simulasi', href: '/simulasi', img: '/nav-icons/simulasi.png' },
 ];

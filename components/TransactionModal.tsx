@@ -3,11 +3,12 @@ import { useState, useEffect } from 'react';
 import { saveTransactions, type NewTransaction } from '@/lib/offlineQueue';
 import type { Preset } from '@/lib/types';
 import { supabase } from '@/lib/supabaseClient';
-import { X, Plus, Settings2, Camera, ImageUp, Loader2, Save, Check } from 'lucide-react';
+import { X, Plus, Settings2, ChevronDown, Camera, ImageUp, Loader2, Save, Check } from 'lucide-react';
 import { toLocalDateStr, errMsg } from '@/lib/utils';
 import { Frequency } from '@/lib/recurring';
 import { createRecurringRule } from '@/lib/recurringClient';
 import { listWallets, Wallet } from '@/lib/wallets';
+import { getActiveWallet } from '@/lib/activeWallet';
 import FrequencyPicker from '@/components/FrequencyPicker';
 import WalletChips from '@/components/WalletChips';
 import { triggerMoneyRain } from '@/components/MoneyRain';
@@ -39,6 +40,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
   const [txList, setTxList] = useState<TxRow[]>([]);
   const [presets, setPresets] = useState<Preset[]>([]);
   const [loading, setLoading] = useState(false);
+  const [moreOpen, setMoreOpen] = useState<Record<string, boolean>>({});
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [defaultWalletId, setDefaultWalletId] = useState('');
 
@@ -99,7 +101,8 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
         if (!session) return;
         const list = await listWallets(session.user.id, true);
         setWallets(list);
-        const def = list.find(w => w.is_default)?.id || list[0]?.id || '';
+        const active = getActiveWallet();
+        const def = (active && list.some(w => w.id === active) ? active : '') || list.find(w => w.is_default)?.id || list[0]?.id || '';
         setDefaultWalletId(def);
         setTxList(prev => prev.map(r => r.walletId ? r : { ...r, walletId: def }));
       })();
@@ -252,11 +255,11 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-4 backdrop-blur-sm">
-        <div className="glass glass-sheet rounded-3xl w-full max-w-md relative max-h-[90vh] flex flex-col overflow-hidden transition-colors">
+      <div className="fixed inset-0 bg-black/60 z-[70] flex items-end justify-center backdrop-blur-sm">
+        <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-md relative max-h-[90vh] flex flex-col overflow-hidden transition-colors">
           
           <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center glass z-10 transition-colors">
-            <h2 className="text-lg font-bold text-gray-800 dark:text-white">Catat Transaksi</h2>
+            <h2 className="text-lg font-bold text-gray-800 dark:text-white">Catat</h2>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
           </div>
 
@@ -264,7 +267,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
             
             {canScan && (
             <SegmentedControl
-              options={[{ value: 'manual', label: 'Ketik Manual' }, { value: 'scan', label: 'Scan Struk' }]}
+              options={[{ value: 'manual', label: 'Ketik' }, { value: 'scan', label: 'Foto Struk' }]}
               value={activeMode}
               onChange={(v) => setInputMode(v as 'manual' | 'scan')}
             />
@@ -272,22 +275,20 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
 
             {inputMode === 'scan' && canScan && (
               <div className="glass p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm text-center space-y-3 transition-colors">
-                <p className="text-sm font-bold text-gray-800 dark:text-white">Catat pengeluaran dari struk</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Foto atau unggah struk, nominal dan tanggal terisi otomatis. Hasilnya tetap bisa kamu periksa dan ubah sebelum disimpan.</p>
+                <p className="text-sm font-bold text-gray-800 dark:text-white">Foto struknya, nominal terisi sendiri</p>
                 {scanning ? (
                   <div className="py-4 flex flex-col items-center gap-2">
                     <Loader2 className="w-6 h-6 text-sky-600 animate-spin" />
                     <p className="text-xs font-bold text-sky-700 dark:text-sky-400">Membaca struk{scanPct > 0 ? ` ${scanPct}%` : '...'}</p>
-                    <p className="text-[10px] text-gray-400">Pertama kali bisa agak lama karena pemindai dimuat.</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-2">
                     <label className="cursor-pointer flex items-center justify-center gap-1.5 py-3 rounded-[9px] text-xs font-extrabold border btn-accent active:scale-95 transition-all">
-                      <Camera className="w-4 h-4" /> Foto Struk
+                      <Camera className="w-4 h-4" /> Kamera
                       <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => { handleReceiptFile(e.target.files?.[0]); e.target.value = ''; }} />
                     </label>
                     <label className="cursor-pointer flex items-center justify-center gap-1.5 py-3 rounded-[9px] text-xs font-extrabold border btn-accent-soft active:scale-95 transition-all">
-                      <ImageUp className="w-4 h-4" /> Unggah Gambar
+                      <ImageUp className="w-4 h-4" /> Galeri
                       <input type="file" accept="image/*" className="hidden" onChange={(e) => { handleReceiptFile(e.target.files?.[0]); e.target.value = ''; }} />
                     </label>
                   </div>
@@ -297,18 +298,11 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
 
             {activeMode === 'manual' && scanNote && (
               <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-900/20">
-                <p className="text-xs font-bold text-amber-800 dark:text-amber-300">Hasil scan, mohon diperiksa</p>
-                <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-1">
-                  {scanNote.foundAmount ? 'Nominal terbaca.' : 'Nominal tidak terbaca, isi manual.'} {scanNote.foundDate ? 'Tanggal terbaca.' : 'Tanggal tidak terbaca, periksa tanggalnya.'}
-                  {scanNote.merchant ? ` Toko terdeteksi: ${scanNote.merchant}.` : ''} Pilih kategori lalu simpan.
-                </p>
+                <p className="text-xs font-bold text-amber-800 dark:text-amber-300">Cek lagi ya, lalu pilih kategori</p>
+                {(!scanNote.foundAmount || !scanNote.foundDate) && (
+                  <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-1">{!scanNote.foundAmount ? 'Nominal belum terbaca.' : ''} {!scanNote.foundDate ? 'Tanggal belum terbaca.' : ''}</p>
+                )}
               </div>
-            )}
-
-            {activeMode === 'manual' && (
-            <div className="flex justify-end">
-              <Btn variant="soft" onClick={() => setIsPresetModalOpen(true)}><Settings2 className="w-3.5 h-3.5" /> Kelola Kategori</Btn>
-            </div>
             )}
 
             {activeMode === 'manual' && txList.map((tx, index) => (
@@ -337,8 +331,7 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
                     inputMode="numeric" 
                     value={tx.amountDisplay} 
                     onChange={(e) => handleAmountChange(tx.id, e)} 
-                    placeholder="0" 
-                    className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 text-sm font-bold transition-colors" 
+                                        className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 text-sm font-bold transition-colors" 
                     required 
                   />
                 </div>
@@ -350,51 +343,56 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
                         {p.label}
                       </button>
                     ))}
+                    <button type="button" onClick={() => setIsPresetModalOpen(true)} aria-label="Atur kategori" className="glass px-2.5 py-1.5 rounded-lg text-gray-400"><Settings2 className="w-3.5 h-3.5" /></button>
                   </div>
                 </div>
 
-                <div className="mb-3">
-                  <input
-                    type="text"
-                    value={tx.notes}
-                    onChange={(e) => updateRow(tx.id, 'notes', e.target.value)}
-                    placeholder="Keterangan (opsional), cth: beli pulsa buat ibu"
-                    maxLength={200}
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 text-sm transition-colors"
-                  />
-                </div>
+                <div className="mb-3"><WalletChips wallets={wallets} value={tx.walletId} onChange={(id) => updateRow(tx.id, 'walletId', id)} /></div>
 
-                <WalletChips wallets={wallets} value={tx.walletId} onChange={(id) => updateRow(tx.id, 'walletId', id)} />
+                <button type="button" onClick={() => setMoreOpen(m => ({ ...m, [tx.id]: !m[tx.id] }))} className="w-full flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700 text-xs font-bold text-gray-500 dark:text-gray-400">
+                  <span>{tx.date === toLocalDateStr(new Date()) ? 'Hari ini' : tx.date}{tx.isRoutine ? ' · Rutin' : ''}{tx.notes ? ' · ada catatan' : ''}</span>
+                  <span className="flex items-center gap-1">Lainnya <ChevronDown className={`w-4 h-4 transition-transform ${moreOpen[tx.id] ? 'rotate-180' : ''}`} /></span>
+                </button>
 
-                <div className="flex gap-2 items-center justify-between mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
-                  {/* POIN 3: Input tanggal diubah jadi hitam (text-gray-900) */}
-                  <DateField compact required value={tx.date} onChange={(v) => updateRow(tx.id, 'date', v)} className="w-[55%]" />
-                  
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400">Rutin</span>
-                    <Toggle checked={tx.isRoutine} onChange={(v) => updateRow(tx.id, 'isRoutine', v)} label="Transaksi rutin" onText="Ya" offText="Tidak" />
-                  </div>
-                </div>
-
-                {tx.isRoutine && (
-                  <div className="mt-3 p-3 bg-sky-50 dark:bg-sky-900/20 rounded-xl">
-                    <p className="text-[10px] font-bold text-sky-700 dark:text-sky-400 mb-2">Tercatat otomatis, ulangi:</p>
-                    <FrequencyPicker value={tx.frequency} onChange={(v) => updateRow(tx.id, 'frequency', v)} />
-                    <p className="text-[9px] text-sky-700/70 dark:text-sky-400/70 mt-2">Kamu tidak perlu mencatat lagi. Kelola di Tagihan → Transaksi Rutin.</p>
+                {moreOpen[tx.id] && (
+                  <div className="mt-3 space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium mb-1 text-gray-500 dark:text-gray-400">Tanggal</label>
+                      <DateField compact required value={tx.date} onChange={(v) => updateRow(tx.id, 'date', v)} className="w-full" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium mb-1 text-gray-500 dark:text-gray-400">Catatan</label>
+                      <input
+                        type="text"
+                        value={tx.notes}
+                        onChange={(e) => updateRow(tx.id, 'notes', e.target.value)}
+                        maxLength={200}
+                        className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 text-sm transition-colors"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Ulang tiap bulan</span>
+                      <Toggle checked={tx.isRoutine} onChange={(v) => updateRow(tx.id, 'isRoutine', v)} label="Transaksi rutin" onText="Ya" offText="Tidak" />
+                    </div>
+                    {tx.isRoutine && (
+                      <div className="p-3 bg-sky-50 dark:bg-sky-900/20 rounded-xl">
+                        <FrequencyPicker value={tx.frequency} onChange={(v) => updateRow(tx.id, 'frequency', v)} />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             ))}
 
             {activeMode === 'manual' && <button type="button" onClick={addRow} className="glass glass-teal w-full py-3 border-2 border-dashed font-bold rounded-xl flex items-center justify-center gap-2 transition-all text-sm">
-              <Plus className="w-4 h-4" /> Tambah Transaksi Lain
+              <Plus className="w-4 h-4" /> Transaksi lain
             </button>}
           </div>
 
           <div className="p-4 border-t border-gray-100 dark:border-gray-700 glass transition-colors">
             <button onClick={handleSaveAll} disabled={loading} className="glass glass-solid-teal w-full border hover:brightness-95 font-bold py-3 rounded-[9px] transition-all flex items-center justify-center gap-2">
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              {loading ? 'Menyimpan...' : `Simpan ${txList.length} Transaksi`}
+              {loading ? 'Menyimpan...' : txList.length > 1 ? `Simpan ${txList.length}` : 'Simpan'}
             </button>
           </div>
 
@@ -403,13 +401,13 @@ export default function TransactionModal({ isOpen, onClose, onSuccess, showDialo
 
       {/* MODAL KELOLA KATEGORI */}
       {isPresetModalOpen && (
-        <div className="fixed inset-0 bg-black/60 z-[80] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative transition-colors max-h-[80vh] flex flex-col">
+        <div className="fixed inset-0 bg-black/60 z-[80] flex items-end justify-center backdrop-blur-sm">
+          <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-6 relative transition-colors max-h-[80vh] flex flex-col">
             <button onClick={() => setIsPresetModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
-            <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4 text-center">Kelola Kategori</h2>
+            <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4 text-center">Kategori</h2>
             
             <div className="flex items-center gap-1.5 mb-4 bg-gray-50 dark:bg-gray-700 p-2 rounded-xl border border-gray-100 dark:border-gray-600 w-full">
-              <input type="text" value={newPresetLabel} onChange={(e) => setNewPresetLabel(e.target.value)} className="flex-1 min-w-0 h-10 border border-gray-300 dark:border-gray-500 rounded-lg px-2 text-sm glass text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 transition-all" placeholder="Nama..." />
+              <input type="text" value={newPresetLabel} onChange={(e) => setNewPresetLabel(e.target.value)} className="flex-1 min-w-0 h-10 border border-gray-300 dark:border-gray-500 rounded-lg px-2 text-sm glass text-gray-900 dark:text-white focus:ring-2 focus:ring-sky-500 transition-all" aria-label="Nama kategori" />
               <Btn variant="primary" size="md" onClick={handleSavePreset} className="shrink-0">{editingPresetId ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}{editingPresetId ? 'Update' : 'Tambah'}</Btn>
             </div>
 

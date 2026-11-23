@@ -32,16 +32,8 @@ let keySeq = 0;
 const newItem = (): ItemDraft => ({ key: `i${++keySeq}`, name: '', priceDisplay: '', priceRaw: 0, qtyText: '1', memberIds: [] });
 const emptyAdj = (mode: AdjMode): AdjDraft => ({ mode, display: '', raw: 0 });
 
-function StepTitle({ n, title, hint }: { n: number; title: string; hint?: string }) {
-  return (
-    <div className="flex items-start gap-2 mb-2">
-      <span className="w-5 h-5 rounded-full bg-sky-600 text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">{n}</span>
-      <div className="min-w-0">
-        <p className="text-sm font-bold text-gray-800 dark:text-gray-100">{title}</p>
-        {hint && <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-snug">{hint}</p>}
-      </div>
-    </div>
-  );
+function StepTitle({ title }: { n?: number; title: string; hint?: string }) {
+  return <p className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-2">{title}</p>;
 }
 
 function AdjRow({ label, adj, onChange }: { label: string; adj: AdjDraft; onChange: (a: AdjDraft) => void }) {
@@ -64,7 +56,7 @@ function AdjRow({ label, adj, onChange }: { label: string; adj: AdjDraft; onChan
             <button key={m} type="button" onClick={() => onChange({ mode: m, display: '', raw: 0 })} className={`px-3 text-xs font-bold ${adj.mode === m ? 'glass glass-teal' : 'glass text-gray-500 dark:text-gray-300'}`}>{m === 'percent' ? '%' : 'Rp'}</button>
           ))}
         </div>
-        <input inputMode={adj.mode === 'percent' ? 'decimal' : 'numeric'} value={adj.display} onChange={(e) => setValue(e.target.value)} placeholder={adj.mode === 'percent' ? '0' : '0'} className={`${inputCls} flex-1`} />
+        <input inputMode={adj.mode === 'percent' ? 'decimal' : 'numeric'} value={adj.display} onChange={(e) => setValue(e.target.value)} className={`${inputCls} flex-1`} />
       </div>
     </div>
   );
@@ -72,7 +64,7 @@ function AdjRow({ label, adj, onChange }: { label: string; adj: AdjDraft; onChan
 
 export default function SplitExpenseModal({ isOpen, onClose, groupId, members, currentUserId, onSaved, variant = 'split', showDialog }: Props) {
   const isG = variant === 'gantian';
-  const [mode, setMode] = useState<'items' | 'quick'>(isG ? 'quick' : 'items');
+  const [mode, setMode] = useState<'items' | 'quick'>('quick');
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
   const [paidBy, setPaidBy] = useState('');
@@ -95,7 +87,7 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
     const mine = members.find((m) => m.user_id === currentUserId) || members[0];
     const sel: Record<string, boolean> = {};
     members.forEach((m) => { sel[m.id] = true; });
-    setMode(isG ? 'quick' : 'items'); setTitle(''); setDate(toLocalDateStr(new Date())); setPaidBy(mine?.id || '');
+    setMode('quick'); setTitle(''); setDate(toLocalDateStr(new Date())); setPaidBy(mine?.id || '');
     setItems([newItem()]);
     setDiscount(emptyAdj('percent')); setService(emptyAdj('percent')); setTax(emptyAdj('percent'));
     setQTotalDisplay(''); setQTotal(0); setQSplit('equal'); setQSelected(sel); setQCustom({});
@@ -223,10 +215,10 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
   const participants = members.filter((m) => result.perMember[m.id]?.itemsTotal > 0);
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-[70] flex items-end sm:items-center justify-center">
-      <div className="glass glass-sheet rounded-t-3xl sm:rounded-3xl w-full max-w-md max-h-[94vh] flex flex-col transition-colors">
+    <div className="fixed inset-0 bg-black/50 z-[70] flex items-end justify-center">
+      <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-md max-h-[94vh] flex flex-col transition-colors">
         <div className="flex items-center justify-between px-5 pt-5 pb-3 shrink-0">
-          <h2 className="text-lg font-bold text-gray-800 dark:text-white">{isG ? 'Catat Bayarin' : 'Tambah Pengeluaran'}</h2>
+          <h2 className="text-lg font-bold text-gray-800 dark:text-white">{isG ? 'Catat' : 'Tagihan baru'}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
         </div>
 
@@ -234,28 +226,30 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
           {/* Mode */}
           <SegmentedControl
             options={(() => {
-              const quick = { value: 'quick' as const, label: <><Calculator className="w-4 h-4" /> {isG ? 'Satu barang' : 'Total saja'}</> };
-              const items = { value: 'items' as const, label: <><Receipt className="w-4 h-4" /> {isG ? 'Banyak barang (struk)' : 'Struk per item'}</> };
-              return isG ? [quick, items] : [items, quick];
+              const quick = { value: 'quick' as const, label: <><Calculator className="w-4 h-4" /> Cepat</> };
+              const items = { value: 'items' as const, label: <><Receipt className="w-4 h-4" /> Per item</> };
+              return [quick, items];
             })()}
             value={mode}
             onChange={setMode}
           />
 
-          {/* 1. Info */}
+          {/* Info */}
           <section>
-            <StepTitle n={1} title="Info tagihan" />
             <div className="space-y-3">
-              <div><label className={labelCls}>Keterangan</label><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={isG ? 'Cth: Galon, bensin, headset' : 'Cth: Makan malam di Warung Bu Tini'} className={inputCls} /></div>
-              <DateField label="Tanggal" value={date} onChange={setDate} />
+              <div><label className={labelCls}>Untuk apa</label><input value={title} onChange={(e) => setTitle(e.target.value)} className={inputCls} /></div>
               <div>
-                <label className={labelCls}>Dibayar oleh</label>
+                <label className={labelCls}>Siapa yang bayar</label>
                 <div className="flex flex-wrap gap-1.5">
                   {members.map((m) => (
                     <button type="button" key={m.id} onClick={() => setPaidBy(m.id)} className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border-2 max-w-full truncate ${paidBy === m.id ? 'glass glass-teal' : 'border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400'}`}>{m.name}</button>
                   ))}
                 </div>
               </div>
+              <details className="text-xs">
+                <summary className="cursor-pointer font-bold text-gray-500 dark:text-gray-400 py-1">Tanggal: {date === toLocalDateStr(new Date()) ? 'hari ini' : date}</summary>
+                <div className="mt-2"><DateField label="" value={date} onChange={setDate} /></div>
+              </details>
             </div>
           </section>
 
@@ -263,7 +257,7 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
             <>
               {/* 2. Pesanan */}
               <section>
-                <StepTitle n={2} title="Isi struk" hint="Scan struknya, atau tulis tiap makanan/minuman sendiri. Lalu pilih siapa saja yang memakainya. Kalau dipakai bersama, harganya dibagi rata ke yang dipilih." />
+                <StepTitle title="Pesanan" />
                 <div className="mb-3 space-y-2">
                   <ReceiptScanner onResult={handleScanResult} showDialog={showDialog} />
                   {scanInfo && scanInfo.count > 0 && (() => {
@@ -291,7 +285,7 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
                     return (
                       <div key={it.key} className={`rounded-2xl border p-3 space-y-2.5 ${it.memberIds.length === 0 && (it.name || it.priceRaw) ? 'border-yellow-300 dark:border-yellow-700 bg-yellow-50/40 dark:bg-yellow-900/10' : 'border-gray-100 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-700/30'}`}>
                         <div className="flex gap-2">
-                          <input value={it.name} onChange={(e) => updateItem(it.key, { name: e.target.value })} placeholder={`Item ${idx + 1} (cth: Nasi goreng)`} className={`${inputCls} flex-1`} />
+                          <input value={it.name} onChange={(e) => updateItem(it.key, { name: e.target.value })} aria-label={`Nama item ${idx + 1}`} className={`${inputCls} flex-1`} />
                           {items.length > 1 && <Btn variant="danger" className="h-11 shrink-0" onClick={() => setItems((p) => p.filter((x) => x.key !== it.key))}>Hapus</Btn>}
                         </div>
                         <div className="flex gap-2">
@@ -300,12 +294,12 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
                             <input inputMode="numeric" value={it.qtyText} onChange={(e) => updateItem(it.key, { qtyText: e.target.value.replace(/\D/g, '').slice(0, 3) })} className={`${inputCls} text-center`} />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <label className="block text-[10px] text-gray-500 dark:text-gray-400 mb-0.5">Harga satuan (Rp)</label>
-                            <input inputMode="numeric" value={it.priceDisplay} onChange={(e) => { const p = parseRupiahInput(e.target.value); updateItem(it.key, { priceRaw: p.raw, priceDisplay: p.display }); }} placeholder="0" className={`${inputCls} font-bold`} />
+                            <label className="block text-[10px] text-gray-500 dark:text-gray-400 mb-0.5">Harga</label>
+                            <input inputMode="numeric" value={it.priceDisplay} onChange={(e) => { const p = parseRupiahInput(e.target.value); updateItem(it.key, { priceRaw: p.raw, priceDisplay: p.display }); }} className={`${inputCls} font-bold`} />
                           </div>
                         </div>
                         <div>
-                          <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-1">Dipakai oleh:</p>
+                          <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-1">Siapa yang makan</p>
                           <div className="flex flex-wrap gap-1.5">
                             <button type="button" onClick={() => toggleAll(it.key)} className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border ${allOn ? 'glass glass-teal' : 'glass text-gray-500 dark:text-gray-300'}`}>Semua</button>
                             {members.map((m) => {
@@ -326,23 +320,23 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
                 </div>
                 <div className="flex gap-2 mt-3">
                   <button type="button" onClick={() => setItems((p) => [...p, newItem()])} className="glass glass-teal glass-pressable flex-1 h-11 rounded-full border-dashed text-xs font-bold flex items-center justify-center gap-1.5"><Plus className="w-4 h-4" /> Tambah item</button>
-                  <button type="button" onClick={assignAllItems} className="glass h-11 px-3 rounded-xl text-gray-600 dark:text-gray-300 text-[11px] font-bold shrink-0">Bagi rata semua</button>
+                  <button type="button" onClick={assignAllItems} className="glass h-11 px-3 rounded-xl text-gray-600 dark:text-gray-300 text-[11px] font-bold shrink-0">Semua ikut</button>
                 </div>
               </section>
 
-              {/* 3. Pajak, service, diskon */}
-              <section>
-                <StepTitle n={3} title="Diskon, service, dan pajak" hint="Isi seperti yang tertulis di struk (boleh % atau Rp). Dihitung berurutan: diskon, lalu service, lalu pajak. Dibagi sesuai jumlah pesanan masing-masing orang." />
-                <div className="space-y-3">
+              {/* Pajak, service, diskon */}
+              <details className="text-xs">
+                <summary className="cursor-pointer font-bold text-gray-500 dark:text-gray-400 py-1">Diskon, service, pajak</summary>
+                <div className="space-y-3 mt-2">
                   <AdjRow label="Diskon" adj={discount} onChange={setDiscount} />
-                  <AdjRow label="Service charge" adj={service} onChange={setService} />
-                  <AdjRow label="Pajak (PB1/PPN)" adj={tax} onChange={setTax} />
+                  <AdjRow label="Service" adj={service} onChange={setService} />
+                  <AdjRow label="Pajak" adj={tax} onChange={setTax} />
                 </div>
-              </section>
+              </details>
 
               {/* 4. Hasil */}
               <section>
-                <StepTitle n={4} title="Hasil hitungan" />
+                <StepTitle title="Hasil" />
                 <div className="rounded-2xl bg-sky-700 text-white p-4 text-xs space-y-1">
                   <div className="flex justify-between"><span className="text-sky-100">Subtotal</span><span>{formatRupiah(result.subtotal)}</span></div>
                   {result.discount > 0 && <div className="flex justify-between"><span className="text-sky-100">Diskon</span><span>-{formatRupiah(result.discount)}</span></div>}
@@ -378,15 +372,15 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
             </>
           ) : (
             <section>
-              <StepTitle n={2} title="Total dan pembagian" />
+              
               <div className="space-y-3">
-                <div><label className={labelCls}>Total tagihan (Rp)</label><input inputMode="numeric" value={qTotalDisplay} onChange={(e) => { const p = parseRupiahInput(e.target.value); setQTotal(p.raw); setQTotalDisplay(p.display); }} placeholder="0" className={`${inputCls} font-bold`} /></div>
-                <SegmentedControl options={[{ value: 'equal', label: 'Bagi rata' }, { value: 'custom', label: 'Atur sendiri' }]} value={qSplit} onChange={setQSplit} />
+                <div><label className={labelCls}>Total</label><input inputMode="numeric" value={qTotalDisplay} onChange={(e) => { const p = parseRupiahInput(e.target.value); setQTotal(p.raw); setQTotalDisplay(p.display); }} className={`${inputCls} font-bold`} /></div>
+                <SegmentedControl options={[{ value: 'equal', label: 'Bagi rata' }, { value: 'custom', label: 'Beda-beda' }]} value={qSplit} onChange={setQSplit} />
                 {isG && members.length > 1 && (
                   <div>
-                    <label className={labelCls}>Untuk siapa</label>
+                    <label className={labelCls}>Buat siapa</label>
                     <div className="flex flex-wrap gap-1.5">
-                      <button type="button" onClick={() => { const all: Record<string, boolean> = {}; members.forEach((m) => { all[m.id] = true; }); setQSelected(all); setQSplit('equal'); }} className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border-2 ${members.every((m) => qSelected[m.id]) ? 'glass glass-teal' : 'border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400'}`}>Semua (patungan)</button>
+                      <button type="button" onClick={() => { const all: Record<string, boolean> = {}; members.forEach((m) => { all[m.id] = true; }); setQSelected(all); setQSplit('equal'); }} className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border-2 ${members.every((m) => qSelected[m.id]) ? 'glass glass-teal' : 'border-gray-100 dark:border-gray-700 text-gray-500 dark:text-gray-400'}`}>Semua</button>
                       {members.map((m) => {
                         const only = members.every((x) => !!qSelected[x.id] === (x.id === m.id));
                         return (
@@ -407,7 +401,7 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
                         {qSplit === 'equal' ? (
                           <span className="w-28 text-right text-[11px] font-bold text-gray-500 dark:text-gray-400 shrink-0">{on && qTotal > 0 ? formatRupiah(eq) : '-'}</span>
                         ) : (
-                          <input inputMode="numeric" disabled={!on} value={qCustom[m.id] ? new Intl.NumberFormat('id-ID').format(qCustom[m.id]) : ''} onChange={(e) => setQCustom((p) => ({ ...p, [m.id]: parseRupiahInput(e.target.value).raw }))} placeholder="Rp" className="w-28 shrink-0 h-10 px-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg text-xs text-right disabled:opacity-40" />
+                          <input inputMode="numeric" disabled={!on} value={qCustom[m.id] ? new Intl.NumberFormat('id-ID').format(qCustom[m.id]) : ''} onChange={(e) => setQCustom((p) => ({ ...p, [m.id]: parseRupiahInput(e.target.value).raw }))} aria-label="Nominal" className="w-28 shrink-0 h-10 px-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg text-xs text-right disabled:opacity-40" />
                         )}
                       </div>
                     );
@@ -418,7 +412,7 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
             </section>
           )}
 
-          <button type="submit" disabled={saving} className="glass glass-solid-teal w-full border hover:brightness-95 font-bold py-3.5 rounded-[9px] transition-all flex items-center justify-center gap-2"><Save className="w-4 h-4" /> {saving ? 'Menyimpan...' : isG ? 'Simpan Catatan' : 'Simpan Pengeluaran'}</button>
+          <button type="submit" disabled={saving} className="glass glass-solid-teal w-full border hover:brightness-95 font-bold py-3.5 rounded-[9px] transition-all flex items-center justify-center gap-2"><Save className="w-4 h-4" /> {saving ? 'Menyimpan...' : 'Simpan'}</button>
         </form>
       </div>
     </div>

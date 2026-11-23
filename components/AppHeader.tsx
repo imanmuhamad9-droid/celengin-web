@@ -67,8 +67,8 @@ export default function AppHeader({ title, onBack, topRight, action, z = 'z-50',
   }, []);
 
   useEffect(() => {
-    if (!key || !MENU_INFO[key]) { setInfoOpen(false); return; }
-    try { setInfoOpen(localStorage.getItem(SEEN_PREFIX + key) !== '1'); } catch { setInfoOpen(true); }
+    // Penjelasan hanya muncul saat tombol ⓘ diketuk, tidak otomatis saat halaman dibuka
+    setInfoOpen(false);
   }, [key]);
 
   const closeInfo = () => {

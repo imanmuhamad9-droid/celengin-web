@@ -4,7 +4,7 @@ import type { Profile } from '@/lib/types';
 import { supabase } from '@/lib/supabaseClient';
 import AppHeader from '@/components/AppHeader';
 import { useRouter } from 'next/navigation';
-import { Save, Upload, Sun, Moon, Monitor, User, LogOut, Lock, Camera, Trash2, Eye, EyeOff, ChevronRight, CalendarClock, Wallet, Image as ImageIcon, Palette, Bell, Repeat, Trophy, Download } from 'lucide-react';
+import { Save, Upload, Sun, Moon, Monitor, User, LogOut, Lock, Camera, Trash2, Eye, EyeOff, ChevronRight, CalendarClock, Wallet, Image as ImageIcon, Palette, Bell, Repeat, Download } from 'lucide-react';
 import CardBgEditor from '@/components/CardBgEditor';
 import PhotoCropper from '@/components/PhotoCropper';
 import SkeletonLoader from '@/components/SkeletonLoader';
@@ -33,11 +33,11 @@ const TITLES: Record<View, string> = {
   data: 'Data & Akun',
   gajian: 'Tanggal Gajian',
   saldo: 'Batas Saldo Aman',
-  kartu: 'Kartu Saldo',
-  tampilan: 'Tampilan',
-  latar: 'Tema Latar',
+  kartu: 'Gambar Kartu Saldo',
+  tampilan: 'Gelap / Terang',
+  latar: 'Latar',
   notif: 'Notifikasi',
-  menu: 'Menu Tambahan',
+  menu: 'Menu Lainnya',
 };
 
 const CARD = 'glass p-5 rounded-3xl border transition-colors';
@@ -455,19 +455,21 @@ export default function SettingsPage() {
               <Row icon={<Download className="w-5 h-5" />} title="Data & Akun" sub="Unduh datamu, hapus akun" onClick={() => go('data')} />
             </Group>
 
-            <Group label="Atur Uang">
-              <Row icon={<CalendarClock className="w-5 h-5" />} title="Tanggal Gajian" sub={payday === 1 ? 'Tanggal 1 (bulan kalender)' : `Tanggal ${payday}${payShift === 'before' ? ' · maju ke hari kerja' : payShift === 'after' ? ' · mundur ke hari kerja' : ''}`} onClick={() => go('gajian')} />
-              <Row icon={<Wallet className="w-5 h-5" />} title="Batas Saldo Aman" sub={formatRupiah(safeLimitRaw)} onClick={() => go('saldo')} />
-              <Row icon={<ImageIcon className="w-5 h-5" />} title="Kartu Saldo" sub="Gambar saat saldo aman dan menipis" onClick={() => go('kartu')} />
-              <Row icon={<Repeat className="w-5 h-5" />} title="Transaksi Rutin" sub="Gaji, langganan, cicilan otomatis" onClick={() => setIsRoutineOpen(true)} />
+            <Group label="Tampilan">
+              <Row icon={<Palette className="w-5 h-5" />} title="Gelap / Terang" sub={themeLabel} onClick={() => go('tampilan')} />
+              <Row icon={<Sparkles className="w-5 h-5" />} title="Latar" sub={bgLabel} onClick={() => go('latar')} />
+              <Row icon={<ImageIcon className="w-5 h-5" />} title="Gambar Kartu Saldo" sub="Saat saldo aman dan menipis" onClick={() => go('kartu')} />
+              <Row icon={<Bell className="w-5 h-5" />} title="Notifikasi" sub="Pengingat di HP kamu" onClick={() => go('notif')} />
             </Group>
 
-            <Group label="Aplikasi">
-              <Row icon={<Palette className="w-5 h-5" />} title="Tampilan" sub={themeLabel} onClick={() => go('tampilan')} />
-              <Row icon={<Sparkles className="w-5 h-5" />} title="Tema Latar" sub={bgLabel} onClick={() => go('latar')} />
-              <Row icon={<MenuIcon className="w-5 h-5" />} title="Menu Tambahan" sub={extraMenus.length > 0 ? `${extraMenus.length} menu di Home` : 'Belum ada, kotak menu di Home disembunyikan'} onClick={() => go('menu')} />
-              <Row icon={<Bell className="w-5 h-5" />} title="Notifikasi" sub="Pengingat di HP kamu" onClick={() => go('notif')} />
-              <Row icon={<Trophy className="w-5 h-5" />} title="Pencapaian" sub="Badge bonus buat kamu" onClick={() => router.push('/badges')} />
+            <Group label="Uang">
+              <Row icon={<CalendarClock className="w-5 h-5" />} title="Tanggal Gajian" sub={payday === 1 ? 'Tanggal 1' : `Tanggal ${payday}`} onClick={() => go('gajian')} />
+              <Row icon={<Wallet className="w-5 h-5" />} title="Batas Saldo Aman" sub={formatRupiah(safeLimitRaw)} onClick={() => go('saldo')} />
+              <Row icon={<Repeat className="w-5 h-5" />} title="Transaksi Otomatis" sub="Gaji dan langganan tiap bulan" onClick={() => setIsRoutineOpen(true)} />
+            </Group>
+
+            <Group label="Lainnya">
+              <Row icon={<MenuIcon className="w-5 h-5" />} title="Menu Lainnya" sub="Laporan, Riwayat, Tagihan, dan lain-lain" onClick={() => go('menu')} />
             </Group>
 
             <Group label="Sesi">
@@ -727,13 +729,13 @@ export default function SettingsPage() {
         {view === 'menu' && (
           <>
             <div className={CARD}>
-              <p className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-1">Menu cepat di Home</p>
+              <p className="text-sm font-bold text-gray-800 dark:text-gray-100 mb-1">Pilih menu yang mau ditampilkan di Home</p>
               <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                Menu yang kamu nyalakan muncul sebagai kotak yang bisa digeser ke samping di Home. Kalau semuanya dimatikan, kotak itu hilang.
+                Yang dinyalakan muncul di Home dan bisa digeser.
               </p>
             </div>
             {(['menu', 'fitur'] as const).map((g) => (
-              <Group key={g} label={g === 'menu' ? 'Menu' : 'Fitur keuangan'}>
+              <Group key={g} label={g === 'menu' ? 'Menu' : 'Fitur'}>
                 {EXTRA_MENUS.filter((m) => m.group === g).map((m) => (
                   <div key={m.key} className="flex items-center gap-3 px-4 py-3.5">
                     <span className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 glass glass-teal"><m.Icon className="w-5 h-5" /></span>

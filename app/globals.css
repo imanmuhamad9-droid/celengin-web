@@ -231,3 +231,8 @@ html.dark .glass-sheet { background: rgba(17, 24, 39, 0.78); }
   color: #ffffff;
 }
 .glass-on-color-strong { background: rgba(255, 255, 255, 0.92); color: #075985; border-color: transparent; }
+
+/* Form dan dialog isian muncul dari bawah layar */
+@keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.sheet-up { animation: sheet-up 0.28s cubic-bezier(0.22, 1, 0.36, 1); }
+@media (prefers-reduced-motion: reduce) { .sheet-up { animation: none; } }

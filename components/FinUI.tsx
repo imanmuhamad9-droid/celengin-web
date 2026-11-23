@@ -13,8 +13,8 @@ export const chipOff = 'glass text-[color:var(--text-muted)]';
 /** Lembar formulir dari bawah (bottom sheet) bergaya kaca. */
 export function Sheet({ title, onClose, children, footer }: { title: string; onClose: () => void; children: ReactNode; footer?: ReactNode }) {
   return (
-    <div className="fixed inset-0 bg-black/50 z-[70] flex items-end sm:items-center justify-center">
-      <div className="glass glass-sheet rounded-t-3xl sm:rounded-3xl w-full max-w-md max-h-[94vh] flex flex-col transition-colors">
+    <div className="fixed inset-0 bg-black/50 z-[70] flex items-end justify-center">
+      <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-md max-h-[94vh] flex flex-col transition-colors">
         <div className="flex items-center justify-between px-5 pt-5 pb-3 shrink-0">
           <h2 className="text-lg font-bold text-[color:var(--text-main)]">{title}</h2>
           <button type="button" onClick={onClose} aria-label="Tutup" className="text-[color:var(--text-muted)]"><X className="w-5 h-5" /></button>

@@ -73,12 +73,12 @@ function Form({ onClose, userId, wallets, balances, onSaved, showDialog }: Omit<
         </div>
         <div>
           <label className={labelCls}>Jumlah (Rp)</label>
-          <input inputMode="numeric" value={display} onChange={(e) => { const p = parseRupiahInput(e.target.value); setRaw(p.raw); setDisplay(p.display); }} placeholder="0" className={`${inputCls} font-bold`} />
+          <input inputMode="numeric" value={display} onChange={(e) => { const p = parseRupiahInput(e.target.value); setRaw(p.raw); setDisplay(p.display); }} className={`${inputCls} font-bold`} />
         </div>
         <DateField label="Tanggal" value={date} onChange={setDate} />
         <div>
           <label className={labelCls}>Catatan (opsional)</label>
-          <input value={note} maxLength={100} onChange={(e) => setNote(e.target.value)} placeholder="Cth: isi saldo GoPay" className={inputCls} />
+          <input value={note} maxLength={100} onChange={(e) => setNote(e.target.value)} className={inputCls} />
         </div>
         <p className="text-[10px] text-[color:var(--text-muted)]">Transfer tidak dihitung sebagai pemasukan atau pengeluaran; hanya memindahkan saldo antar dompet.</p>
       </Sheet>

@@ -17,7 +17,6 @@ import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
 import AppHeader from '@/components/AppHeader';
 import { useCatatAction } from '@/lib/catatAction';
-import SubTabs, { SPLIT_TABS } from '@/components/SubTabs';
 import { Btn } from '@/components/ui';
 import SkeletonLoader from '@/components/SkeletonLoader';
 
@@ -31,44 +30,44 @@ const INTRO_KEY = 'celengin:gantian-intro-hidden';
 
 function labelsFor(running: boolean) {
   return running ? {
-    title: 'Bayarin',
-    menu: 'Bayarin',
-    create: 'Buat Bayarin Baru',
-    modalTitle: 'Bayarin Baru',
+    title: 'Gantian',
+    menu: 'Gantian',
+    create: 'Buat Baru',
+    modalTitle: 'Gantian Baru',
     nameLabel: 'Nama',
-    namePh: 'Rina & Dito',
-    friends: 'Siapa saja yang ikut',
-    empty: 'Belum ada. Buat satu, misalnya "Rina & Dito".',
-    inviteLabel: 'Undangan Bayarin',
+    namePh: '',
+    friends: 'Siapa saja',
+    empty: 'Belum ada. Ketuk Buat Baru.',
+    inviteLabel: 'Undangan Gantian',
     entity: 'daftar',
-    addExp: 'Catat Bayarin',
+    addExp: 'Catat',
     tabs: { ringkasan: 'Saldo', pengeluaran: 'Catatan', anggota: 'Anggota' },
-    nameEmpty: 'Isi namanya dulu, misalnya "Rina & Dito".',
+    nameEmpty: 'Isi namanya dulu.',
     created: 'Berhasil Dibuat',
-    deleteTitle: 'Hapus Bayarin?',
+    deleteTitle: 'Hapus Gantian?',
     deleteMsg: (n: string) => `"${n}" beserta semua catatan dan pembayarannya akan dihapus permanen untuk semua anggota.`,
     noExp: 'Belum ada catatan.',
     delExpTitle: 'Hapus Catatan?',
     delExp: 'Hapus catatan',
     sqlFile: 'sql/05_gantian.sql',
   } : {
-    title: 'Patungan',
-    menu: 'Patungan',
-    create: 'Buat Grup Patungan',
-    modalTitle: 'Grup Patungan Baru',
-    nameLabel: 'Nama grup',
-    namePh: 'Makan malam Sabtu',
-    friends: 'Teman yang ikut',
-    empty: 'Belum ada grup. Buat satu untuk mulai patungan.',
-    inviteLabel: 'Kamu diundang ke grup Patungan',
+    title: 'Split Bill',
+    menu: 'Split Bill',
+    create: 'Buat Baru',
+    modalTitle: 'Split Bill Baru',
+    nameLabel: 'Nama',
+    namePh: '',
+    friends: 'Siapa saja',
+    empty: 'Belum ada. Ketuk Buat Baru.',
+    inviteLabel: 'Undangan Split Bill',
     entity: 'grup',
-    addExp: 'Tambah Pengeluaran',
+    addExp: 'Tambah Tagihan',
     tabs: { ringkasan: 'ringkasan', pengeluaran: 'pengeluaran', anggota: 'anggota' },
-    nameEmpty: 'Isi nama grup, misalnya "Makan Malam Sabtu".',
-    created: 'Grup Dibuat',
+    nameEmpty: 'Isi namanya dulu.',
+    created: 'Berhasil Dibuat',
     deleteTitle: 'Hapus Grup?',
     deleteMsg: (n: string) => `Grup "${n}" beserta seluruh pengeluaran dan pelunasannya akan dihapus permanen untuk semua anggota.`,
-    noExp: 'Belum ada pengeluaran.',
+    noExp: 'Belum ada tagihan.',
     delExpTitle: 'Hapus Pengeluaran?',
     delExp: 'Hapus pengeluaran',
     sqlFile: 'sql/03_splitbill.sql',
@@ -193,14 +192,14 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
 
   useEffect(() => { loadList(); }, []);
   useEffect(() => {
-    try { setIntroHidden(localStorage.getItem(INTRO_KEY) === '1'); } catch { setIntroHidden(false); }
+    setIntroHidden(true);
     setCurMonth(toLocalDateStr(new Date()).slice(0, 7));
   }, []);
 
   // Gelembung Catat mengikuti posisi: daftar -> buat grup/buku; di dalam grup -> catat pengeluaran
   useCatatAction(
-    group ? (isRunning ? 'Catatan' : 'Pengeluaran') : (isRunning ? 'Bayarin' : 'Grup'),
-    group ? (isRunning ? 'Catat Bayarin' : 'Tambah pengeluaran') : (isRunning ? 'Buat Bayarin baru' : 'Buat grup patungan'),
+    group ? (isRunning ? 'Catatan' : 'Tagihan') : (isRunning ? 'Gantian' : 'Split Bill'),
+    group ? (isRunning ? 'Catat' : 'Tambah tagihan') : 'Buat baru',
     () => { if (group) { setEditExp(null); setIsExpOpen(true); } else openNewGroup(); },
   );
 
@@ -491,15 +490,14 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
     <div className="min-h-screen bg-[var(--page-bg)] pb-40 transition-colors">
       <AppHeader
         z="z-40"
-        title={group ? group.name : 'Split Bill'}
-        infoKey={group ? undefined : (isRunning ? 'Bayarin' : 'Patungan')}
+        title={group ? group.name : (isRunning ? 'Gantian' : 'Split Bill')}
+        infoKey={group ? undefined : (isRunning ? 'Gantian' : 'Split Bill')}
         onBack={group ? goBack : undefined}
         action={group && isOwner ? <Btn variant="danger" size="sm" onClick={handleDeleteGroup}>Hapus</Btn> : undefined}
       />
 
       <main className="px-5 mt-4 space-y-4">
         {/* Di daftar (bukan di dalam sebuah grup): dua pilihan Split Bill */}
-        {!group && <SubTabs items={SPLIT_TABS} />}
         {missingTable && (
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-4 rounded-2xl text-xs text-yellow-800 dark:text-yellow-300">
             Database {L.menu} belum siap. Jalankan <strong>{L.sqlFile}</strong> (versi terbaru) di Supabase SQL Editor, lalu muat ulang halaman ini.
@@ -716,7 +714,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                 <div className="glass p-4 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-3">
                   <p className="text-xs font-bold text-gray-800 dark:text-gray-100">Tambah teman</p>
                   <div className="flex gap-2">
-                    <input value={newMember} onChange={(e) => setNewMember(noDigits(e.target.value))} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddMember(); } }} placeholder="Nama teman (tanpa akun)" className={inputCls} />
+                    <input value={newMember} onChange={(e) => setNewMember(noDigits(e.target.value))} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddMember(); } }} aria-label="Nama teman" className={inputCls} />
                     <button onClick={handleAddMember} className="glass glass-teal w-11 h-11 rounded-xl shrink-0 flex items-center justify-center" aria-label="Tambah"><Plus className="w-5 h-5" /></button>
                   </div>
                   <button onClick={() => setIsInviteOpen(true)} className="glass glass-teal glass-pressable w-full h-11 rounded-full border-dashed text-xs font-bold flex items-center justify-center gap-1.5"><UserPlus className="w-4 h-4" /> Undang pengguna Celengin (lewat email)</button>
@@ -729,14 +727,14 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
 
       {/* ===== MODAL GRUP BARU ===== */}
       {isGroupOpen && (
-        <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4">
-          <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative max-h-[90vh] overflow-y-auto transition-colors">
+        <div className="fixed inset-0 bg-black/50 z-[70] flex items-end justify-center">
+          <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-6 relative max-h-[90vh] overflow-y-auto transition-colors">
             <button onClick={() => setIsGroupOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-center mb-4 text-gray-800 dark:text-white">{L.modalTitle}</h2>
             <form onSubmit={handleCreateGroup} className="space-y-4">
               <div>
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">{L.nameLabel}</label>
-                <input value={gName} onChange={(e) => setGName(e.target.value)} placeholder={L.namePh} className={inputCls} />
+                <input value={gName} onChange={(e) => setGName(e.target.value)} aria-label={L.nameLabel} className={inputCls} />
               </div>
               <div>
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">{L.friends}</label>
@@ -750,17 +748,16 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                 </div>
                 <SegmentedControl
                   className="mb-2"
-                  options={[{ value: 'nama', label: 'Nama saja' }, { value: 'email', label: 'Undang pengguna (email)' }]}
+                  options={[{ value: 'nama', label: 'Nama saja' }, { value: 'email', label: 'Pakai email' }]}
                   value={gInviteMode ? 'email' : 'nama'}
                   onChange={(v) => { setGInviteMode(v === 'email'); setGMemberInput(''); }}
                 />
                 <div className="flex gap-2">
-                  <input type={gInviteMode ? 'email' : 'text'} value={gMemberInput} onChange={(e) => setGMemberInput(gInviteMode ? e.target.value : noDigits(e.target.value))} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addGroupMemberChip(); } }} placeholder={gInviteMode ? 'email@contoh.com' : 'Nama teman'} className={inputCls} />
+                  <input type={gInviteMode ? 'email' : 'text'} value={gMemberInput} onChange={(e) => setGMemberInput(gInviteMode ? e.target.value : noDigits(e.target.value))} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addGroupMemberChip(); } }} aria-label={gInviteMode ? 'Email teman' : 'Nama teman'} className={inputCls} />
                   <button type="button" onClick={() => addGroupMemberChip()} disabled={gAdding} className="glass glass-teal w-11 h-11 rounded-xl shrink-0 flex items-center justify-center disabled:opacity-50"><Plus className="w-5 h-5" /></button>
                 </div>
-                <p className="text-[10px] text-gray-400 mt-1.5">{gInviteMode ? `Pengguna yang diundang melihat ${L.entity} ini dari akunnya setelah menerima.` : 'Teman tidak perlu punya akun, cukup ditulis namanya.'} Bisa ditambah lagi nanti di tab Anggota.</p>
               </div>
-              <button type="submit" className="glass glass-solid-teal w-full font-bold py-3.5 rounded-xl transition-all">{isRunning ? 'Buat Bayarin' : 'Buat Grup'}</button>
+              <button type="submit" className="glass glass-solid-teal w-full font-bold py-3.5 rounded-xl transition-all">Buat</button>
             </form>
           </div>
         </div>
@@ -768,20 +765,19 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
 
       {/* ===== MODAL REKENING ===== */}
       {bankMember && (
-        <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4">
-          <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative transition-colors">
+        <div className="fixed inset-0 bg-black/50 z-[70] flex items-end justify-center">
+          <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-6 relative transition-colors">
             <button onClick={() => setBankMember(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-center mb-1 text-gray-800 dark:text-white">Info Rekening</h2>
             <p className="text-xs text-center text-gray-500 dark:text-gray-400 mb-4 truncate">{bankMember.name}</p>
             <form onSubmit={handleSaveBank} className="space-y-3">
               <select value={bankName} onChange={(e) => setBankName(e.target.value)} className={inputCls}>
-                <option value="">Pilih Bank / E-Wallet</option>
+                <option value="">Bank / E-Wallet</option>
                 {BANKS.map((b) => <option key={b} value={b}>{b}</option>)}
               </select>
-              <input inputMode="numeric" value={bankNumber} onChange={(e) => setBankNumber(digitsOnly(e.target.value))} placeholder="Nomor rekening / nomor HP" className={inputCls} />
-              <input value={bankHolder} onChange={(e) => setBankHolder(noDigits(e.target.value))} placeholder="Nama pemilik rekening" className={inputCls} />
-              <input type="tel" inputMode="tel" value={bankPhone} onChange={(e) => setBankPhone(digitsOnly(e.target.value))} placeholder="Nomor WhatsApp (opsional), cth 0812..." className={inputCls} />
-              <p className="text-[10px] text-gray-400">Rekening dipakai agar yang berutang langsung tahu harus transfer ke mana. Nomor WhatsApp membuat tombol Kirim ke WhatsApp langsung membuka chat orang ini.</p>
+              <input inputMode="numeric" value={bankNumber} onChange={(e) => setBankNumber(digitsOnly(e.target.value))} aria-label="Nomor rekening" className={inputCls} />
+              <input value={bankHolder} onChange={(e) => setBankHolder(noDigits(e.target.value))} aria-label="Nama pemilik" className={inputCls} />
+              <input type="tel" inputMode="tel" value={bankPhone} onChange={(e) => setBankPhone(digitsOnly(e.target.value))} aria-label="Nomor WhatsApp" className={inputCls} />
               <button type="submit" className="glass glass-solid-teal w-full font-bold py-3.5 rounded-xl transition-all">Simpan</button>
             </form>
           </div>
@@ -790,13 +786,13 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
 
       {/* ===== MODAL UNDANG ===== */}
       {isInviteOpen && (
-        <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4">
-          <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative transition-colors">
+        <div className="fixed inset-0 bg-black/50 z-[70] flex items-end justify-center">
+          <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-6 relative transition-colors">
             <button onClick={() => setIsInviteOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-center mb-1 text-gray-800 dark:text-white">Undang Pengguna</h2>
-            <p className="text-xs text-center text-gray-500 dark:text-gray-400 mb-4">Masukkan email akun Celengin temanmu. Dia akan melihat {L.entity} ini di menu {L.menu}-nya.</p>
+            
             <form onSubmit={handleInvite} className="space-y-3">
-              <div className="relative"><Mail className="w-4 h-4 text-gray-400 absolute left-3 top-3.5" /><input type="email" required value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="email@contoh.com" className={`${inputCls} pl-9`} /></div>
+              <div className="relative"><Mail className="w-4 h-4 text-gray-400 absolute left-3 top-3.5" /><input type="email" required value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} aria-label="Email" className={`${inputCls} pl-9`} /></div>
               <button type="submit" disabled={inviteBusy} className="glass glass-solid-teal w-full disabled:opacity-60 font-bold py-3.5 rounded-xl transition-all">{inviteBusy ? 'Mengundang...' : 'Kirim Undangan'}</button>
             </form>
           </div>
@@ -805,17 +801,16 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
 
       {/* ===== MODAL CATAT PEMBAYARAN (Gantian) ===== */}
       {settleLine && (
-        <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4">
-          <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative transition-colors">
+        <div className="fixed inset-0 bg-black/50 z-[70] flex items-end justify-center">
+          <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-6 relative transition-colors">
             <button onClick={() => setSettleLine(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-center mb-1 text-gray-800 dark:text-white">Catat Pembayaran</h2>
             <p className="text-xs text-center text-gray-500 dark:text-gray-400 mb-4"><strong>{nameOf(settleLine.from)}</strong> membayar ke <strong>{nameOf(settleLine.to)}</strong>. Masih harus dibayar {formatRupiah(settleLine.amount)}.</p>
             <form onSubmit={submitSettle} className="space-y-3">
               <div>
-                <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Nominal yang dibayarkan (Rp)</label>
-                <input inputMode="numeric" value={settleDisplay} onChange={(e) => { const v = parseRupiahInput(e.target.value); setSettleRaw(v.raw); setSettleDisplay(v.display); }} placeholder="0" className={`${inputCls} font-bold`} />
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Dibayar</label>
+                <input inputMode="numeric" value={settleDisplay} onChange={(e) => { const v = parseRupiahInput(e.target.value); setSettleRaw(v.raw); setSettleDisplay(v.display); }} className={`${inputCls} font-bold`} />
               </div>
-              <p className="text-[10px] text-gray-400">Dibayar sebagian? Ubah nominalnya. Sisanya tetap tercatat dan terbawa ke hitungan berikutnya.</p>
               <button type="submit" disabled={settleBusy} className="glass glass-solid-teal w-full disabled:opacity-60 font-bold py-3.5 rounded-xl transition-all">{settleBusy ? 'Menyimpan...' : 'Simpan Pembayaran'}</button>
             </form>
           </div>

@@ -155,7 +155,6 @@ export default function SimulasiPage() {
             <input
               value={draft.name}
               onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-              placeholder="Nama rencana"
               aria-label="Nama rencana"
               className="glass w-full h-11 px-4 rounded-2xl text-base font-extrabold outline-none focus:ring-2 focus:ring-[color:var(--teal-primary)] text-[color:var(--text-main)]"
             />

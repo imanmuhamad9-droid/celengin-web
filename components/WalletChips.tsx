@@ -1,16 +1,13 @@
 'use client';
 import type { Wallet } from '@/lib/wallets';
-import { useExtraMenus } from '@/lib/menuSettings';
 
-// Pilihan dompet di form Catat/Ubah. Hanya tampil bila fitur Dompet dinyalakan (Pengaturan > Menu Tambahan)
-// dan ada lebih dari satu dompet. Kalau tidak tampil, transaksi masuk ke dompet utama otomatis.
+// Pilihan dompet di form Catat/Ubah. Hanya tampil bila ada lebih dari satu dompet. Kalau tidak tampil, transaksi masuk ke dompet utama otomatis.
 export default function WalletChips({ wallets, value, onChange }: {
   wallets: Wallet[];
   value: string;
   onChange: (id: string) => void;
 }) {
-  const enabled = useExtraMenus().includes('dompet');
-  if (!enabled || wallets.length < 2) return null;
+  if (wallets.length < 2) return null;
   return (
     <div>
       <label className="block text-xs font-medium mb-1.5 text-[color:var(--text-muted)]">Dompet</label>

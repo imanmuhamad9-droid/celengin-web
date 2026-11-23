@@ -13,8 +13,8 @@ export function ProfileModal({ profile, displayName, onClose, onSettings, onLogo
   onLogout: () => void;
 }) {
   return (
-    <div onClick={onClose} className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-      <div onClick={(e) => e.stopPropagation()} className="bg-gray-50 dark:bg-gray-800 rounded-3xl w-full max-w-xs relative overflow-hidden shadow-2xl">
+    <div onClick={onClose} className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center backdrop-blur-sm">
+      <div onClick={(e) => e.stopPropagation()} className="bg-gray-50 dark:bg-gray-800 rounded-t-3xl rounded-b-none sheet-up w-full max-w-xs relative overflow-hidden shadow-2xl">
         <div className="pt-6 pb-12 flex flex-col items-center relative bg-cover bg-center" style={{ backgroundColor: profile?.theme_color || '#0369a1', ...(profile?.cover_url ? { backgroundImage: `url(${profile.cover_url})` } : {}) }}>
           {profile?.cover_url && <div className="absolute inset-0 bg-black/25" />}
           <button onClick={onClose} aria-label="Tutup" className="absolute top-4 right-4 z-10 text-white/80 hover:text-white bg-black/20 rounded-full p-1"><X className="w-5 h-5" /></button>
@@ -41,8 +41,8 @@ export function ProfileModal({ profile, displayName, onClose, onSettings, onLogo
 export function CategoryDetailModal({ name, transactions, onClose }: { name: string; transactions: Transaction[]; onClose: () => void }) {
   const sorted = [...transactions].sort((a, b) => new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime());
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative max-h-[80vh] flex flex-col transition-colors">
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
+      <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-6 relative max-h-[80vh] flex flex-col transition-colors">
         <button onClick={onClose} aria-label="Tutup" className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
         <h2 className="text-lg font-bold text-center mb-1 text-gray-800 dark:text-white">Detail Kategori</h2>
         <p className="text-xs text-center text-gray-500 dark:text-gray-400 mb-4">{name}</p>
@@ -65,8 +65,8 @@ export function CategoryDetailModal({ name, transactions, onClose }: { name: str
 
 export function AllowanceInfoModal({ onClose }: { onClose: () => void }) {
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-      <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative transition-colors">
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center backdrop-blur-sm">
+      <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-6 relative transition-colors">
         <button onClick={onClose} aria-label="Tutup" className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
         <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-2">Apa itu Jatah Hari Ini?</h2>
         <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
@@ -90,8 +90,8 @@ export function AllowanceInfoModal({ onClose }: { onClose: () => void }) {
 
 export function StreakInfoModal({ onClose }: { onClose: () => void }) {
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-      <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative transition-colors">
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center backdrop-blur-sm">
+      <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-6 relative transition-colors">
         <button onClick={onClose} aria-label="Tutup" className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
         <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-2">Apa itu Streak Hemat?</h2>
         <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mb-4">

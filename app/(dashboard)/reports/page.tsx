@@ -264,8 +264,8 @@ export default function ReportsPage() {
       </main>
 
       {showHealthInfo && health && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="glass glass-sheet rounded-3xl w-full max-w-sm p-6 relative transition-colors">
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center backdrop-blur-sm">
+          <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-6 relative transition-colors">
             <button onClick={() => setShowHealthInfo(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-2">Apa itu Skor Kesehatan?</h2>
             <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed mb-4">Angka 0-100 yang merangkum seberapa sehat keuanganmu di periode ini.</p>

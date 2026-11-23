@@ -51,7 +51,7 @@ function AdjRow({ label, adj, onChange }: { label: string; adj: Adj; onChange: (
             <button key={m} type="button" onClick={() => onChange({ mode: m, display: '', raw: 0 })} className={`px-3 text-xs font-bold ${adj.mode === m ? chipOn : chipOff}`}>{m === 'percent' ? '%' : 'Rp'}</button>
           ))}
         </div>
-        <input inputMode={adj.mode === 'percent' ? 'decimal' : 'numeric'} value={adj.display} onChange={(e) => setValue(e.target.value)} placeholder="0" className={`${inputCls} flex-1`} />
+        <input inputMode={adj.mode === 'percent' ? 'decimal' : 'numeric'} value={adj.display} onChange={(e) => setValue(e.target.value)} className={`${inputCls} flex-1`} />
       </div>
     </div>
   );
@@ -94,12 +94,7 @@ function CatatanCard({ c, index, count, members, currentUserId, update, onRemove
       {/* Info catatan */}
       <div className="space-y-3">
         <div>
-          <label className={labelCls}>Toko / tempat (opsional)</label>
-          <input value={c.store} maxLength={80} onChange={(e) => set({ store: e.target.value })} placeholder="Cth: Alfamart, Warung Bu Tini" className={inputCls} />
-        </div>
-        <DateField label="Tanggal" value={c.date} onChange={(v) => set({ date: v })} />
-        <div>
-          <label className={labelCls}>Dibayar oleh</label>
+          <label className={labelCls}>Siapa yang bayar</label>
           <div className="flex flex-wrap gap-1.5">
             {members.map((m) => (
               <button type="button" key={m.id} onClick={() => set({ paidBy: m.id })} className={`px-3 py-1.5 rounded-full text-[11px] font-bold max-w-full truncate ${c.paidBy === m.id ? chipOn : chipOff}`}>{nameLabel(m)}</button>
@@ -132,7 +127,7 @@ function CatatanCard({ c, index, count, members, currentUserId, update, onRemove
               return (
                 <div key={it.key} className={`rounded-2xl p-3 space-y-2.5 border ${unassigned ? 'border-yellow-400/70 bg-yellow-400/10' : 'border-black/[0.07] dark:border-white/10 bg-white/20 dark:bg-white/5'}`}>
                   <div className="flex gap-2">
-                    <input value={it.name} onChange={(e) => setItem(it.key, { name: e.target.value })} placeholder={`Barang ${idx + 1} (cth: Galon)`} className={`${inputCls} flex-1`} />
+                    <input value={it.name} onChange={(e) => setItem(it.key, { name: e.target.value })} aria-label={`Nama barang ${idx + 1}`} className={`${inputCls} flex-1`} />
                     {c.items.length > 1 && <GlassButton type="button" variant="danger" size="md" className="h-11 shrink-0" onClick={() => update((x) => ({ ...x, items: x.items.filter((i) => i.key !== it.key) }))}>Hapus</GlassButton>}
                   </div>
                   <div className="flex gap-2">
@@ -141,12 +136,12 @@ function CatatanCard({ c, index, count, members, currentUserId, update, onRemove
                       <input inputMode="numeric" value={it.qtyText} onChange={(e) => setItem(it.key, { qtyText: e.target.value.replace(/\D/g, '').slice(0, 3) })} className={`${inputCls} text-center`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <label className="block text-[10px] mb-0.5 text-[color:var(--text-muted)]">Harga satuan (Rp)</label>
-                      <input inputMode="numeric" value={it.priceDisplay} onChange={(e) => { const p = parseRupiahInput(e.target.value); setItem(it.key, { priceRaw: p.raw, priceDisplay: p.display }); }} placeholder="0" className={`${inputCls} font-bold`} />
+                      <label className="block text-[10px] mb-0.5 text-[color:var(--text-muted)]">Harga</label>
+                      <input inputMode="numeric" value={it.priceDisplay} onChange={(e) => { const p = parseRupiahInput(e.target.value); setItem(it.key, { priceRaw: p.raw, priceDisplay: p.display }); }} className={`${inputCls} font-bold`} />
                     </div>
                   </div>
                   <div>
-                    <p className="text-[10px] mb-1 text-[color:var(--text-muted)]">Dipakai oleh:</p>
+                    <p className="text-[10px] mb-1 text-[color:var(--text-muted)]">Siapa yang makan</p>
                     <div className="flex flex-wrap gap-1.5">
                       <button type="button" onClick={() => toggleAll(it.key)} className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${allOn ? chipOn : chipOff}`}>Semua</button>
                       {members.map((m) => {
@@ -167,20 +162,19 @@ function CatatanCard({ c, index, count, members, currentUserId, update, onRemove
           </div>
 
           <div className="flex gap-2">
-            <GlassButton type="button" variant="teal" size="lg" className="flex-1 border-dashed" onClick={() => update((x) => ({ ...x, items: [...x.items, newItem()] }))}><Plus className="w-4 h-4" /> Tambah barang</GlassButton>
-            {c.items.length > 1 && <GlassButton type="button" size="lg" className="shrink-0" onClick={() => update((x) => ({ ...x, items: x.items.map((it) => ({ ...it, memberIds: [...memberIds] })) }))}>Bagi rata semua</GlassButton>}
+            <GlassButton type="button" variant="teal" size="lg" className="flex-1 border-dashed" onClick={() => update((x) => ({ ...x, items: [...x.items, newItem()] }))}><Plus className="w-4 h-4" /> Barang lain</GlassButton>
+            {c.items.length > 1 && <GlassButton type="button" size="lg" className="shrink-0" onClick={() => update((x) => ({ ...x, items: x.items.map((it) => ({ ...it, memberIds: [...memberIds] })) }))}>Semua ikut</GlassButton>}
           </div>
 
           {/* Diskon, service, pajak (terlipat) */}
           {c.adjOpen ? (
             <div className="space-y-3">
-              <p className="text-[10px] leading-snug text-[color:var(--text-muted)]">Isi seperti di struk (boleh % atau Rp). Dihitung berurutan: diskon, service, pajak. Dibagi sesuai jumlah pesanan masing-masing orang.</p>
               <AdjRow label="Diskon" adj={c.discount} onChange={(a) => set({ discount: a })} />
               <AdjRow label="Service charge" adj={c.service} onChange={(a) => set({ service: a })} />
               <AdjRow label="Pajak (PB1/PPN)" adj={c.tax} onChange={(a) => set({ tax: a })} />
             </div>
           ) : (
-            <button type="button" onClick={() => set({ adjOpen: true })} className="text-xs font-bold underline underline-offset-2 text-[color:var(--teal-primary)]">+ Diskon, service, atau pajak</button>
+            <button type="button" onClick={() => set({ adjOpen: true })} className="text-xs font-bold underline underline-offset-2 text-[color:var(--teal-primary)]">+ Diskon / service / pajak</button>
           )}
 
           {/* Hasil */}
@@ -199,22 +193,22 @@ function CatatanCard({ c, index, count, members, currentUserId, update, onRemove
           {result.unassigned.length > 0 && <p className="text-[11px] font-bold text-yellow-700 dark:text-yellow-400">{result.unassigned.length} barang belum dipilih pemakainya (kotak kuning).</p>}
 
           {c.items.length === 1 && (
-            <button type="button" onClick={() => update((x) => ({ ...x, split: 'nominal', nName: x.items[0].name, nTotal: x.items[0].priceRaw * Math.max(1, parseInt(x.items[0].qtyText, 10) || 1), nTotalDisplay: x.items[0].priceRaw ? parseRupiahInput(String(x.items[0].priceRaw * Math.max(1, parseInt(x.items[0].qtyText, 10) || 1))).display : '' }))} className="block text-[11px] font-bold underline underline-offset-2 text-[color:var(--text-muted)]">Bagi nominal per orang (tanpa rincian barang)</button>
+            <button type="button" onClick={() => update((x) => ({ ...x, split: 'nominal', nName: x.items[0].name, nTotal: x.items[0].priceRaw * Math.max(1, parseInt(x.items[0].qtyText, 10) || 1), nTotalDisplay: x.items[0].priceRaw ? parseRupiahInput(String(x.items[0].priceRaw * Math.max(1, parseInt(x.items[0].qtyText, 10) || 1))).display : '' }))} className="block text-[11px] font-bold underline underline-offset-2 text-[color:var(--text-muted)]">Isi total saja</button>
           )}
         </>
       ) : (
         <div className="space-y-3">
-          <div><label className={labelCls}>Nama barang</label><input value={c.nName} onChange={(e) => set({ nName: e.target.value })} placeholder="Cth: Galon, bensin, headset" className={inputCls} /></div>
-          <div><label className={labelCls}>Total tagihan (Rp)</label><input inputMode="numeric" value={c.nTotalDisplay} onChange={(e) => { const p = parseRupiahInput(e.target.value); set({ nTotal: p.raw, nTotalDisplay: p.display }); }} placeholder="0" className={`${inputCls} font-bold`} /></div>
+          <div><label className={labelCls}>Untuk apa</label><input value={c.nName} onChange={(e) => set({ nName: e.target.value })} className={inputCls} /></div>
+          <div><label className={labelCls}>Total</label><input inputMode="numeric" value={c.nTotalDisplay} onChange={(e) => { const p = parseRupiahInput(e.target.value); set({ nTotal: p.raw, nTotalDisplay: p.display }); }} className={`${inputCls} font-bold`} /></div>
           <div className="flex gap-2">
             <button type="button" onClick={() => set({ nMode: 'equal' })} className={`flex-1 py-2 rounded-full text-xs font-bold ${c.nMode === 'equal' ? chipOn : chipOff}`}>Bagi rata</button>
-            <button type="button" onClick={() => set({ nMode: 'custom' })} className={`flex-1 py-2 rounded-full text-xs font-bold ${c.nMode === 'custom' ? chipOn : chipOff}`}>Atur sendiri</button>
+            <button type="button" onClick={() => set({ nMode: 'custom' })} className={`flex-1 py-2 rounded-full text-xs font-bold ${c.nMode === 'custom' ? chipOn : chipOff}`}>Beda-beda</button>
           </div>
           {members.length > 1 && (
             <div>
-              <label className={labelCls}>Untuk siapa</label>
+              <label className={labelCls}>Buat siapa</label>
               <div className="flex flex-wrap gap-1.5">
-                <button type="button" onClick={() => { const all: Record<string, boolean> = {}; members.forEach((m) => { all[m.id] = true; }); set({ nSelected: all, nMode: 'equal' }); }} className={`px-3 py-1.5 rounded-full text-[11px] font-bold ${members.every((m) => c.nSelected[m.id]) ? chipOn : chipOff}`}>Semua (patungan)</button>
+                <button type="button" onClick={() => { const all: Record<string, boolean> = {}; members.forEach((m) => { all[m.id] = true; }); set({ nSelected: all, nMode: 'equal' }); }} className={`px-3 py-1.5 rounded-full text-[11px] font-bold ${members.every((m) => c.nSelected[m.id]) ? chipOn : chipOff}`}>Semua</button>
                 {members.map((m) => {
                   const only = members.every((x) => !!c.nSelected[x.id] === (x.id === m.id));
                   return <button type="button" key={m.id} onClick={() => { const one: Record<string, boolean> = {}; members.forEach((x) => { one[x.id] = x.id === m.id; }); set({ nSelected: one, nMode: 'equal' }); }} className={`px-3 py-1.5 rounded-full text-[11px] font-bold max-w-full truncate ${only ? chipOn : chipOff}`}>{nameLabel(m)}</button>;
@@ -233,21 +227,25 @@ function CatatanCard({ c, index, count, members, currentUserId, update, onRemove
                   {c.nMode === 'equal' ? (
                     <span className="w-28 text-right text-[11px] font-bold shrink-0 text-[color:var(--text-muted)]">{on && c.nTotal > 0 ? formatRupiah(eq) : '-'}</span>
                   ) : (
-                    <input inputMode="numeric" disabled={!on} value={c.nCustom[m.id] ? new Intl.NumberFormat('id-ID').format(c.nCustom[m.id]) : ''} onChange={(e) => set({ nCustom: { ...c.nCustom, [m.id]: parseRupiahInput(e.target.value).raw } })} placeholder="Rp" className="glass w-28 shrink-0 h-10 px-2 rounded-xl text-xs text-right outline-none text-[color:var(--text-main)] disabled:opacity-40" />
+                    <input inputMode="numeric" disabled={!on} value={c.nCustom[m.id] ? new Intl.NumberFormat('id-ID').format(c.nCustom[m.id]) : ''} onChange={(e) => set({ nCustom: { ...c.nCustom, [m.id]: parseRupiahInput(e.target.value).raw } })} aria-label="Nominal" className="glass w-28 shrink-0 h-10 px-2 rounded-xl text-xs text-right outline-none text-[color:var(--text-main)] disabled:opacity-40" />
                   )}
                 </div>
               );
             })}
           </div>
           {c.nMode === 'custom' && <p className="text-[10px] text-right text-[color:var(--text-muted)]">Terisi {formatRupiah(members.filter((m) => c.nSelected[m.id]).reduce((s, m) => s + (c.nCustom[m.id] || 0), 0))} dari {formatRupiah(c.nTotal)}</p>}
-          <button type="button" onClick={() => set({ split: 'items', items: [{ ...newItem([...memberIds]), name: c.nName, priceRaw: c.nTotal, priceDisplay: c.nTotalDisplay }] })} className="block text-[11px] font-bold underline underline-offset-2 text-[color:var(--text-muted)]">Kembali ke rincian barang</button>
+          <button type="button" onClick={() => set({ split: 'items', items: [{ ...newItem([...memberIds]), name: c.nName, priceRaw: c.nTotal, priceDisplay: c.nTotalDisplay }] })} className="block text-[11px] font-bold underline underline-offset-2 text-[color:var(--text-muted)]">Rincikan per barang</button>
         </div>
       )}
 
-      <div>
-        <label className={labelCls}>Catatan (opsional)</label>
-        <input value={c.note} maxLength={300} onChange={(e) => set({ note: e.target.value })} placeholder="Cth: belanja bulanan, dibayar pakai OVO" className={inputCls} />
-      </div>
+      <details className="text-xs">
+        <summary className="cursor-pointer font-bold py-1 text-[color:var(--text-muted)]">Tanggal, toko, catatan</summary>
+        <div className="space-y-3 mt-2">
+          <DateField label="Tanggal" value={c.date} onChange={(v) => set({ date: v })} />
+          <div><label className={labelCls}>Toko</label><input value={c.store} maxLength={80} onChange={(e) => set({ store: e.target.value })} className={inputCls} /></div>
+          <div><label className={labelCls}>Catatan</label><input value={c.note} maxLength={300} onChange={(e) => set({ note: e.target.value })} className={inputCls} /></div>
+        </div>
+      </details>
     </section>
   );
 }
@@ -355,10 +353,10 @@ function BayarinForm({ onClose, groupId, members, currentUserId, onSaved, showDi
   const grandTotal = list.reduce((s, c) => s + totalOf(c, memberIds), 0);
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-[70] flex items-end sm:items-center justify-center">
-      <div className="glass glass-sheet rounded-t-3xl sm:rounded-3xl w-full max-w-md max-h-[94vh] flex flex-col transition-colors">
+    <div className="fixed inset-0 bg-black/50 z-[70] flex items-end justify-center">
+      <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-md max-h-[94vh] flex flex-col transition-colors">
         <div className="flex items-center justify-between px-5 pt-5 pb-3 shrink-0">
-          <h2 className="text-lg font-bold text-[color:var(--text-main)]">{editing ? 'Ubah Catatan' : 'Catat Bayarin'}</h2>
+          <h2 className="text-lg font-bold text-[color:var(--text-main)]">{editing ? 'Ubah' : 'Catat'}</h2>
           <button onClick={onClose} aria-label="Tutup" className="text-[color:var(--text-muted)]"><X className="w-5 h-5" /></button>
         </div>
 
@@ -371,7 +369,7 @@ function BayarinForm({ onClose, groupId, members, currentUserId, onSaved, showDi
 
             {!editing && (
               <div className="space-y-2">
-                <GlassButton type="button" variant="teal" size="lg" full onClick={addManual}><Plus className="w-4 h-4" /> Catatan manual</GlassButton>
+                <GlassButton type="button" variant="teal" size="lg" full onClick={addManual}><Plus className="w-4 h-4" /> Catatan lain</GlassButton>
                 <ReceiptScanner multiple onResult={onScan} showDialog={showDialog} />
               </div>
             )}
@@ -379,7 +377,7 @@ function BayarinForm({ onClose, groupId, members, currentUserId, onSaved, showDi
 
           <div className="shrink-0 px-5 pt-3 pb-5 space-y-2 border-t border-black/[0.07] dark:border-white/10">
             {list.length > 1 && <p className="text-xs text-center text-[color:var(--text-muted)]">{list.length} catatan · total {formatRupiah(grandTotal)}</p>}
-            <GlassButton type="submit" variant="primary" size="lg" full disabled={saving || list.length === 0}><Save className="w-4 h-4" /> {saving ? 'Menyimpan...' : editing ? 'Simpan Perubahan' : list.length > 1 ? `Simpan ${list.length} Catatan` : 'Simpan Catatan'}</GlassButton>
+            <GlassButton type="submit" variant="primary" size="lg" full disabled={saving || list.length === 0}><Save className="w-4 h-4" /> {saving ? 'Menyimpan...' : list.length > 1 ? `Simpan ${list.length}` : 'Simpan'}</GlassButton>
           </div>
         </form>
       </div>

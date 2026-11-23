@@ -27,7 +27,6 @@ function MoneyField({ value, onChange, compact = false, label }: { value: number
       aria-label={label}
       value={value > 0 ? rupiahDisplay(value) : ''}
       onChange={(e) => onChange(parseRupiahInput(e.target.value).raw)}
-      placeholder="0"
       className={`${inputCls} text-right font-bold ${compact ? '!h-9 !px-2 text-xs !w-[104px]' : '!w-36'}`}
     />
   );
@@ -162,7 +161,7 @@ export default function PlanEditor({ data, onChange, userId, showDialog, onSave,
               {data.rows.filter((r) => r.group === g).map((r) => (
                 <div key={r.id} className={`flex items-center gap-2 ${r.on ? '' : 'opacity-50'}`}>
                   <input type="checkbox" checked={r.on} onChange={(e) => patch(r.id, { on: e.target.checked })} aria-label={`Ikut hitung ${r.label || 'baris'}`} className="w-4 h-4 shrink-0 accent-sky-600" />
-                  <input value={r.label} onChange={(e) => patch(r.id, { label: e.target.value })} placeholder="Nama" aria-label="Nama baris" className={`${inputCls} flex-1 !h-10`} />
+                  <input value={r.label} onChange={(e) => patch(r.id, { label: e.target.value })} aria-label="Nama baris" className={`${inputCls} flex-1 !h-10`} />
                   <MoneyField label={`Jumlah ${r.label || 'baris'}`} value={rowAmount(r, data.month)} onChange={(n) => setAmount(r, data.month, n, false)} />
                   <button type="button" onClick={() => removeRow(r.id)} aria-label="Hapus baris" className="shrink-0 text-[color:var(--text-muted)]"><Trash2 className="w-4 h-4" /></button>
                 </div>
@@ -192,7 +191,7 @@ export default function PlanEditor({ data, onChange, userId, showDialog, onSave,
                         <td className="sticky left-0 z-10 glass-sheet px-3 py-1">
                           <div className="flex items-center gap-1.5">
                             <input type="checkbox" checked={r.on} onChange={(e) => patch(r.id, { on: e.target.checked })} aria-label={`Ikut hitung ${r.label || 'baris'}`} className="w-3.5 h-3.5 shrink-0 accent-sky-600" />
-                            <input value={r.label} onChange={(e) => patch(r.id, { label: e.target.value })} placeholder="Nama" aria-label="Nama baris" className="w-[72px] min-w-0 bg-transparent outline-none font-semibold text-[color:var(--text-main)] truncate" />
+                            <input value={r.label} onChange={(e) => patch(r.id, { label: e.target.value })} aria-label="Nama baris" className="w-[72px] min-w-0 bg-transparent outline-none font-semibold text-[color:var(--text-main)] truncate" />
                             <button type="button" onClick={() => removeRow(r.id)} aria-label={`Hapus baris ${r.label || ''}`.trim()} className="shrink-0 text-[color:var(--text-muted)]"><Trash2 className="w-3.5 h-3.5" /></button>
                           </div>
                         </td>
