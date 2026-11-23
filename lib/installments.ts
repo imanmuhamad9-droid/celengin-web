@@ -33,6 +33,8 @@ export interface InstGroup extends GroupRules {
   statement_month?: string | null;
   statement_total?: number | string | null;
   min_payment?: number | string | null;
+  /** Keterangan bebas, mis. harus bayar ke mana atau transfer ke rekening apa */
+  pay_note?: string | null;
 }
 
 /**

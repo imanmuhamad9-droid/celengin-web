@@ -27,7 +27,7 @@ function MoneyField({ value, onChange, compact = false, label }: { value: number
       aria-label={label}
       value={value > 0 ? rupiahDisplay(value) : ''}
       onChange={(e) => onChange(parseRupiahInput(e.target.value).raw)}
-      className={`${inputCls} text-right font-bold ${compact ? '!h-9 !px-2 text-xs !w-[104px]' : '!w-36'}`}
+      className={`${inputCls} text-right font-bold ${compact ? '!h-9 !px-2 text-xs !w-[104px]' : '!w-32'}`}
     />
   );
 }

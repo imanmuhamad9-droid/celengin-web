@@ -78,7 +78,7 @@ export default function ReceiptScannerModal({ isOpen, onClose, onSuccess }: { is
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
+    <div className="fixed inset-0 bg-black/50 z-[70] flex items-end justify-center">
       <div className="bg-white rounded-t-3xl rounded-b-none sheet-up w-full max-w-md p-6 relative">
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800">
           <X className="w-6 h-6" />

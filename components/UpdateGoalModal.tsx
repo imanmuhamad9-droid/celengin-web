@@ -31,7 +31,7 @@ export default function UpdateGoalModal({ isOpen, onClose, onSave, goal }: Props
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-[60] flex items-end justify-center backdrop-blur-sm">
+    <div className="fixed inset-0 bg-black/60 z-[70] flex items-end justify-center backdrop-blur-sm">
       <form onSubmit={submit} className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-6 relative shadow-2xl">
         <button type="button" onClick={onClose} aria-label="Tutup" className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><X className="w-5 h-5" /></button>
 

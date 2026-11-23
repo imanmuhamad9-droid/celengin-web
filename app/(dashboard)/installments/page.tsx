@@ -111,20 +111,18 @@ export default function InstallmentsPage() {
         {!tableOk && <SqlNotice file="sql/07_cicilan.sql" />}
 
         {tableOk && !openId && (
-          <GlassCard>
-            <p className="text-xs font-semibold text-[color:var(--text-muted)]">Tagihan {upName(upMonths[0])} (belum dibayar)</p>
-            <p className="text-3xl font-extrabold tracking-tight mt-1" style={{ color: 'var(--text-main)' }}>{formatRupiah(upTotals[0])}</p>
+          <div className="rounded-3xl p-5 text-white shadow-lg" style={{ background: 'var(--accent-grad)', boxShadow: 'var(--accent-shadow)' }}>
+            <p className="text-xs font-semibold text-white/80">Tagihan {upName(upMonths[0])} (belum dibayar)</p>
+            <p className="text-3xl font-extrabold tracking-tight mt-1">{formatRupiah(upTotals[0])}</p>
             <div className="grid grid-cols-2 gap-2.5 mt-4">
-              <div className="rounded-2xl px-3.5 py-2.5 bg-white/30 dark:bg-white/5 border border-white/40 dark:border-white/10">
-                <p className="text-[11px] font-semibold text-[color:var(--text-muted)]">Tagihan {upName(upMonths[1])}</p>
-                <p className="text-sm font-extrabold mt-0.5" style={{ color: 'var(--text-main)' }}>{formatRupiah(upTotals[1])}</p>
-              </div>
-              <div className="rounded-2xl px-3.5 py-2.5 bg-white/30 dark:bg-white/5 border border-white/40 dark:border-white/10">
-                <p className="text-[11px] font-semibold text-[color:var(--text-muted)]">Tagihan {upName(upMonths[2])}</p>
-                <p className="text-sm font-extrabold mt-0.5" style={{ color: 'var(--text-main)' }}>{formatRupiah(upTotals[2])}</p>
-              </div>
+              {[1, 2].map((i) => (
+                <div key={i} className="rounded-2xl px-3.5 py-2.5 bg-white/15 border border-white/25 min-w-0">
+                  <p className="text-[11px] font-semibold text-white/80 truncate">Tagihan {upName(upMonths[i])}</p>
+                  <p className="text-sm font-extrabold mt-0.5 truncate">{formatRupiah(upTotals[i])}</p>
+                </div>
+              ))}
             </div>
-          </GlassCard>
+          </div>
         )}
 
         {tableOk && !openId && groups.length === 0 && (
@@ -218,6 +216,7 @@ export default function InstallmentsPage() {
                           ['Sudah dibayar', formatRupiah(st.paid)],
                           ['Sisa', formatRupiah(st.remaining)],
                           ['Jatuh tempo', formatDateID(dueDate)],
+                          ...(g.pay_note ? [['Bayar ke', g.pay_note]] : []),
                           ...(st.minDue > 0 ? [['Pembayaran minimum', `${formatRupiah(st.minDue)}${st.remaining === 0 || !proj.belowMin ? ' (terpenuhi)' : ''}`]] : []),
                         ] as [string, string][]).map(([k, v]) => (
                           <div key={k} className="flex items-center justify-between gap-3 px-3.5 py-2 text-xs">
@@ -335,6 +334,7 @@ function GroupForm({ group, userId, onClose, onSaved, showDialog }: {
   const [feePct, setFeePct] = useState(numStr(group?.late_fee_pct));
   const [feeMin, setFeeMin] = useState(Math.round(Number(group?.late_fee_min ?? 0)));
   const [feeMax, setFeeMax] = useState(Math.round(Number(group?.late_fee_max ?? 0)));
+  const [payNote, setPayNote] = useState(group?.pay_note ?? '');
   const [stmtMonth, setStmtMonth] = useState(group?.statement_month ?? '');
   const [stmtTotal, setStmtTotal] = useState(Math.round(Number(group?.statement_total ?? 0)));
   const [minPayment, setMinPayment] = useState(Math.round(Number(group?.min_payment ?? 0)));
@@ -359,13 +359,14 @@ function GroupForm({ group, userId, onClose, onSaved, showDialog }: {
       name: name.trim().slice(0, 60), kind, due_day: day,
       interest_pct: toNum(interest), min_pct: toNum(minPct), min_floor: minFloor, min_with_installments: minWithInst,
       late_fee_pct: toNum(feePct), late_fee_min: feeMin, late_fee_max: feeMax,
+      ...(payNote.trim() || group?.pay_note ? { pay_note: payNote.trim().slice(0, 200) || null } : {}),
       statement_month: stmtTotal > 0 ? stmtMonth : null, statement_total: stmtTotal > 0 ? stmtTotal : null, min_payment: minPayment > 0 ? minPayment : null,
     };
     const { error } = group
       ? await supabase.from('installment_groups').update(payload).eq('id', group.id)
       : await supabase.from('installment_groups').insert({ user_id: userId, ...payload });
     setBusy(false);
-    if (error) return showDialog('Gagal', error.message, 'danger');
+    if (error) return showDialog('Gagal', /pay_note/.test(error.message) ? 'Kolom keterangan belum ada di database. Jalankan sql/09_cicilan_keterangan.sql di Supabase SQL Editor, atau kosongkan keterangannya.' : error.message, 'danger');
     onSaved();
     onClose();
   };
@@ -389,6 +390,11 @@ function GroupForm({ group, userId, onClose, onSaved, showDialog }: {
         <div>
           <label className={labelCls}>Tanggal jatuh tempo (1-31)</label>
           <input inputMode="numeric" value={dueDay} maxLength={2} onChange={(e) => setDueDay(e.target.value.replace(/\D/g, ''))} className={inputCls} />
+        </div>
+
+        <div>
+          <label className={labelCls}>Bayar ke mana (opsional)</label>
+          <input value={payNote} maxLength={200} onChange={(e) => setPayNote(e.target.value)} className={inputCls} />
         </div>
 
         <details className="glass rounded-2xl p-3.5">

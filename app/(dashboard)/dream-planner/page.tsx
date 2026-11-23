@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import type { DreamGoal, GoalTx, Transaction, Profile } from '@/lib/types';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
-import { Target, X, ArrowDownCircle, ArrowUpCircle, Info, TrendingUp } from 'lucide-react';
+import { Target, X, ArrowDownCircle, ArrowUpCircle, Info, Plus } from 'lucide-react';
 import { formatRupiah, formatDateID, toLocalDateStr, errMsg } from '@/lib/utils';
 import { cycleFor, shiftCycle, paydayRuleFrom } from '@/lib/cycle';
 import UpdateGoalModal from '@/components/UpdateGoalModal';
@@ -160,29 +160,9 @@ export default function DreamPlannerPage() {
 
   return (
     <div className="min-h-screen bg-[var(--page-bg)] pb-40 transition-colors">
-      <AppHeader title="Dream" />
+      <AppHeader title="Dream" action={<button onClick={() => setIsModalOpen(true)} className="glass glass-solid-teal glass-pressable h-9 px-3.5 rounded-full text-xs font-bold flex items-center gap-1 whitespace-nowrap"><Plus className="w-4 h-4" /> Dream</button>} />
 
       <main className="max-w-md mx-auto px-5 mt-4 space-y-4">
-
-        {/* REFERENSI: kemampuan menabung dari uangmu sendiri */}
-        {cap && (
-          <div className="glass rounded-3xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="w-4 h-4 text-sky-600 dark:text-sky-400" />
-              <p className="text-[11px] font-extrabold text-sky-800 dark:text-sky-300 uppercase">Kemampuan menabungmu</p>
-            </div>
-            {cap.months === 0 ? (
-              <p className="text-xs text-gray-600 dark:text-gray-300">Belum ada transaksi. Catat pemasukan dan pengeluaranmu dulu supaya saran menabung bisa dihitung dari uangmu sendiri.</p>
-            ) : (
-              <>
-                <p className={`text-2xl font-extrabold ${cap.income - cap.expense >= 0 ? 'text-sky-700 dark:text-sky-300' : 'text-red-500'}`}>{formatRupiah(Math.round(Math.abs(cap.income - cap.expense)))}<span className="text-xs font-bold text-gray-500 dark:text-gray-400"> / periode gajian</span></p>
-                <p className="text-[11px] text-gray-600 dark:text-gray-300 mt-0.5">
-                  {cap.income - cap.expense >= 0 ? 'Rata-rata sisa uangmu tiap periode gajian' : 'Rata-rata pengeluaranmu melebihi pemasukan tiap periode gajian'}, dihitung dari {cap.months} periode gajian transaksimu.
-                </p>
-              </>
-            )}
-          </div>
-        )}
 
         <div className="space-y-4">
           {goals.map(goal => {
@@ -245,7 +225,7 @@ export default function DreamPlannerPage() {
         const monthsAtCapacity = surplus > 0 ? Math.ceil(remaining / surplus) : null;
         const row = 'flex justify-between gap-3 text-xs py-1.5';
         return (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
+          <div className="fixed inset-0 bg-black/50 z-[70] flex items-end justify-center">
             <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-6 relative max-h-[85vh] overflow-y-auto transition-colors">
               <button onClick={() => setEstimate(null)} aria-label="Tutup" className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
               <h2 className="text-lg font-extrabold text-center text-gray-800 dark:text-white">Perkiraan Menabung</h2>
@@ -306,7 +286,7 @@ export default function DreamPlannerPage() {
       })()}
 
       {isDetailOpen && selectedGoal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
+        <div className="fixed inset-0 bg-black/50 z-[70] flex items-end justify-center">
           <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-6 relative max-h-[80vh] flex flex-col transition-colors">
             <button onClick={() => setIsDetailOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-1 text-center">{selectedGoal.title}</h2>
@@ -331,7 +311,7 @@ export default function DreamPlannerPage() {
       )}
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
+        <div className="fixed inset-0 bg-black/50 z-[70] flex items-end justify-center">
           <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-6 relative transition-colors">
             <button onClick={() => setIsModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-center mb-4 text-gray-800 dark:text-white">Dream Baru</h2>

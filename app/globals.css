@@ -236,3 +236,8 @@ html.dark .glass-sheet { background: rgba(17, 24, 39, 0.78); }
 @keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
 .sheet-up { animation: sheet-up 0.28s cubic-bezier(0.22, 1, 0.36, 1); }
 @media (prefers-reduced-motion: reduce) { .sheet-up { animation: none; } }
+
+/* Kotak isian sejajar tidak boleh melebar melewati kolomnya dan saling menimpa */
+input, select, textarea { min-width: 0; max-width: 100%; }
+.grid > *, .flex > input, .flex > select { min-width: 0; }
+input[type="date"], input[type="month"] { min-width: 0; width: 100%; }

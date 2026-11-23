@@ -78,7 +78,7 @@ export default function LoginPage() {
       </div>
 
       {isResetModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
+        <div className="fixed inset-0 bg-black/50 z-[70] flex items-end justify-center">
           <div className="bg-white rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-6 relative">
             <button onClick={() => setIsResetModalOpen(false)} className="absolute top-4 right-4 text-gray-400"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-gray-800 mb-2 text-center">Lupa Password?</h2>

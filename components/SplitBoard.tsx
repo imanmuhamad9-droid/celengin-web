@@ -493,7 +493,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
         title={group ? group.name : (isRunning ? 'Gantian' : 'Split Bill')}
         infoKey={group ? undefined : (isRunning ? 'Gantian' : 'Split Bill')}
         onBack={group ? goBack : undefined}
-        action={group && isOwner ? <Btn variant="danger" size="sm" onClick={handleDeleteGroup}>Hapus</Btn> : undefined}
+        action={group ? (isOwner ? <Btn variant="danger" size="sm" onClick={handleDeleteGroup}>Hapus</Btn> : undefined) : <button onClick={openNewGroup} className="glass glass-solid-teal glass-pressable h-9 px-3.5 rounded-full text-xs font-bold flex items-center gap-1 whitespace-nowrap"><Plus className="w-4 h-4" /> {L.title}</button>}
       />
 
       <main className="px-5 mt-4 space-y-4">

@@ -13,7 +13,7 @@ export function ProfileModal({ profile, displayName, onClose, onSettings, onLogo
   onLogout: () => void;
 }) {
   return (
-    <div onClick={onClose} className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center backdrop-blur-sm">
+    <div onClick={onClose} className="fixed inset-0 bg-black/60 z-[70] flex items-end justify-center backdrop-blur-sm">
       <div onClick={(e) => e.stopPropagation()} className="bg-gray-50 dark:bg-gray-800 rounded-t-3xl rounded-b-none sheet-up w-full max-w-xs relative overflow-hidden shadow-2xl">
         <div className="pt-6 pb-12 flex flex-col items-center relative bg-cover bg-center" style={{ backgroundColor: profile?.theme_color || '#0369a1', ...(profile?.cover_url ? { backgroundImage: `url(${profile.cover_url})` } : {}) }}>
           {profile?.cover_url && <div className="absolute inset-0 bg-black/25" />}
@@ -41,7 +41,7 @@ export function ProfileModal({ profile, displayName, onClose, onSettings, onLogo
 export function CategoryDetailModal({ name, transactions, onClose }: { name: string; transactions: Transaction[]; onClose: () => void }) {
   const sorted = [...transactions].sort((a, b) => new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime());
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
+    <div className="fixed inset-0 bg-black/50 z-[70] flex items-end justify-center">
       <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-6 relative max-h-[80vh] flex flex-col transition-colors">
         <button onClick={onClose} aria-label="Tutup" className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
         <h2 className="text-lg font-bold text-center mb-1 text-gray-800 dark:text-white">Detail Kategori</h2>
@@ -65,7 +65,7 @@ export function CategoryDetailModal({ name, transactions, onClose }: { name: str
 
 export function AllowanceInfoModal({ onClose }: { onClose: () => void }) {
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center backdrop-blur-sm">
+    <div className="fixed inset-0 bg-black/60 z-[70] flex items-end justify-center backdrop-blur-sm">
       <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-6 relative transition-colors">
         <button onClick={onClose} aria-label="Tutup" className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
         <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-2">Apa itu Jatah Hari Ini?</h2>
@@ -90,7 +90,7 @@ export function AllowanceInfoModal({ onClose }: { onClose: () => void }) {
 
 export function StreakInfoModal({ onClose }: { onClose: () => void }) {
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center backdrop-blur-sm">
+    <div className="fixed inset-0 bg-black/60 z-[70] flex items-end justify-center backdrop-blur-sm">
       <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-6 relative transition-colors">
         <button onClick={onClose} aria-label="Tutup" className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
         <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-2">Apa itu Streak Hemat?</h2>

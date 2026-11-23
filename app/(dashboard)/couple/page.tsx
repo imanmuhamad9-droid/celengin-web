@@ -434,7 +434,7 @@ export default function SharedSpacePage() {
 
       {/* MODALS */}
       {isHistoryOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
+        <div className="fixed inset-0 bg-black/50 z-[70] flex items-end justify-center">
           <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-6 relative max-h-[80vh] flex flex-col transition-colors">
             <button onClick={() => setIsHistoryOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-center mb-4 text-gray-800 dark:text-white">Riwayat Tabungan</h2>
@@ -463,7 +463,7 @@ export default function SharedSpacePage() {
       )}
 
       {isUpdateModalOpen && selectedGoal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
+        <div className="fixed inset-0 bg-black/50 z-[70] flex items-end justify-center">
           <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-6 relative transition-colors">
             <button onClick={() => setIsUpdateModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-center mb-1 text-gray-800 dark:text-white">Transaksi</h2>
@@ -482,7 +482,7 @@ export default function SharedSpacePage() {
 
       {/* MODAL FORM (TAMBAH / EDIT) */}
       {isFormModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
+        <div className="fixed inset-0 bg-black/50 z-[70] flex items-end justify-center">
           <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-6 relative transition-colors max-h-[90vh] overflow-y-auto">
             <button onClick={() => setIsFormModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-center mb-4 text-gray-800 dark:text-white">{editingId ? 'Edit Target Bareng' : 'Buat Target Bareng'}</h2>
@@ -526,7 +526,7 @@ export default function SharedSpacePage() {
       )}
 
       {isInviteModalOpen && selectedGoal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
+        <div className="fixed inset-0 bg-black/50 z-[70] flex items-end justify-center">
           <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-6 relative transition-colors">
             <button onClick={() => setIsInviteModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-center mb-2 text-gray-800 dark:text-white">Undang Anggota</h2>
@@ -548,7 +548,7 @@ export default function SharedSpacePage() {
         const monthsAtCapacity = groupCapacity > 0 ? Math.ceil(e.remaining / groupCapacity) : null;
         const row = 'flex justify-between gap-3 text-xs py-1.5';
         return (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
+          <div className="fixed inset-0 bg-black/50 z-[70] flex items-end justify-center">
             <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-6 relative max-h-[85vh] overflow-y-auto transition-colors">
               <button onClick={() => setEstimate(null)} aria-label="Tutup" className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
               <h2 className="text-lg font-extrabold text-center text-gray-800 dark:text-white">Perkiraan Menabung</h2>

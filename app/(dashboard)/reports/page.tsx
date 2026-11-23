@@ -264,7 +264,7 @@ export default function ReportsPage() {
       </main>
 
       {showHealthInfo && health && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center backdrop-blur-sm">
+        <div className="fixed inset-0 bg-black/60 z-[70] flex items-end justify-center backdrop-blur-sm">
           <div className="glass glass-sheet rounded-t-3xl rounded-b-none sheet-up w-full max-w-sm p-6 relative transition-colors">
             <button onClick={() => setShowHealthInfo(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"><X className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-2">Apa itu Skor Kesehatan?</h2>
