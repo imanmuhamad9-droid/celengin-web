@@ -241,3 +241,6 @@ html.dark .glass-sheet { background: rgba(17, 24, 39, 0.78); }
 input, select, textarea { min-width: 0; max-width: 100%; }
 .grid > *, .flex > input, .flex > select { min-width: 0; }
 input[type="date"], input[type="month"] { min-width: 0; width: 100%; }
+
+/* Kartu ringkasan angka utama: gradien warna aksen, tulisan putih */
+.card-bold { background: var(--accent-grad); box-shadow: var(--accent-shadow); color: #fff; }

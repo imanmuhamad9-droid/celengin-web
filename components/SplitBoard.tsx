@@ -21,7 +21,7 @@ import { Btn } from '@/components/ui';
 import SkeletonLoader from '@/components/SkeletonLoader';
 
 import SegmentedControl from '@/components/SegmentedControl';
-interface GroupCard extends SplitGroup { memberCount: number; total: number }
+interface GroupCard extends SplitGroup { memberCount: number; total: number; hasExpenses: boolean; debts: { from: string; to: string; amount: number }[]; names: Record<string, string> }
 interface Invite { memberId: string; group: SplitGroup }
 
 const EMOJIS = ['🍽️', '🏖️', '🏠', '🎬', '🚗', '🛒', '🎉', '☕'];
@@ -153,21 +153,40 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
     const ids = groups.map((x) => x.id);
 
     let mem: SplitMember[] = [];
-    let exp: { group_id: string; total_amount: number | string }[] = [];
+    type ListExp = { id: string; group_id: string; total_amount: number | string; paid_by: string; created_by: string | null; expense_date: string; split_type: string; created_at: string; split_shares: { member_id: string; share_amount: number | string }[] | null };
+    let exp: ListExp[] = [];
+    let sets: { id: string; group_id: string; from_member: string; to_member: string; amount: number | string; created_at: string }[] = [];
     if (ids.length > 0) {
       mem = ((await supabase.from('split_members').select('*').in('group_id', ids)).data || []) as SplitMember[];
-      exp = (await supabase.from('split_expenses').select('group_id,total_amount').in('group_id', ids)).data || [];
+      exp = ((await supabase.from('split_expenses').select('id,group_id,total_amount,paid_by,created_by,expense_date,split_type,created_at,split_shares(member_id,share_amount)').in('group_id', ids)).data || []) as unknown as ListExp[];
+      sets = (await supabase.from('split_settlements').select('id,group_id,from_member,to_member,amount,created_at').in('group_id', ids)).data || [];
     }
     // Versi SQL lama belum punya kolom user_id: minta jalankan ulang 03_splitbill.sql
     if (needs05 || (mem.length > 0 && !('user_id' in mem[0]))) setMissingTable(true); else setMissingTable(false);
 
     const pendingIds = new Set(mem.filter((m) => m.user_id === uid && m.status === 'pending').map((m) => m.group_id));
     setInvites(groups.filter((x) => pendingIds.has(x.id)).map((x) => ({ memberId: mem.find((m) => m.group_id === x.id && m.user_id === uid)!.id, group: x })));
-    setCards(groups.filter((x) => !pendingIds.has(x.id)).map((x) => ({
-      ...x,
-      memberCount: mem.filter((m) => m.group_id === x.id).length,
-      total: exp.filter((e) => e.group_id === x.id).reduce((s, e) => s + Number(e.total_amount), 0),
-    })));
+    setCards(groups.filter((x) => !pendingIds.has(x.id)).map((x) => {
+      const gm = mem.filter((m) => m.group_id === x.id);
+      const ge = exp.filter((e) => e.group_id === x.id);
+      const gnet = computeNet(
+        gm.map((m) => m.id),
+        ge.map((e) => ({
+          id: e.id, title: '', total_amount: e.total_amount, paid_by: e.paid_by, created_by: e.created_by || '',
+          expense_date: e.expense_date, split_type: e.split_type === 'equal' ? 'equal' : 'custom', created_at: e.created_at,
+          shared_expense_shares: (e.split_shares || []).map((sh) => ({ user_id: sh.member_id, share_amount: sh.share_amount })),
+        })),
+        sets.filter((st) => st.group_id === x.id).map((st) => ({ id: st.id, from_user: st.from_member, to_user: st.to_member, amount: st.amount, created_at: st.created_at })),
+      );
+      return {
+        ...x,
+        memberCount: gm.length,
+        total: ge.reduce((sum, e) => sum + Number(e.total_amount), 0),
+        hasExpenses: ge.length > 0,
+        debts: simplifyDebts(gnet),
+        names: Object.fromEntries(gm.map((m) => [m.id, m.name])),
+      };
+    }));
     setLoading(false);
 
     // Notifikasi pengingat membuka buku tertentu lewat /gantian?book=<id>
@@ -542,8 +561,22 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                 <span className="w-16 h-16 shrink-0 rounded-2xl flex items-center justify-center text-3xl" style={{ background: 'var(--accent-tint)' }}>{c.emoji || (isRunning ? '🤝' : '🍽️')}</span>
                 <span className="min-w-0 flex-1">
                   <span className="block font-extrabold text-base truncate" style={{ color: 'var(--text-main)' }}>{c.name}</span>
-                  <span className="block text-[11px] text-[color:var(--text-muted)]">{c.memberCount} orang</span>
-                  <span className="block text-sm font-extrabold mt-1" style={{ color: 'var(--accent-text)' }}>{formatRupiah(c.total)}</span>
+                  <span className="block text-[11px] text-[color:var(--text-muted)]">{c.memberCount} orang{!isRunning && c.hasExpenses ? ` · total ${formatRupiah(c.total)}` : ''}</span>
+                  {!c.hasExpenses ? (
+                    <span className="block text-[11px] mt-1 text-[color:var(--text-muted)]">Belum ada catatan</span>
+                  ) : c.debts.length === 0 ? (
+                    <span className="block text-xs font-bold mt-1" style={{ color: 'var(--accent-text)' }}>Impas 🎉</span>
+                  ) : (
+                    <span className="block mt-1.5 space-y-0.5">
+                      {c.debts.slice(0, 3).map((d, i) => (
+                        <span key={i} className="flex items-baseline justify-between gap-2 text-[11px]">
+                          <span className="truncate text-[color:var(--text-muted)]">{i + 1}. {c.names[d.from] || '?'} → {c.names[d.to] || '?'}</span>
+                          <span className="font-extrabold shrink-0" style={{ color: 'var(--accent-text)' }}>{formatRupiah(d.amount)}</span>
+                        </span>
+                      ))}
+                      {c.debts.length > 3 && <span className="block text-[11px] text-[color:var(--text-muted)]">...</span>}
+                    </span>
+                  )}
                 </span>
                 <ArrowRight className="w-4 h-4 text-gray-300 shrink-0" />
               </button>
@@ -555,7 +588,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
         {group && (
           <>
             {isRunning ? (
-              <div className="bg-sky-700 text-white rounded-3xl p-5 shadow-lg">
+              <div className="card-bold rounded-3xl p-5">
                 {expenses.length === 0 ? (
                   <><p className="text-[11px] text-sky-100">Saldo</p><p className="text-lg font-bold">Belum ada catatan</p></>
                 ) : debts.length === 0 ? (
@@ -584,7 +617,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
                 </div>
               </div>
             ) : (
-              <div className="bg-sky-700 text-white rounded-3xl p-5 shadow-lg">
+              <div className="card-bold rounded-3xl p-5">
                 <p className="text-[11px] text-sky-100">Total pengeluaran grup</p>
                 <p className="text-2xl font-bold">{formatRupiah(totalSpent)}</p>
                 <p className="text-[11px] text-sky-100 mt-1">{members.length} orang · {expenses.length} pengeluaran</p>

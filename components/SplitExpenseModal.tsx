@@ -337,7 +337,7 @@ export default function SplitExpenseModal({ isOpen, onClose, groupId, members, c
               {/* 4. Hasil */}
               <section>
                 <StepTitle title="Hasil" />
-                <div className="rounded-2xl bg-sky-700 text-white p-4 text-xs space-y-1">
+                <div className="card-bold rounded-2xl p-4 text-xs space-y-1">
                   <div className="flex justify-between"><span className="text-sky-100">Subtotal</span><span>{formatRupiah(result.subtotal)}</span></div>
                   {result.discount > 0 && <div className="flex justify-between"><span className="text-sky-100">Diskon</span><span>-{formatRupiah(result.discount)}</span></div>}
                   {result.service > 0 && <div className="flex justify-between"><span className="text-sky-100">Service</span><span>+{formatRupiah(result.service)}</span></div>}
