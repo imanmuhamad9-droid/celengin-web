@@ -33,7 +33,6 @@ export default function AppHeader({ title, onBack, topRight, action, z = 'z-50',
   const key = infoKey || title;
   const info = key ? MENU_INFO[key] : undefined;
   const [infoOpen, setInfoOpen] = useState(false);
-  const [hidden, setHidden] = useState(false);
   const { refresh, refreshing, stale } = useRefresh();
   const [avatar, setAvatar] = useState<string | null>(avatarCache ?? null);
 
@@ -49,21 +48,6 @@ export default function AppHeader({ title, onBack, topRight, action, z = 'z-50',
       if (!cancelled) setAvatar(url);
     })();
     return () => { cancelled = true; };
-  }, []);
-
-  // Sembunyi saat scroll ke bawah, muncul lagi begitu scroll ke atas (tanpa harus sampai paling atas)
-  useEffect(() => {
-    let lastY = window.scrollY;
-    const onScroll = () => {
-      const y = Math.max(0, window.scrollY);
-      const delta = y - lastY;
-      if (y < 80) setHidden(false);
-      else if (delta > 6) setHidden(true);
-      else if (delta < -6) setHidden(false);
-      if (Math.abs(delta) > 6) lastY = y;
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   useEffect(() => {
@@ -83,10 +67,8 @@ export default function AppHeader({ title, onBack, topRight, action, z = 'z-50',
 
   return (
     <>
-      {/* Bar menempel di atas saat scroll; latar blur supaya konten yang lewat di bawahnya tetap rapi */}
       <header
-        className={`sticky top-0 ${z} px-4 pt-[calc(env(safe-area-inset-top,0px)+10px)] pb-2 transition-transform duration-300 ease-out ${hidden ? '-translate-y-full' : 'translate-y-0'}`}
-        style={{ background: 'var(--bar-bg)', WebkitBackdropFilter: 'blur(14px)', backdropFilter: 'blur(14px)' }}
+        className={`relative ${z} px-4 pt-[calc(env(safe-area-inset-top,0px)+10px)] pb-2`}
       >
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">

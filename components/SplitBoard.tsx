@@ -507,6 +507,14 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
         {/* ===== DAFTAR GRUP ===== */}
         {!group && !loading && (
           <>
+            <section className="relative overflow-hidden rounded-3xl p-5 min-h-[140px] flex items-center" style={{ background: 'linear-gradient(135deg, #bae6fd 0%, #e0f2fe 55%, #ddd6fe 100%)' }}>
+              <div className="relative z-10 max-w-[62%]">
+                <h2 className="text-2xl font-extrabold leading-tight text-slate-900">{isRunning ? <>Bayar gantian,<br /><span className="text-[color:var(--accent-text)]">tercatat rapi</span></> : <>Makan bareng,<br /><span className="text-[color:var(--accent-text)]">tanpa ribet</span></>}</h2>
+                <p className="text-[11px] mt-2 text-slate-600">{isRunning ? 'Saldo saling mengurangi otomatis.' : 'Bagian tiap orang dihitung sekali jalan.'}</p>
+              </div>
+              <img src={isRunning ? '/menu-icons/gantian.png' : '/menu-icons/split.png'} alt="" className="absolute right-3 bottom-2 h-[110px] w-auto object-contain select-none pointer-events-none" draggable={false} />
+            </section>
+
             {invites.length > 0 && (
               <div className="space-y-2">
                 <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Undangan Masuk</p>
@@ -525,16 +533,18 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
             )}
 
             {cards.length === 0 && invites.length === 0 ? (
-              <div className="glass rounded-3xl p-10 text-center border border-gray-100 dark:border-gray-700 shadow-sm">
+              <div className="glass rounded-3xl p-10 text-center shadow-sm">
                 <Receipt className="w-12 h-12 text-gray-200 dark:text-gray-600 mx-auto mb-3" />
                 <p className="text-gray-400 dark:text-gray-500 text-sm">{L.empty}</p>
               </div>
             ) : cards.map((c) => (
-              <button key={c.id} onClick={() => { setTab('ringkasan'); loadGroup(c); }} className="glass w-full text-left p-4 rounded-3xl border flex items-center gap-3 transition-colors active:scale-[0.99]">
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-gray-800 dark:text-gray-100 truncate">{c.name}</p>
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400">{c.memberCount} orang · total {formatRupiah(c.total)}</p>
-                </div>
+              <button key={c.id} onClick={() => { setTab('ringkasan'); loadGroup(c); }} className="glass w-full text-left p-4 rounded-3xl flex items-center gap-3 shadow-sm transition-colors active:scale-[0.99]">
+                <span className="w-16 h-16 shrink-0 rounded-2xl flex items-center justify-center text-3xl" style={{ background: 'var(--accent-tint)' }}>{c.emoji || (isRunning ? '🤝' : '🍽️')}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-extrabold text-base truncate" style={{ color: 'var(--text-main)' }}>{c.name}</span>
+                  <span className="block text-[11px] text-[color:var(--text-muted)]">{c.memberCount} orang</span>
+                  <span className="block text-sm font-extrabold mt-1" style={{ color: 'var(--accent-text)' }}>{formatRupiah(c.total)}</span>
+                </span>
                 <ArrowRight className="w-4 h-4 text-gray-300 shrink-0" />
               </button>
             ))}
