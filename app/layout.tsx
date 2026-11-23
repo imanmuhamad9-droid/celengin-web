@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0369a1",
+  themeColor: "#DCEEFB",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1, // cegah Safari iPhone zoom otomatis saat mengetuk kolom input
@@ -44,6 +44,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 } else {
                   document.documentElement.classList.remove('dark');
                 }
+                var tc = document.documentElement.classList.contains('dark') ? '#08141D' : '#DCEEFB';
+                document.addEventListener('DOMContentLoaded', function () { var m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute('content', tc); });
                 let size = localStorage.getItem('ui-size');
                 if (size === 'kecil' || size === 'besar') document.documentElement.setAttribute('data-size', size);
                 let accent = localStorage.getItem('ui-accent');

@@ -20,9 +20,12 @@
   }
 }
 
+/* Warna dasar halaman mengikuti tema aplikasi (bukan mode gelap HP). Safari iPhone memakai warna ini
+   untuk area status bar; kalau gelap sendiri, muncul pita gelap dan gradasi buram di atas halaman. */
+html { background: var(--bg-main); }
 body {
   overscroll-behavior-y: contain; /* tarik-untuk-segarkan dikendalikan aplikasi, bukan browser */
-  background: var(--background);
+  background: var(--bg-main);
   color: var(--foreground);
   font-family: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
 }
