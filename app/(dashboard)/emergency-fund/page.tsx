@@ -70,7 +70,7 @@ export default function EmergencyFundPage() {
 
   useCatatAction('Dana', 'Setor dana darurat', () => setEntryType('in'));
 
-  if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
+  if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader variant="list" /></div>;
 
   const saved = entries.reduce((s, e) => s + (e.type === 'in' ? 1 : -1) * (Number(e.amount) || 0), 0);
   const st = emergencyStatus(avg, months, saved);

@@ -156,7 +156,7 @@ export default function BillsPage() {
 
   useCatatAction('Tagihan', 'Tambah tagihan', openAdd);
 
-  if (loading || !today) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
+  if (loading || !today) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader variant="list" /></div>;
 
   const enriched = bills.map((b) => ({ ...b, daysLeft: diffDays(today, b.due_date) }));
   const active = enriched.filter((b) => b.is_active);

@@ -322,7 +322,7 @@ const [todayStr, setTodayStr] = useState('');
   
 
   if (isLoading || !currentMonthStr) return (
-    <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>
+    <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader variant="home" /></div>
   );
 
   const displayName = profile?.nickname || profile?.full_name || user?.email?.split('@')[0];

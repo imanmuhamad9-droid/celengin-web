@@ -311,7 +311,7 @@ export default function SharedSpacePage() {
 
   useCatatAction('Target', 'Buat target bareng', handleOpenAdd);
 
-  if (isLoading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
+  if (isLoading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader variant="cards" /></div>;
 
 
   return (

@@ -63,7 +63,7 @@ export default function BudgetsPage() {
 
   useCatatAction('Anggaran', 'Buat anggaran', () => setForm({ budget: null, category: '' }));
 
-  if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
+  if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader variant="list" /></div>;
 
   const shownDate = viewDate || today;
   const cycle: Cycle = cycleFor(shownDate, payday);

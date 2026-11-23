@@ -57,7 +57,7 @@ export default function ReportsPage() {
     load();
   }, [router]);
 
-  if (loading || !anchor || !today) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
+  if (loading || !anchor || !today) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader variant="list" /></div>;
 
   const range = getRange(period, anchor, payday);
   const prevRange = getRange(period, shiftAnchor(period, anchor, -1, payday), payday);

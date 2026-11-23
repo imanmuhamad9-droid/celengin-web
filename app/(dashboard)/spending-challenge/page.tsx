@@ -53,7 +53,7 @@ export default function TargetPage() {
 
   useCatatAction('Tantangan', 'Buat tantangan', () => { setSelectedTarget(null); setIsModalOpen(true); });
 
-  if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
+  if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader variant="list" /></div>;
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 

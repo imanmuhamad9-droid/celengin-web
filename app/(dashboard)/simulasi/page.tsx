@@ -100,7 +100,7 @@ export default function SimulasiPage() {
       else void load();
     });
 
-  if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
+  if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader variant="settings" /></div>;
 
   return (
     <div className="min-h-screen bg-[var(--page-bg)] pb-40 transition-colors">

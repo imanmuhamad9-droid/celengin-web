@@ -86,7 +86,7 @@ export default function InstallmentsPage() {
   }, []);
   const openGroup = (id: string) => { setOpenId(id); setTab('bayar'); window.history.pushState({ cicilan: id }, ''); window.scrollTo(0, 0); };
 
-  if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
+  if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader variant="summary" /></div>;
 
   const cur = today.slice(0, 7);
   const itemsOf = (gid: string) => items.filter((i) => i.group_id === gid);

@@ -106,7 +106,7 @@ export default function NetWorthPage() {
 
   useCatatAction('Aset', 'Tambah aset atau utang', () => setForm({ item: null }));
 
-  if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
+  if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader variant="list" /></div>;
 
   const points = [
     ...snapshots.filter((s) => s.month !== curMonth).slice(-5).map((s) => ({ label: monthShort(s.month), value: Number(s.net) || 0 })),

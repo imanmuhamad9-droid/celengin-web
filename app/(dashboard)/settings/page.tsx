@@ -404,7 +404,7 @@ export default function SettingsPage() {
 
   const isPasswordValid = newPassword.length >= 8 && /[A-Z]/.test(newPassword) && /[0-9]/.test(newPassword) && /[^A-Za-z0-9]/.test(newPassword);
 
-  if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
+  if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader variant="settings" /></div>;
 
   const themeLabel = theme === 'light' ? 'Terang' : theme === 'dark' ? 'Gelap' : 'Ikuti sistem';
 

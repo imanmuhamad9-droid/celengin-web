@@ -53,7 +53,7 @@ export default function WalletsPage() {
   const openNew = () => { setEditing(null); setFormOpen(true); };
   useCatatAction('Dompet', 'Tambah dompet', openNew);
 
-  if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
+  if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader variant="list" /></div>;
 
   const { balances, unassigned } = computeWalletBalances(wallets, txs, transfers);
   const total = wallets.reduce((s, w) => s + (balances[w.id] || 0), 0) + unassigned;

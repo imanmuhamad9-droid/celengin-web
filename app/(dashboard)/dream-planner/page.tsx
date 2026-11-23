@@ -141,7 +141,7 @@ export default function DreamPlannerPage() {
 
   useCatatAction('Dream', 'Buat dream', () => setIsModalOpen(true));
 
-  if (isLoading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
+  if (isLoading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader variant="cards" /></div>;
 
 
   return (

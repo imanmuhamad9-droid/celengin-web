@@ -107,7 +107,7 @@ function TransactionsContent() {
   const totalPages = Math.ceil(filteredTx.length / itemsPerPage);
   const paginatedTx = filteredTx.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  if (isLoading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
+  if (isLoading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader variant="list" /></div>;
 
   return (
     <div className="min-h-screen bg-[var(--page-bg)] pb-40 transition-colors">
@@ -198,7 +198,7 @@ function TransactionsContent() {
 
 export default function TransactionsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader variant="list" /></div>}>
       <TransactionsContent />
     </Suspense>
   );

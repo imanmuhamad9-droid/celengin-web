@@ -222,7 +222,7 @@ export default function SplitBoard({ kind }: { kind: 'event' | 'running' }) {
     () => { if (group) { setEditExp(null); setIsExpOpen(true); } else openNewGroup(); },
   );
 
-  if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
+  if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader variant="cards" /></div>;
 
   const isOwner = !!group && group.user_id === userId;
   const memberById = (id: string) => members.find((m) => m.id === id);

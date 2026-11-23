@@ -50,7 +50,7 @@ export default function BadgesPage() {
     load();
   }, [router]);
 
-  if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader /></div>;
+  if (loading) return <div className="min-h-screen bg-[var(--page-bg)]"><SkeletonLoader variant="list" /></div>;
 
   const earnedMap: Record<string, string> = {};
   earned.forEach((e) => { earnedMap[e.badge_key] = e.earned_at; });
