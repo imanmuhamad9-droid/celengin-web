@@ -15,30 +15,15 @@ import { Btn, RowActions } from '@/components/ui';
 import SkeletonLoader from '@/components/SkeletonLoader';
 import DateField from '@/components/DateField';
 
-// Cincin progres bundar: terisi pelan-pelan saat tampil dan setiap kali jumlahnya bertambah, persen di tengah.
-function ProgressRing({ percent, color, size = 96 }: { percent: number; color: string; size?: number }) {
-  const [shown, setShown] = useState(0);
-  useEffect(() => {
-    const t = setTimeout(() => setShown(percent), 60);
-    return () => clearTimeout(t);
-  }, [percent]);
-  const stroke = 10;
-  const r = (size - stroke) / 2;
-  const c = 2 * Math.PI * r;
-  return (
-    <div className="relative shrink-0" style={{ width: size, height: size }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="currentColor" strokeWidth={stroke} className="text-gray-100 dark:text-gray-700" />
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round"
-          strokeDasharray={c} strokeDashoffset={c * (1 - Math.min(shown, 100) / 100)} style={{ transition: 'stroke-dashoffset 900ms cubic-bezier(0.34, 1.2, 0.64, 1)' }} />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
-        <span className="text-xl font-extrabold text-gray-900 dark:text-white">{Math.round(percent)}%</span>
-        <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500 mt-1">tercapai</span>
-      </div>
-    </div>
-  );
-}
+
+// Ikon impian ditebak dari namanya (tanpa perlu mengisi apa-apa)
+const GOAL_EMOJI: [RegExp, string][] = [
+  [/mobil|car|motor/i, '🚗'], [/rumah|house|kpr|tanah/i, '🏠'], [/liburan|travel|trip|jalan|bali|umroh|haji/i, '✈️'],
+  [/darurat|emergency|dana/i, '🐷'], [/nikah|wedding|kawin/i, '💍'], [/hp|iphone|laptop|gadget|kamera/i, '📱'],
+  [/kuliah|sekolah|studi|kursus/i, '🎓'], [/usaha|bisnis/i, '🏪'], [/anak|baby|bayi/i, '👶'],
+];
+const goalEmoji = (title: string) => GOAL_EMOJI.find(([re]) => re.test(title))?.[1] ?? '🎯';
+const pctColor = (p: number, done: boolean) => (done ? '#22c55e' : p < 34 ? '#ec4899' : p < 67 ? '#0ea5e9' : '#6366f1');
 
 export default function DreamPlannerPage() {
   // Referensi menabung: murni dari uangmu sendiri (rata-rata pemasukan dan pengeluaran bulanan dari transaksimu)
@@ -55,6 +40,7 @@ export default function DreamPlannerPage() {
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<DreamGoal | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [openGoalId, setOpenGoalId] = useState<string | null>(null);
   const [goalHistory, setGoalHistory] = useState<GoalTx[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -164,44 +150,55 @@ export default function DreamPlannerPage() {
 
       <main className="max-w-md mx-auto px-5 mt-4 space-y-4">
 
-        <div className="space-y-4">
+        <section className="relative overflow-hidden rounded-3xl p-5 min-h-[150px] flex items-center" style={{ background: 'linear-gradient(135deg, #bae6fd 0%, #e0f2fe 55%, #ddd6fe 100%)' }}>
+          <div className="relative z-10 max-w-[62%]">
+            <h2 className="text-2xl font-extrabold leading-tight text-slate-900">Langkah kecil,<br /><span className="text-[color:var(--accent-text)]">Dream besar</span></h2>
+            <p className="text-[11px] mt-2 text-slate-600">Tabung sedikit-sedikit, wujudkan satu per satu.</p>
+          </div>
+          <img src="/icon-dream.png" alt="" className="absolute right-2 bottom-0 h-[140px] w-auto object-contain select-none pointer-events-none" draggable={false} />
+        </section>
+
+        <div className="space-y-3">
           {goals.map(goal => {
             const percentage = Math.min((Number(goal.current_amount) / Number(goal.target_amount)) * 100, 100);
             const daysLeft = calculateDaysLeft(goal.target_date);
             const remainingAmount = Math.max(0, Number(goal.target_amount) - Number(goal.current_amount));
             const done = remainingAmount <= 0;
+            const color = pctColor(percentage, done);
+            const open = openGoalId === goal.id;
 
             return (
-              <div key={goal.id} className="glass p-5 rounded-3xl border border-sky-100 dark:border-sky-900/30 shadow-sm transition-colors">
-                <div className="flex justify-between items-start gap-3 mb-4">
-                  <div className="min-w-0">
-                    {daysLeft !== null && (
-                      <span className="inline-block text-[10px] font-bold px-2.5 py-1 rounded-lg bg-sky-500/10 text-sky-700 dark:text-sky-300">H-{daysLeft < 0 ? 0 : daysLeft}</span>
-                    )}
-                    <h3 className="font-extrabold text-gray-900 dark:text-white text-lg mt-1.5 truncate">{goal.title}</h3>
+              <div key={goal.id} className="glass rounded-3xl p-4 shadow-sm transition-colors">
+                <button type="button" onClick={() => setOpenGoalId(open ? null : goal.id)} aria-expanded={open} className="w-full flex items-start gap-3 text-left">
+                  <span className="w-16 h-16 shrink-0 rounded-2xl flex items-center justify-center text-3xl" style={{ background: 'var(--accent-tint)' }}>{goalEmoji(goal.title)}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-start justify-between gap-2">
+                      <span className="min-w-0">
+                        <span className="block font-extrabold text-base truncate" style={{ color: 'var(--text-main)' }}>{goal.title}</span>
+                        <span className="block text-[11px] text-[color:var(--text-muted)]">Target {formatRupiah(goal.target_amount)}{daysLeft !== null ? ` · H-${daysLeft < 0 ? 0 : daysLeft}` : ''}</span>
+                      </span>
+                      <span className="text-lg font-extrabold shrink-0" style={{ color }}>{Math.round(percentage)}%</span>
+                    </span>
+                    <span className="block h-2 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden mt-2.5"><span className="block h-full rounded-full transition-all" style={{ width: `${percentage}%`, background: color }} /></span>
+                    <span className="flex justify-between gap-2 mt-1.5 text-[11px]">
+                      <span className="font-bold truncate" style={{ color: 'var(--text-main)' }}>{formatRupiah(goal.current_amount)} <span className="font-normal text-[color:var(--text-muted)]">terkumpul</span></span>
+                      <span className="shrink-0 text-[color:var(--text-muted)]">{done ? 'Tercapai 🎉' : `${formatRupiah(remainingAmount)} lagi`}</span>
+                    </span>
+                  </span>
+                </button>
+
+                {open && (
+                  <div className="mt-3 pt-3 border-t border-black/[0.07] dark:border-white/10 space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <Btn variant="soft" onClick={() => { setSelectedGoal(goal); setIsUpdateModalOpen(true); }}>Catat Tabungan</Btn>
+                      <Btn variant="soft" onClick={() => handleCardClick(goal)}>Riwayat</Btn>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <button onClick={() => openEstimate(goal)} className="text-xs font-bold flex items-center gap-1 text-[color:var(--teal-primary)]"><Info className="w-4 h-4" /> Perkiraan menabung</button>
+                      <RowActions onDelete={() => handleDeleteGoal(goal.id)} />
+                    </div>
                   </div>
-                  <button onClick={() => openEstimate(goal)} aria-label="Perkiraan menabung" className="glass glass-teal shrink-0 w-9 h-9 rounded-full flex items-center justify-center border transition-all active:scale-95"><Info className="w-4 h-4" /></button>
-                </div>
-
-                <div className="flex items-center gap-4 mb-4">
-                  <ProgressRing percent={percentage} color={done ? '#22c55e' : '#0ea5e9'} />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase">Terkumpul</p>
-                    <p className="font-extrabold text-xl text-sky-600 dark:text-sky-400">{formatRupiah(goal.current_amount)}</p>
-                    <p className="text-[11px] text-gray-500 dark:text-gray-400">dari {formatRupiah(goal.target_amount)}</p>
-                    <p className="text-xs font-extrabold text-gray-800 dark:text-gray-100 mt-1.5">{done ? 'Target tercapai 🎉' : `Kurang ${formatRupiah(remainingAmount)} lagi`}</p>
-                    {goal.target_date && <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">Target: {formatDateID(goal.target_date)}</p>}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <Btn variant="soft" onClick={() => { setSelectedGoal(goal); setIsUpdateModalOpen(true); }}>Catat Tabungan</Btn>
-                  <Btn variant="soft" onClick={() => handleCardClick(goal)}>Riwayat</Btn>
-                </div>
-
-                <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-end">
-                  <RowActions onDelete={() => handleDeleteGoal(goal.id)} />
-                </div>
+                )}
               </div>
             );
           })}

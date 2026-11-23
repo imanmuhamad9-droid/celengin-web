@@ -16,6 +16,7 @@ import SubTabs, { RIWAYAT_TABS } from '@/components/SubTabs';
 import TxList from '@/components/TxList';
 import GlassCard from '@/components/GlassCard';
 import GlassButton from '@/components/GlassButton';
+import Overview from '@/components/riwayat/Overview';
 
 function TransactionsContent() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -30,6 +31,7 @@ function TransactionsContent() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
+  const [view, setView] = useState<'ringkasan' | 'daftar'>('ringkasan');
   const [currentPage, setCurrentPage] = useState(1);
   const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([]);
   useEffect(() => { setSavedFilters(loadSavedFilters()); }, []);
@@ -79,6 +81,7 @@ function TransactionsContent() {
     if (urlDate) {
       setStartDate(urlDate);
       setEndDate(urlDate);
+      setView('daftar');
     }
   }, [urlDate]);
 
@@ -115,6 +118,16 @@ function TransactionsContent() {
 
         {errorMsg && <div className="glass glass-danger text-xs p-3 rounded-2xl">{errorMsg}</div>}
 
+        <div className="flex gap-2">
+          {([['ringkasan', 'Ringkasan'], ['daftar', 'Semua Transaksi']] as const).map(([k, label]) => (
+            <button key={k} onClick={() => setView(k)} className={`px-4 h-9 rounded-full text-xs font-bold ${view === k ? 'glass glass-solid-teal' : 'glass text-[color:var(--text-muted)]'}`}>{label}</button>
+          ))}
+        </div>
+
+        {view === 'ringkasan' ? (
+          <Overview transactions={transactions} onSeeAll={() => setView('daftar')} />
+        ) : (
+          <>
         <div className="relative">
           <Search className="w-5 h-5 absolute left-3.5 top-3.5 z-10 text-[color:var(--text-muted)]" />
           <input type="text" placeholder="Cari catatan, kategori, atau nominal..." value={search} onChange={(e) => setSearch(e.target.value)} className="glass w-full pl-10 pr-4 py-3 rounded-full text-sm outline-none focus:ring-2 focus:ring-[color:var(--teal-primary)]" style={{ color: 'var(--text-main)' }} />
@@ -171,6 +184,8 @@ function TransactionsContent() {
             <span className="text-xs font-semibold text-[color:var(--text-muted)]">Halaman {currentPage} dari {totalPages}</span>
             <GlassButton size="icon" disabled={currentPage === totalPages} onClick={() => setCurrentPage(c => c + 1)} aria-label="Halaman berikutnya"><ChevronRight className="w-4 h-4" /></GlassButton>
           </div>
+        )}
+          </>
         )}
       </main>
 

@@ -33,7 +33,7 @@ export const EXTRA_MENUS: ExtraMenuDef[] = [
 const LS_KEY = 'celengin:extra-menus';
 const CHANGED_EVENT = 'celengin:extra-menus-changed';
 /** Bawaan sebelum pengguna pernah mengatur Menu Tambahan. Mematikan semuanya tersimpan sebagai [] dan menang atas bawaan ini. */
-const DEFAULT_MENUS: ExtraMenuKey[] = ['laporan'];
+const DEFAULT_MENUS: ExtraMenuKey[] = ['riwayat', 'laporan', 'tagihan'];
 const EMPTY: ExtraMenuKey[] = [];
 const VALID = new Set<string>(EXTRA_MENUS.map((m) => m.key));
 

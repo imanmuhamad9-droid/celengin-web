@@ -12,7 +12,6 @@ import TransactionModal from '@/components/TransactionModal';
 import TransactionDetailModal from '@/components/TransactionDetailModal';
 import CustomDialog from '@/components/CustomDialog';
 import BottomNav from '@/components/BottomNav';
-import AppHeader from '@/components/AppHeader';
 import QuickMenu from '@/components/QuickMenu';
 import NotificationBell, { LocalNotif } from '@/components/NotificationBell';
 import AttentionStrip, { AttentionItem } from '@/components/AttentionStrip';
@@ -21,7 +20,7 @@ import { cycleFor, paydayRuleFrom } from '@/lib/cycle';
 import WeeklyChart from '@/components/WeeklyChart';
 import { getRange } from '@/lib/insights';
 import SkeletonLoader from '@/components/SkeletonLoader';
-import HomeGreeting from '@/components/home/HomeGreeting';
+import HomeHeader from '@/components/home/HomeHeader';
 import BalanceCard, { type DailyAllowance } from '@/components/home/BalanceCard';
 import RecentTxCard from '@/components/home/RecentTxCard';
 import StatsCard from '@/components/home/StatsCard';
@@ -333,15 +332,18 @@ const [todayStr, setTodayStr] = useState('');
 
   return (
     <div className="min-h-screen bg-[var(--page-bg)] pb-40 transition-colors">
-      <AppHeader
-        topRight={<NotificationBell userId={user?.id ?? null} local={localNotifs} />}
+      <HomeHeader
+        name={displayName ?? ''}
+        avatarUrl={profile?.avatar_url}
         onAvatarClick={() => setIsProfileModalOpen(true)}
+        bell={<NotificationBell userId={user?.id ?? null} local={localNotifs} />}
+        streak={streak}
+        showStreak={dailyAllowance > 0}
+        onStreakClick={() => setShowInfoStreak(true)}
       />
 
       {/* Urutan kotak di Home: pindahkan baris di bawah untuk menata ulang */}
       <main className="px-5 mt-4 space-y-4">
-        <HomeGreeting name={displayName ?? ''} todayStr={todayStr} streak={streak} showStreak={dailyAllowance > 0} onStreakClick={() => setShowInfoStreak(true)} />
-
         <BalanceCard
           profile={profile}
           balance={balance}
